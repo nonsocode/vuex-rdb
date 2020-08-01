@@ -1,6 +1,5 @@
 import { normalize } from 'normalizr';
 import { entitySchemas } from './registrar';
-import Vue from 'vue';
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { identity, isFunction, mergeUnique } from './utils';
 import { getId, Model } from './model';
@@ -37,14 +36,13 @@ export function createModule<T>(
     }),
     mutations: {
       [Mutations.ADD](state, { id, entity }) {
-        Vue.set(
-          state.data,
-          id,
-          Object.freeze({
+        state.data = {
+          ...state.data,
+          [id]: Object.freeze({
             ...state.data[id],
             ...entity
           })
-        );
+        }
       }
     },
     actions: {
