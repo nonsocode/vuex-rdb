@@ -1,6 +1,6 @@
 import { registerSchema, resolveCyclicDependencies } from './registrar';
 import { createModule, generateModuleName } from './module';
-import { EntityName, PluginOptions, StorePath } from './types';
+import { EntityName, PluginOptions, StorePath, Model } from '@/types';
 
 const defaultPluginOptions = {
   schemas: [],
@@ -31,3 +31,5 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
     }
   };
 }
+
+export { Model }
