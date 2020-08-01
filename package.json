@@ -13,7 +13,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c"
+    "build": "tsc --declaration --emitDeclarationOnly --declarationDir dist && rollup -c"
   },
   "peerDependencies": {
     "vue": ">=2.5.0",
