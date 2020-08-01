@@ -1,13 +1,16 @@
 {
-  "name": "vuex-db",
-  "version": "0.0.1",
+  "name": "vuex-rdb",
+  "version": "0.0.2",
   "description": "An Active record database for vuex",
-  "main": "index.js",
+  "main": "dist/vuex-db.js",
   "repository": "https://github.com/nonsocode/vuex-rdb.git",
   "author": "Chinonso Chukwuogor<nonsochukwuogor@gmail.com>",
   "license": "MIT",
   "private": false,
-  "typings": "src/types/index.d.ts",
+  "typings": "src/external-types.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c"
   },
