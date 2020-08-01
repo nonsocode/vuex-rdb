@@ -17,6 +17,6 @@ const config = {
       esModule: false
     },
   ],
-  plugins: [typescript()]
+  plugins: [typescript(), resolve()]
 };
 export default config;
