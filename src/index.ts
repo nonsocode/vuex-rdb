@@ -1,8 +1,7 @@
 import { registerSchema, resolveCyclicDependencies } from './registrar';
 import { createModule, generateModuleName } from './module';
 import { EntityName, PluginOptions, StorePath } from '@/types';
-export { Model } from './model'
-
+import { Model } from './model';
 const defaultPluginOptions = {
   schemas: [],
   namespace: 'database'
@@ -32,4 +31,4 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
     }
   };
 }
-
+export { Model };

@@ -1,17 +1,15 @@
 import { schema as normalizerSchema } from 'normalizr';
-import { IModelStatic } from './types';
-import {getRelationshipSchema, isList} from './relationships';
+import { Model } from './model';
+import { getRelationshipSchema, isList } from './relationships';
 
-type DepTree<T> = Map<IModelStatic<T>, Map<IModelStatic<T>, Set<string>>>;
+type DepTree<T> = Map<typeof Model, Map<typeof Model, Set<string>>>;
 
-export const entitySchemas: Map<IModelStatic<any>, normalizerSchema.Entity> = new Map();
+export const entitySchemas: Map<typeof Model, normalizerSchema.Entity> = new Map();
 
 export const pendingItems: DepTree<any> = new Map();
 
-function dependOn<T, U>(dependant: IModelStatic<T>, dependee?:  IModelStatic<U>, keyName?: string) {
-  let innerMap: Map<IModelStatic<U>, Set<string>> = pendingItems.has(dependant)
-    ? pendingItems.get(dependant)
-    : new Map();
+function dependOn<T, U>(dependant: typeof Model, dependee?: typeof Model, keyName?: string) {
+  let innerMap: Map<typeof Model, Set<string>> = pendingItems.has(dependant) ? pendingItems.get(dependant) : new Map();
   if (dependee) {
     let keySet: Set<string> = innerMap.has(dependee) ? innerMap.get(dependee) : new Set();
     keySet.add(keyName);
@@ -20,7 +18,7 @@ function dependOn<T, U>(dependant: IModelStatic<T>, dependee?:  IModelStatic<U>,
   pendingItems.set(dependant, innerMap);
 }
 
-export function registerSchema<T>(schema: IModelStatic<T>) {
+export function registerSchema<T>(schema: typeof Model) {
   if (entitySchemas.has(schema)) {
     return 'registered';
   }
@@ -38,7 +36,7 @@ export function resolveCyclicDependencies() {
   pendingItems.forEach((value, dep) => cyclicResolve(dep, entitySchemas));
 }
 
-function cyclicResolve(modelSchema: IModelStatic<any>, result: Map<IModelStatic<any>, normalizerSchema.Entity>) {
+function cyclicResolve(modelSchema: typeof Model, result: Map<typeof Model, normalizerSchema.Entity>) {
   if (result.has(modelSchema)) return;
 
   const entity = new normalizerSchema.Entity(

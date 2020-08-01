@@ -4,7 +4,7 @@ import Vue from 'vue';
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { identity, isFunction, mergeUnique } from './utils';
 import { getId, Model } from './model';
-import { PluginOptions, ModelState, Mutations, Actions, Getters, IModelStatic, EntityName, StorePath } from '@/types';
+import { PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath } from '@/types';
 import { Module, Store } from 'vuex';
 
 export function generateModuleName(namespace, key) {
@@ -15,7 +15,7 @@ export function generateModuleName(namespace, key) {
 }
 
 export function createModule<T>(
-  schema: IModelStatic<T>,
+  schema: typeof Model,
   keyMap: Record<EntityName, StorePath>,
   options: PluginOptions<T>,
   store: Store<any>

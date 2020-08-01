@@ -5,7 +5,7 @@ import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
 const cacheNames = ['_dataCache', '_relationshipCache', '_changes'];
-export function getId<T>(model: T, schema: IModelStatic<T>): string | number {
+export function getId<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
 function appendReducer(acc, key) {
@@ -13,7 +13,7 @@ function appendReducer(acc, key) {
   return acc;
 }
 function setAppendableDescriptors<T>(model: Model, appendable) {
-  const schema = model.constructor as IModelStatic<T>;
+  const schema = model.constructor as typeof Model;
   let keys;
   if (appendable['*']) {
     keys = Object.keys(schema.relationships);
@@ -24,7 +24,7 @@ function setAppendableDescriptors<T>(model: Model, appendable) {
   setDescriptors(model, data);
 }
 function setDescriptors<T>(model: Model, data: any = {}, setValues = false): void {
-  const schema = model.constructor as IModelStatic<T>;
+  const schema = model.constructor as typeof Model;
   Object.entries(data).forEach(([key, value]) => {
     const isRelationship = key in schema.relationships;
     const cacheName = isRelationship ? '_relationshipCache' : '_dataCache';
@@ -45,7 +45,7 @@ function setDescriptors<T>(model: Model, data: any = {}, setValues = false): voi
 }
 function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = {}) {
   setDescriptors(model, data);
-  const schema = model.constructor as IModelStatic<T>;
+  const schema = model.constructor as typeof Model;
   Object.entries(data).forEach(([key, value]) => {
     const isRelationship = key in schema.relationships;
     if (!isRelationship) {
@@ -55,9 +55,9 @@ function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = 
       const load = { ...options?.load?.[key] };
       model._relationshipCache[key] = isList(relationshipDef)
         ? getRelationshipSchema(relationshipDef).findByIds(
-            (value as Array<any>).map(v => getId(v, getRelationshipSchema(relationshipDef))),
-            { load }
-          )
+          (value as Array<any>).map(v => getId(v, getRelationshipSchema(relationshipDef))),
+          { load }
+        )
         : value && relationshipDef.find(getId(value, getRelationshipSchema(relationshipDef)), { load });
     }
   });
@@ -99,11 +99,11 @@ export class Model implements IModel {
   }
 
   protected get _id(): string | number {
-    return getId(this, this.constructor as IModelStatic<this>);
+    return getId(this, this.constructor as typeof Model);
   }
 
   async $update(data = {}): Promise<string | number> {
-    const constructor = this.constructor as IModelStatic<this>;
+    const constructor = this.constructor as typeof Model;
     return constructor._store
       .dispatch(`${constructor._path}/update`, {
         id: this._id,
@@ -120,7 +120,7 @@ export class Model implements IModel {
   }
 
   async $addRelated(related, data): Promise<string | number> {
-    const constructor = this.constructor as IModelStatic<this>;
+    const constructor = this.constructor as typeof Model;
     return constructor._store
       .dispatch(`${constructor._path}/addRelated`, {
         id: this._id,
@@ -129,12 +129,12 @@ export class Model implements IModel {
       })
       .then(ids => {
         if (['*', related].some(prop => this._options?.load?.[prop])) {
-          const relationshipDef = (this.constructor as IModelStatic<this>).relationships[related];
+          const relationshipDef = (this.constructor as typeof Model).relationships[related];
           const shouldBeArray = isList(relationshipDef);
           data = shouldBeArray
             ? mergeUnique((this[related] || []).concat(!Array.isArray(data) ? [data] : data), item =>
-                getId(item, shouldBeArray ? relationshipDef[0] : relationshipDef)
-              )
+              getId(item, shouldBeArray ? relationshipDef[0] : relationshipDef)
+            )
             : data;
           setCurrentPropsFromRaw(this, { [related]: data }, this._options);
         }
@@ -143,7 +143,8 @@ export class Model implements IModel {
   }
 
   async $fresh(): Promise<this> {
-    const newModel = (this.constructor as IModelStatic<this>).find(this._id, this._options);
+    // Todo: populate with new data
+    const newModel = (this.constructor as typeof Model).find(this._id, this._options);
     setDescriptors(this, newModel, true);
     return this;
   }
@@ -158,7 +159,7 @@ export class Model implements IModel {
     });
   }
   async $removeRelated(related, relatedId): Promise<string | number> {
-    const constructor = this.constructor as IModelStatic<this>;
+    const constructor = this.constructor as typeof Model;
     return constructor._store
       .dispatch(`${constructor._path}/removeRelated`, {
         id: this._id,
@@ -167,7 +168,7 @@ export class Model implements IModel {
       })
       .then(ids => {
         if (['*', related].some(prop => this._options?.load?.[prop])) {
-          const relationshipDef = (this.constructor as IModelStatic<this>).relationships[related];
+          const relationshipDef = (this.constructor as typeof Model).relationships[related];
           let data;
           if (isList(relationshipDef)) {
             if (!relatedId) {
@@ -175,7 +176,9 @@ export class Model implements IModel {
             } else {
               const items: Model[] = this[related];
               const ids = Array.isArray(relatedId) ? relatedId : [relatedId];
-              data = items ? items.filter(item => !ids.includes(getId(item, getRelationshipSchema(relationshipDef)))) : [];
+              data = items
+                ? items.filter(item => !ids.includes(getId(item, getRelationshipSchema(relationshipDef))))
+                : [];
             }
           } else {
             data = null;

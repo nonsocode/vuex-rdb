@@ -3,7 +3,6 @@ import SchemaFunction = schema.SchemaFunction;
 import { Store } from 'vuex';
 import { Model } from '@/model'
 
-export { Model }
 export enum Mutations {
   ADD = '_ADD'
 }

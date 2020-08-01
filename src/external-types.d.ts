@@ -1,1 +1,2 @@
-export { generateDatabasePlugin, Model } from './types'
+export { generateDatabasePlugin } from './types'
+export { Model } from './model'
