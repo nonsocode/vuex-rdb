@@ -8,7 +8,7 @@
   "author": "Chinonso Chukwuogor<nonsochukwuogor@gmail.com>",
   "license": "MIT",
   "private": false,
-  "types": "src/external-types.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
