@@ -1,5 +1,5 @@
 import {isString} from './utils';
-import {Relationship} from '@/types';
+import {Relationship} from './types';
 import {Model} from './model';
 export const isList = <T extends Relationship>(definition: any): definition is Array<T> => Array.isArray(definition);
 export const isItem = (definition: Relationship): Boolean => !isList(definition);

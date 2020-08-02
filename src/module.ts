@@ -2,9 +2,9 @@ import { normalize } from 'normalizr';
 import { entitySchemas } from './registrar';
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { identity, isFunction, mergeUnique } from './utils';
-import { getId, Model } from './model';
-import { PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath } from '@/types';
-import { Module, Store } from 'vuex';
+import {getId, Model} from './model';
+import {PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath} from './types';
+import {Module, Store} from 'vuex';
 
 export function generateModuleName(namespace, key) {
   namespace = namespace || '';

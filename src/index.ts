@@ -1,7 +1,7 @@
 import { registerSchema, resolveCyclicDependencies } from './registrar';
-import { createModule, generateModuleName } from './module';
-import { EntityName, PluginOptions, StorePath } from '@/types';
-import { Model } from './model';
+import {createModule, generateModuleName} from './module';
+import {EntityName, PluginOptions, StorePath} from './types';
+import {Model} from './model';
 const defaultPluginOptions = {
   schemas: [],
   namespace: 'database'

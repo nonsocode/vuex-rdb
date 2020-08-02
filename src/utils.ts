@@ -1,4 +1,4 @@
-import { TypeOrFunction } from '@/types';
+import {TypeOrFunction} from './types';
 
 export const identity = k => k;
 

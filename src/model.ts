@@ -1,6 +1,6 @@
-import { isFunction, mergeUnique } from './utils';
-import { Actions, FindOptions, Getters, IModel, IModelStatic, Relationship } from '@/types';
-import { Store } from 'vuex';
+import {isFunction, mergeUnique} from './utils';
+import {Actions, FindOptions, Getters, IModel, IModelStatic, Relationship} from './types';
+import {Store} from 'vuex';
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
