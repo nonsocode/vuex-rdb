@@ -1,7 +1,7 @@
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
-import { Store } from 'vuex';
-import { Model } from '@/model'
+import {Store} from 'vuex';
+import {Model} from '../model';
 
 export enum Mutations {
   ADD = '_ADD'
@@ -196,4 +196,5 @@ export interface FindOptions {
 }
 export type EntityName = string;
 export type StorePath = string;
-export declare function generateDatabasePlugin<T>(options: PluginOptions<T>) : (store: Store<any>) => any
+
+export declare function generateDatabasePlugin<T>(options: PluginOptions<T>): (store: Store<any>) => any;

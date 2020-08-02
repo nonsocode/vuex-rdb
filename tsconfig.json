@@ -26,11 +26,7 @@
         "afterDeclarations": true
       }
     ],
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
+    "paths": {},
     "lib": [
       "esnext",
       "dom",
