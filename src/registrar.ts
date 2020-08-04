@@ -40,7 +40,7 @@ function cyclicResolve(modelSchema: typeof Model, result: Map<typeof Model, norm
   if (result.has(modelSchema)) return;
 
   const entity = new normalizerSchema.Entity(
-    modelSchema.entityName,
+    modelSchema.name,
     {},
     {
       idAttribute: modelSchema.id || 'id'

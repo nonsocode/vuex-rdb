@@ -23,7 +23,7 @@ export function createModule<T>(
   const relationKeys = Object.keys(schema.relationships || {});
   Object.defineProperties(schema, {
     _path: {
-      value: keyMap[schema.entityName]
+      value: keyMap[schema.name]
     },
     _store: {
       value: store

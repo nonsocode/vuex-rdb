@@ -100,7 +100,7 @@ export type IModelStatic<T> = {
   /**
    * The name of the entity
    */
-  entityName: string;
+  readonly name: string;
   /**
    * A record of all the possible relationships of this Schema. Currently, two types are supported
    *

@@ -68,8 +68,6 @@ export class Model implements IModel {
   public static _path: string;
   public static _store: Store<any>;
   static id: string | SchemaFunction;
-  public static entityName: string;
-  public static accessors;
   _dataCache;
   _relationshipCache;
   _changes;
