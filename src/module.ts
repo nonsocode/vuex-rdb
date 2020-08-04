@@ -204,7 +204,7 @@ function relationGetters(data, key, schema, keyMap, rootGetters) {
   const relDefinition = schema.relationships[key];
   const relatedSchema = getRelationshipSchema(relDefinition);
   const getterType = isList(relDefinition) ? Getters.FIND_BY_IDS : Getters.FIND;
-  const getterPath = `${keyMap[relatedSchema.entityName]}/${getterType}`;
+  const getterPath = `${keyMap[relatedSchema.name]}/${getterType}`;
   const getter = rootGetters[getterPath];
   let identifier = data[key];
   if ([null, undefined].includes(identifier) && isList(relDefinition)) {
