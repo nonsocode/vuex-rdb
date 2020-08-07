@@ -4,6 +4,8 @@
   "description": "An Active record database for vuex",
   "main": "dist/vuex-db.cjs.js",
   "module": "dist/vuex-db.es.js",
+  "browser": "dist/vuex-db.min.js",
+  "unpkg": "dist/vuex-db.min.js",
   "repository": "https://github.com/nonsocode/vuex-rdb.git",
   "author": "Chinonso Chukwuogor<nonsochukwuogor@gmail.com>",
   "license": "MIT",
@@ -15,7 +17,9 @@
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly --declarationDir dist && rollup -c"
   },
-  "peerDependencies": {},
+  "peerDependencies": {
+    "vuex": "^3.3.0"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^8.4.0",
