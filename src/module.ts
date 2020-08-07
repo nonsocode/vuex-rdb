@@ -191,7 +191,7 @@ export function createModule<T>(
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
         return function(ids = [], opts = {}) {
-          return ids.map(id => getters[Getters.FIND](id, opts));
+          return ids.map(id => getters[Getters.FIND](id, opts)).filter(identity);
         };
       },
       [Getters.ALL]: (state, getters) => (opts = {}) => {
