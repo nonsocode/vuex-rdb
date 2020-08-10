@@ -12,7 +12,8 @@
   "private": false,
   "types": "types/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c"
