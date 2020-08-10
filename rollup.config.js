@@ -7,13 +7,13 @@ const moduleConfig = {
   external: ['normalizr', 'vuex'],
   output: [
     {
-      file: 'dist/vuex-db.es.js',
+      file: 'dist/vuex-rdb.es.js',
       format: 'es',
       name: 'vuex-db',
       esModule: false
     },
     {
-      file: 'dist/vuex-db.cjs.js',
+      file: 'dist/vuex-rdb.cjs.js',
       format: 'cjs',
       name: 'vuex-db',
       esModule: false
@@ -25,7 +25,7 @@ const moduleConfig = {
 const browserConfig = {
   input: 'src/index.ts',
   output: {
-    file: 'dist/vuex-db.min.js',
+    file: 'dist/vuex-rdb.min.js',
     format: 'iife',
     name: 'VuexRdb'
   },
