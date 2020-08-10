@@ -1,6 +1,6 @@
 {
   "name": "vuex-rdb",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "An Active record database for vuex",
   "main": "dist/vuex-rdb.cjs.js",
   "browser": "dist/vuex-rdb.min.js",
@@ -9,10 +9,8 @@
   "author": "Chinonso Chukwuogor<nonsochukwuogor@gmail.com>",
   "license": "MIT",
   "private": false,
-  "types": "types/index.d.ts",
   "files": [
-    "dist",
-    "types"
+    "dist"
   ],
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c"
