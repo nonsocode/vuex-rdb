@@ -23,7 +23,7 @@ export function createModule<T>(
   const relationKeys = Object.keys(schema.relationships || {});
   Object.defineProperties(schema, {
     _path: {
-      value: keyMap[schema.name]
+      value: keyMap[schema.entityName]
     },
     _store: {
       value: store
@@ -204,7 +204,7 @@ function relationGetters(data, key, schema, keyMap, rootGetters) {
   const relDefinition = schema.relationships[key];
   const relatedSchema = getRelationshipSchema(relDefinition);
   const getterType = isList(relDefinition) ? Getters.FIND_BY_IDS : Getters.FIND;
-  const getterPath = `${keyMap[relatedSchema.name]}/${getterType}`;
+  const getterPath = `${keyMap[relatedSchema.entityName]}/${getterType}`;
   const getter = rootGetters[getterPath];
   let identifier = data[key];
   if ([null, undefined].includes(identifier) && isList(relDefinition)) {

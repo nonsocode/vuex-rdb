@@ -11,7 +11,7 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
   return store => {
     const schemaModuleNameMap: Record<EntityName, StorePath> = {};
     options.schemas.forEach(schema => {
-      schemaModuleNameMap[schema.name] = generateModuleName(options.namespace, schema.name);
+      schemaModuleNameMap[schema.entityName] = generateModuleName(options.namespace, schema.entityName);
       registerSchema(schema);
     });
 
@@ -19,7 +19,7 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
 
     const modules = {};
     options.schemas.forEach(schema => {
-      modules[schema.name] = createModule(schema, schemaModuleNameMap, options, store);
+      modules[schema.entityName] = createModule(schema, schemaModuleNameMap, options, store);
     });
     if (options.namespace) {
       store.registerModule(options.namespace, {

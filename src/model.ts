@@ -66,6 +66,7 @@ function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = 
 export class Model implements IModel {
   private _options: any = {};
   public static _path: string;
+  public static entityName: string;
   public static _store: Store<any>;
   static id: string | SchemaFunction;
   _dataCache;
