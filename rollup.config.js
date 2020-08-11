@@ -27,7 +27,7 @@ const esConfig = {
     esModule: true,
   },
 
-  plugins: [typescript({target: 'es2017'}), resolve()]
+  plugins: [typescript(), resolve()]
 };
 
 const browserConfig = {
