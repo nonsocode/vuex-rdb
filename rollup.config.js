@@ -1,25 +1,33 @@
 import typescript from '@rollup/plugin-typescript';
-import resolve from '@rollup/plugin-node-resolve'
-import {terser} from "rollup-plugin-terser";
+import resolve from '@rollup/plugin-node-resolve';
+import {terser} from 'rollup-plugin-terser';
+import commonjs from '@rollup/plugin-commonjs';
 
-const moduleConfig = {
+const commonConfig = {
+  input: 'src/index.ts',
+  external: [],
+  output: {
+    file: 'dist/vuex-rdb.js',
+    format: 'cjs',
+    esModule: false
+  },
+  plugins: [
+    resolve(),
+    commonjs(),
+    typescript(),
+  ]
+};
+
+const esConfig = {
   input: 'src/index.ts',
   external: ['normalizr', 'vuex'],
-  output: [
-    {
-      file: 'dist/vuex-rdb.es.js',
-      format: 'es',
-      name: 'vuex-db',
-      esModule: false
-    },
-    {
-      file: 'dist/vuex-rdb.cjs.js',
-      format: 'cjs',
-      name: 'vuex-db',
-      esModule: false
-    }
-  ],
-  plugins: [typescript()]
+  output: {
+    file: 'dist/vuex-rdb.es.js',
+    format: 'es',
+    esModule: true
+  },
+
+  plugins: [typescript(), resolve()]
 };
 
 const browserConfig = {
@@ -29,6 +37,6 @@ const browserConfig = {
     format: 'iife',
     name: 'VuexRdb'
   },
-  plugins: [typescript(), resolve(), terser()]
-}
-export default [browserConfig, moduleConfig];
+  plugins: [resolve(), terser(), typescript()]
+};
+export default [esConfig, browserConfig, commonConfig];

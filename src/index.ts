@@ -32,3 +32,8 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
   };
 }
 export { Model };
+
+export default {
+  generateDatabasePlugin,
+  Model,
+}
