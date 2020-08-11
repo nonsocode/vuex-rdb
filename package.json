@@ -5,7 +5,6 @@
   "main": "dist/vuex-rdb.js",
   "typings": "types/index.d.ts",
   "module": "dist/vuex-rdb.es.js",
-  "browser": "dist/vuex-rdb.min.js",
   "unpkg": "dist/vuex-rdb.min.js",
   "repository": "https://github.com/nonsocode/vuex-rdb.git",
   "author": "Chinonso Chukwuogor<nonsochukwuogor@gmail.com>",
