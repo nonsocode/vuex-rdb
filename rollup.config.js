@@ -5,7 +5,7 @@ import commonjs from '@rollup/plugin-commonjs';
 
 const commonConfig = {
   input: 'src/index.ts',
-  external: [],
+  external: ['normalizr', 'vuex'],
   output: {
     file: 'dist/vuex-rdb.js',
     format: 'cjs',
@@ -24,10 +24,10 @@ const esConfig = {
   output: {
     file: 'dist/vuex-rdb.es.js',
     format: 'es',
-    esModule: true
+    esModule: true,
   },
 
-  plugins: [typescript(), resolve()]
+  plugins: [typescript({target: 'es2017'}), resolve()]
 };
 
 const browserConfig = {
