@@ -5,7 +5,7 @@ import { identity, isFunction, mergeUnique } from './utils';
 import {getId, Model} from './model';
 import {PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath} from './types';
 import {Module, Store} from 'vuex';
-
+import Vue from 'vue';
 export function generateModuleName(namespace, key) {
   namespace = namespace || '';
   const chunks = namespace.split('/');
@@ -36,13 +36,7 @@ export function createModule<T>(
     }),
     mutations: {
       [Mutations.ADD](state, { id, entity }) {
-        state.data = {
-          ...state.data,
-          [id]: Object.freeze({
-            ...state.data[id],
-            ...entity
-          })
-        }
+        Vue.set(state, id, {...state[id], ...entity});
       }
     },
     actions: {

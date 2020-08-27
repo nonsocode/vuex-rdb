@@ -18,7 +18,8 @@
     "build": "rm -Rf dist && tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c"
   },
   "peerDependencies": {
-    "vuex": "^3.3.0"
+    "vuex": "^3.3.0",
+    "vue": "^2.5.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
