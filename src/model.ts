@@ -4,47 +4,36 @@ import {Store} from 'vuex';
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
+
 const cacheNames = ['_dataCache', '_relationshipCache', '_changes'];
+const internal = [...cacheNames, '_options'];
+const getCacheName = (target, key) => key in (target.constructor as typeof Model).relationships ? '_relationshipCache' : '_dataCache';
+const unique = (...items) => [...new Set(items.flat())]
+const enumerator = (target) => unique(cacheNames.map(name => Object.keys(target[name])))
+const externalGet = (target: Model, key: string, receiver) => {
+  if(internal.includes(key)) return target[key];
+  return  target._changes[key] !== undefined ? target._changes[key] : target[getCacheName(target, key)][key];
+}
+const externalSet = (target: Model, key: string, value) => {
+  if(internal.includes(key))
+  target._changes[key] = value
+  return true
+}
+const internalSet = (target, key, value) => {
+  target[getCacheName(target, key)] = value
+}
+
+const hydrate = (husk: Model, fountain = {}) => {
+  Object.entries(fountain).forEach(([key, value]) => {
+    internalSet(husk, key, value)
+  })
+}
+
 export function getId<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
-function appendReducer(acc, key) {
-  acc[key] = null;
-  return acc;
-}
-function setAppendableDescriptors<T>(model: Model, appendable) {
-  const schema = model.constructor as typeof Model;
-  let keys;
-  if (appendable['*']) {
-    keys = Object.keys(schema.relationships);
-  } else {
-    keys = Object.keys(appendable).filter(k => k !== '*');
-  }
-  const data = keys.reduce(appendReducer, {});
-  setDescriptors(model, data);
-}
-function setDescriptors<T>(model: Model, data: any = {}, setValues = false): void {
-  const schema = model.constructor as typeof Model;
-  Object.entries(data).forEach(([key, value]) => {
-    const isRelationship = key in schema.relationships;
-    const cacheName = isRelationship ? '_relationshipCache' : '_dataCache';
-    if (!Object.getOwnPropertyDescriptor(model, key)) {
-      Object.defineProperty(model, key, {
-        get() {
-          return this._changes[key] !== undefined ? this._changes[key] : this[cacheName][key];
-        },
-        set(val) {
-          this._changes[key] = val;
-        },
-        enumerable: true
-      });
-    }
-    setValues && (model[cacheName][key] = value);
-  });
-  model.$resetChanges();
-}
+
 function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = {}) {
-  setDescriptors(model, data);
   const schema = model.constructor as typeof Model;
   Object.entries(data).forEach(([key, value]) => {
     const isRelationship = key in schema.relationships;
@@ -63,6 +52,7 @@ function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = 
   });
 }
 
+
 export class Model implements IModel {
   private _options: any = {};
   public static _path: string;
@@ -72,25 +62,23 @@ export class Model implements IModel {
   _dataCache;
   _relationshipCache;
   _changes;
+  
 
   constructor(data: any, opts: any = {}) {
-    cacheNames.forEach(cacheName => {
-      Object.defineProperty(this, cacheName, {
-        value: {}
-      });
+    Object.defineProperties(this, {
+      ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
+      _options: { value: { ...opts }, enumerable: false },
     });
-    if (opts.load) {
-      setAppendableDescriptors(this, opts.load);
+    if(data) {
+      hydrate(this, data)
     }
-    setDescriptors(this, data, true);
-
-    const privateDescriptors = {
-      _options: { value: { ...opts }, enumerable: false }
-    };
-    const descriptors = {
-      ...privateDescriptors
-    };
-    Object.defineProperties(this, descriptors);
+    
+    // return new Proxy<Model>(this, {
+    //   get: externalGet,
+    //   set: externalSet,
+    //   enumerate: enumerator,
+    //   ownKeys: enumerator,
+    // })
   }
 
   static get relationships(): Record<string, Relationship> {
@@ -144,7 +132,7 @@ export class Model implements IModel {
   async $fresh(): Promise<this> {
     // Todo: populate with new data
     const newModel = (this.constructor as typeof Model).find(this._id, this._options);
-    setDescriptors(this, newModel, true);
+    hydrate(this, newModel);
     return this;
   }
 
