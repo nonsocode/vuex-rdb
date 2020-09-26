@@ -12,7 +12,8 @@ export declare class Model implements IModel {
     _dataCache: any;
     _relationshipCache: any;
     _changes: any;
-    constructor(data: any, opts?: any);
+    private _connected;
+    constructor(data: any, opts?: any, connected?: boolean);
     static get relationships(): Record<string, Relationship>;
     protected get _id(): string | number;
     $update(data?: {}): Promise<string | number>;

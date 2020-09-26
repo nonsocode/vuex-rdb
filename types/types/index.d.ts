@@ -21,9 +21,7 @@ export declare type TypeOrFunction<T> = T | TypeFunction<T>;
 export interface TypeFunction<T> extends Function {
     (this: null, data: any): T;
 }
-export interface ModelState {
-    data: Record<string | number, any>;
-}
+export declare type ModelState = Record<string | number, any>;
 export interface IModel {
     /**
      * Update the properties of the model with the given data. You don't need to pass the full model.

@@ -31,9 +31,7 @@ export function createModule<T>(
   });
   return {
     namespaced: true,
-    state: () => ({
-      data: {}
-    }),
+    state: () => ({}),
     mutations: {
       [Mutations.ADD](state, { id, entity }) {
         Vue.set(state, id, {...state[id], ...entity});
@@ -148,7 +146,7 @@ export function createModule<T>(
     },
     getters: {
       [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, opts: any = {}) => {
-        const data = state.data[id];
+        const data = state[id];
         if (!data) {
           return;
         }
@@ -181,7 +179,7 @@ export function createModule<T>(
           }
           return data;
         }, {});
-        return new schema({ ...dataWithoutRelationships, ...relatedData }, { load: loadable });
+        return new schema({ ...dataWithoutRelationships, ...relatedData }, { load: loadable }, true);
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
         return function(ids = [], opts = {}) {
@@ -189,7 +187,7 @@ export function createModule<T>(
         };
       },
       [Getters.ALL]: (state, getters) => (opts = {}) => {
-        return getters[Getters.FIND_BY_IDS](Object.keys(state.data), opts);
+        return getters[Getters.FIND_BY_IDS](Object.keys(state), opts);
       }
     }
   };

@@ -24,9 +24,8 @@ export type TypeOrFunction<T> = T | TypeFunction<T>;
 export interface TypeFunction<T> extends Function {
   (this: null, data: any): T;
 }
-export interface ModelState {
-  data: Record<string | number, any>;
-}
+export type ModelState = Record<string|number, any>
+
 
 export interface IModel {
   /**

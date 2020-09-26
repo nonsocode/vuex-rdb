@@ -211,10 +211,44 @@ var Getters;
 })(Getters || (Getters = {}));
 
 var cacheNames = ['_dataCache', '_relationshipCache', '_changes'];
-var internal = __spread(cacheNames, ['_options']);
+var internals = __spread(cacheNames, ['_options', '_connected']).reduce(function (acc, key) {
+    acc[key] = true;
+    return acc;
+}, {});
 var getCacheName = function (target, key) { return key in target.constructor.relationships ? '_relationshipCache' : '_dataCache'; };
+var externalGet = function (target, key, receiver) {
+    if (key in target)
+        return target[key];
+    return target._changes[key] !== undefined ? target._changes[key] : target[getCacheName(target, key)][key];
+};
+var externalSet = function (target, key, value) {
+    if (!(key in target)) {
+        createAccessor(target, key);
+    }
+    if (internals[key]) {
+        target[key] = value;
+    }
+    else {
+        target._changes[key] = value;
+    }
+    return true;
+};
+function createAccessor(target, key) {
+    Object.defineProperty(target, key, {
+        enumerable: true,
+        get: function () {
+            return this._changes[key] !== undefined ? this._changes[key] : this[getCacheName(this, key)][key];
+        },
+        set: function (value) {
+            this._changes[key] = value;
+        }
+    });
+}
 var internalSet = function (target, key, value) {
-    target[getCacheName(target, key)] = value;
+    if (!(key in target)) {
+        createAccessor(target, key);
+    }
+    target[getCacheName(target, key)][key] = value;
 };
 var hydrate = function (husk, fountain) {
     if (fountain === void 0) { fountain = {}; }
@@ -247,19 +281,20 @@ function setCurrentPropsFromRaw(model, data, options) {
     });
 }
 var Model = /** @class */ (function () {
-    function Model(data, opts) {
+    function Model(data, opts, connected) {
         if (opts === void 0) { opts = {}; }
+        if (connected === void 0) { connected = false; }
         this._options = {};
+        this._connected = false;
         Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _options: { value: __assign({}, opts), enumerable: false } }));
+        this._connected = connected;
         if (data) {
             hydrate(this, data);
         }
-        // return new Proxy<Model>(this, {
-        //   get: externalGet,
-        //   set: externalSet,
-        //   enumerate: enumerator,
-        //   ownKeys: enumerator,
-        // })
+        return new Proxy(this, {
+            get: externalGet,
+            set: externalSet,
+        });
     }
     Object.defineProperty(Model, "relationships", {
         get: function () {
@@ -287,17 +322,36 @@ var Model = /** @class */ (function () {
                         id: this._id,
                         data: data
                     })
-                        .then(function (ids) {
+                        .then(function (id) {
                         setCurrentPropsFromRaw(_this, data, _this._options);
-                        return ids;
+                        _this.$resetChanges();
+                        return id;
                     })];
             });
         });
     };
     Model.prototype.$save = function () {
         return __awaiter(this, void 0, void 0, function () {
+            var result, constructor, data_1;
+            var _this = this;
             return __generator(this, function (_a) {
-                return [2 /*return*/, this.$update(__assign({}, this._changes))];
+                console.log('save', this);
+                constructor = this.constructor;
+                if (this._connected) {
+                    result = this.$update(__assign({}, this._changes));
+                }
+                else {
+                    data_1 = __assign(__assign(__assign({}, this._dataCache), this._relationshipCache), this._changes);
+                    result = (constructor)._store.dispatch(constructor._path + "/add", data_1)
+                        .then(function (res) {
+                        console.log('after', _this);
+                        setCurrentPropsFromRaw(_this, data_1, _this._options);
+                        _this._connected = true;
+                        _this.$resetChanges();
+                        return res;
+                    });
+                }
+                return [2 /*return*/];
             });
         });
     };
@@ -406,6 +460,7 @@ var Model = /** @class */ (function () {
     Model.addAll = function (items) {
         return this._store.dispatch(this._path + "/" + Actions.ADD_ALL, items);
     };
+    Model.id = "id";
     return Model;
 }());
 
@@ -429,9 +484,7 @@ function createModule(schema, keyMap, options, store) {
     });
     return {
         namespaced: true,
-        state: function () { return ({
-            data: {}
-        }); },
+        state: function () { return ({}); },
         mutations: (_a = {},
             _a[Mutations.ADD] = function (state, _a) {
                 var id = _a.id, entity = _a.entity;
@@ -555,7 +608,7 @@ function createModule(schema, keyMap, options, store) {
         getters: (_c = {},
             _c[Getters.FIND] = function (state, getters, rootState, rootGetters) { return function (id, opts) {
                 if (opts === void 0) { opts = {}; }
-                var data = state.data[id];
+                var data = state[id];
                 if (!data) {
                     return;
                 }
@@ -588,7 +641,7 @@ function createModule(schema, keyMap, options, store) {
                     }
                     return data;
                 }, {});
-                return new schema(__assign(__assign({}, dataWithoutRelationships), relatedData), { load: loadable });
+                return new schema(__assign(__assign({}, dataWithoutRelationships), relatedData), { load: loadable }, true);
             }; },
             _c[Getters.FIND_BY_IDS] = function (state, getters) {
                 return function (ids, opts) {
@@ -599,7 +652,7 @@ function createModule(schema, keyMap, options, store) {
             },
             _c[Getters.ALL] = function (state, getters) { return function (opts) {
                 if (opts === void 0) { opts = {}; }
-                return getters[Getters.FIND_BY_IDS](Object.keys(state.data), opts);
+                return getters[Getters.FIND_BY_IDS](Object.keys(state), opts);
             }; },
             _c)
     };

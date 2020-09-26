@@ -6,21 +6,42 @@ import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
 
 const cacheNames = ['_dataCache', '_relationshipCache', '_changes'];
-const internal = [...cacheNames, '_options'];
+const internals = [...cacheNames, '_options', '_connected'].reduce((acc, key) => {
+  acc[key] = true
+  return acc;
+}, {});
+
 const getCacheName = (target, key) => key in (target.constructor as typeof Model).relationships ? '_relationshipCache' : '_dataCache';
-const unique = (...items) => [...new Set(items.flat())]
-const enumerator = (target) => unique(cacheNames.map(name => Object.keys(target[name])))
+
 const externalGet = (target: Model, key: string, receiver) => {
-  if(internal.includes(key)) return target[key];
+  if(key in target) return target[key];
   return  target._changes[key] !== undefined ? target._changes[key] : target[getCacheName(target, key)][key];
 }
 const externalSet = (target: Model, key: string, value) => {
-  if(internal.includes(key))
-  target._changes[key] = value
+  if(!(key in target)) {
+    createAccessor(target, key)
+  }
+  if(internals[key]) {target[key] = value}
+  else {target._changes[key] = value;}
   return true
 }
+
+function createAccessor (target, key) {
+  Object.defineProperty(target, key, {
+    enumerable: true,
+    get() {
+      return this._changes[key] !== undefined ? this._changes[key] : this[getCacheName(this, key)][key];
+    },
+    set(value) {
+      this._changes[key] = value
+    }
+  })
+}
 const internalSet = (target, key, value) => {
-  target[getCacheName(target, key)] = value
+  if(!(key in target)) {
+    createAccessor(target, key)
+  }
+  target[getCacheName(target, key)][key] = value
 }
 
 const hydrate = (husk: Model, fountain = {}) => {
@@ -58,27 +79,27 @@ export class Model implements IModel {
   public static _path: string;
   public static entityName: string;
   public static _store: Store<any>;
-  static id: string | SchemaFunction;
+  static id: string | SchemaFunction = "id";
   _dataCache;
   _relationshipCache;
   _changes;
+  private _connected = false;
   
 
-  constructor(data: any, opts: any = {}) {
+  constructor(data: any, opts: any = {}, connected = false) {
     Object.defineProperties(this, {
       ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
       _options: { value: { ...opts }, enumerable: false },
     });
+    this._connected = connected;
     if(data) {
       hydrate(this, data)
     }
     
-    // return new Proxy<Model>(this, {
-    //   get: externalGet,
-    //   set: externalSet,
-    //   enumerate: enumerator,
-    //   ownKeys: enumerator,
-    // })
+    return new Proxy<Model>(this, {
+      get: externalGet,
+      set: externalSet,
+    })
   }
 
   static get relationships(): Record<string, Relationship> {
@@ -96,14 +117,31 @@ export class Model implements IModel {
         id: this._id,
         data
       })
-      .then(ids => {
+      .then(id => {
         setCurrentPropsFromRaw(this, data, this._options);
-        return ids;
+        this.$resetChanges();
+        return id;
       });
   }
 
   async $save(): Promise<number | string> {
-    return this.$update({ ...this._changes });
+    let result;
+    console.log('save', this)
+    const constructor = this.constructor as typeof Model;
+    if(this._connected) {
+      result = this.$update({ ...this._changes });
+    } else {
+      const data = {...this._dataCache, ...this._relationshipCache, ...this._changes};
+      result = (constructor)._store.dispatch(`${constructor._path}/add`,data)
+      .then(res => {
+        console.log('after', this)
+        setCurrentPropsFromRaw(this, data, this._options);
+        this._connected = true;
+        this.$resetChanges()
+        return res
+      })
+    }
+    return ;
   }
 
   async $addRelated(related, data): Promise<string | number> {
