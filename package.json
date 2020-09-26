@@ -15,7 +15,8 @@
     "types"
   ],
   "scripts": {
-    "build": "rm -Rf dist && tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c"
+    "build": "rm -Rf dist && tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
+    "serve": "parcel --out-dir serve dev/public/index.html"
   },
   "peerDependencies": {
     "vue": "^2.5.0",
@@ -29,6 +30,7 @@
     "@types/jest": "^25.1.4",
     "core-js": "^2.6.11",
     "jest": "^25.2.4",
+    "parcel": "^1.12.4",
     "prettier": "1.19.1",
     "reflect-metadata": "^0.1.13",
     "rollup": "^2.3.2",
@@ -36,10 +38,11 @@
     "ts-jest": "^25.3.0",
     "tslib": "^2.0.1",
     "typescript": "^3.9.7",
-    "vue": "^2.6.11",
+    "vue": "^2.6.12",
     "vuex": "^3.5.1"
   },
   "dependencies": {
-    "normalizr": "^3.6.0"
+    "normalizr": "^3.6.0",
+    "vue-hot-reload-api": "^2.3.4"
   }
 }
