@@ -280,7 +280,7 @@ var Model = /** @class */ (function () {
         if (connected === void 0) { connected = false; }
         this._options = {};
         this._connected = false;
-        Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _options: { value: __assign({}, opts), enumerable: false } }));
+        Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _options: { value: __assign({}, opts), enumerable: false }, _connected: { value: connected, enumerable: false, configurable: true } }));
         this._connected = connected;
         if (data) {
             hydrate(this, data);
@@ -329,7 +329,6 @@ var Model = /** @class */ (function () {
             var result, constructor, data_1;
             var _this = this;
             return __generator(this, function (_a) {
-                console.log('save', this);
                 constructor = this.constructor;
                 if (this._connected) {
                     result = this.$update(__assign({}, this._changes));
@@ -338,7 +337,6 @@ var Model = /** @class */ (function () {
                     data_1 = __assign(__assign(__assign({}, this._dataCache), this._relationshipCache), this._changes);
                     result = (constructor)._store.dispatch(constructor._path + "/add", data_1)
                         .then(function (res) {
-                        console.log('after', _this);
                         setCurrentPropsFromRaw(_this, data_1, _this._options);
                         _this._connected = true;
                         _this.$resetChanges();

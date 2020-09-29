@@ -90,6 +90,7 @@ export class Model implements IModel {
     Object.defineProperties(this, {
       ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
       _options: { value: { ...opts }, enumerable: false },
+      _connected: {value: connected, enumerable: false, configurable: true}
     });
     this._connected = connected;
     if(data) {
@@ -126,7 +127,6 @@ export class Model implements IModel {
 
   async $save(): Promise<number | string> {
     let result;
-    console.log('save', this)
     const constructor = this.constructor as typeof Model;
     if(this._connected) {
       result = this.$update({ ...this._changes });
@@ -134,7 +134,6 @@ export class Model implements IModel {
       const data = {...this._dataCache, ...this._relationshipCache, ...this._changes};
       result = (constructor)._store.dispatch(`${constructor._path}/add`,data)
       .then(res => {
-        console.log('after', this)
         setCurrentPropsFromRaw(this, data, this._options);
         this._connected = true;
         this.$resetChanges()
