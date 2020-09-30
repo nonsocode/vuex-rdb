@@ -2,16 +2,15 @@ import { FindOptions, IModel, IModelStatic, Relationship } from './types';
 import { Store } from 'vuex';
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
+import 'reflect-metadata';
 export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
 export declare class Model implements IModel {
-    private _options;
     static _path: string;
     static entityName: string;
     static _store: Store<any>;
     static id: string | SchemaFunction;
     _dataCache: any;
     _relationshipCache: any;
-    _changes: any;
     _connected: boolean;
     _id: any;
     constructor(data: any, opts?: any);
@@ -19,8 +18,6 @@ export declare class Model implements IModel {
     $update(data?: {}): Promise<string | number>;
     $save(): Promise<number | string>;
     $addRelated(related: any, data: any): Promise<string | number>;
-    $fresh(): Promise<this>;
-    $resetChanges(): void;
     $removeRelated(related: any, relatedId: any): Promise<string | number>;
     static find<T>(this: IModelStatic<T>, id: string | number, opts?: FindOptions): T;
     static findByIds<T>(this: IModelStatic<T>, ids: any[], opts?: FindOptions): T[];

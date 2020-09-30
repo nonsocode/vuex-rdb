@@ -71,16 +71,6 @@ export interface IModel {
    */
   $save(): Promise<string | number>;
 
-  /**
-   * Updates `this` model with fresh properties from the db
-   */
-  $fresh(): Promise<this>;
-
-
-  /**
-   * Reset any pending changes yet to be committed to the db;
-   */
-  $resetChanges(): void;
   [key: string]: any;
 }
 

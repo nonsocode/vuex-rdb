@@ -3,8 +3,8 @@
     <div>Yall playing</div>
     <button @click="createUser">ClickMe</button>
     <pre>{{ user }}</pre>
-    <pre>{{ posts }}</pre>
-    <pre>{{ comments }}</pre>
+    <!-- <pre>{{ posts }}</pre> -->
+    <!-- <pre>{{ comments }}</pre> -->
   </div>
 </template>
 <script>
@@ -15,12 +15,12 @@
       user() {
         return User.find(1);
       },
-      posts() {
-        return this.user?.posts
-      },
-      comments() {
-        return this.posts?.flatMap(post => post.comments) 
-      }
+      // posts() {
+      //   return this.user?.posts
+      // },
+      // comments() {
+      //   return this.posts?.flatMap(post => post.comments) 
+      // }
     },
     methods: {
       createUser() {

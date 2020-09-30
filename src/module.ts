@@ -38,7 +38,8 @@ export function createModule<T>(
       },
       [Mutations.SET_PROP](state, { id, key, value }) {
         if(state[id] == null) { throw new Error('Entity does not exist')}
-        Vue.set(state, id, {...state[id], [key]: value});
+        Vue.set(state[id], key, value)
+        // Vue.set(state, id, {...state[id], [key]: value});
       }
     },
     actions: {
@@ -151,40 +152,12 @@ export function createModule<T>(
     getters: {
       [Getters.GET_RAW]: (state) => id => state[id],
       [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, opts: any = {}) => {
-        const data = state[id];
+        const data = getters[Getters.GET_RAW](id);
         if (!data) {
           return;
         }
-        const loadable = relations(opts.load);
-        let relatedData;
-        if (Object.keys(loadable).includes('*')) {
-          relatedData = relationKeys.reduce((relatedData, key) => {
-            const { getter, identifier } = relationGetters(data, key, schema, keyMap, rootGetters);
-            relatedData[key] = getter(identifier, {
-              ...opts,
-              load: []
-            });
-            return relatedData;
-          }, {});
-        } else {
-          relatedData = Object.entries(loadable)
-            .filter(([key]) => key in schema.relationships)
-            .reduce((relatedData, [key, value]) => {
-              const { getter, identifier } = relationGetters(data, key, schema, keyMap, rootGetters);
-              relatedData[key] = getter(identifier, {
-                ...opts,
-                load: value
-              });
-              return relatedData;
-            }, {});
-        }
-        const dataWithoutRelationships = Object.entries(data).reduce((data, [key, value]) => {
-          if (!(key in schema.relationships)) {
-            data[key] = value;
-          }
-          return data;
-        }, {});
-        return new schema({ ...dataWithoutRelationships, ...relatedData }, { load: loadable, connected: true });
+        
+        return new schema(data, { connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
         return function(ids = [], opts = {}) {

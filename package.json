@@ -15,7 +15,7 @@
     "types"
   ],
   "scripts": {
-    "build": "rm -Rf dist && tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
+    "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
     "serve": "parcel --out-dir serve dev/public/index.html"
   },
   "peerDependencies": {

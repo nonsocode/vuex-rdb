@@ -6,20 +6,12 @@ import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
 import { entitySchemas, nameModelMap } from './registrar';
 import { normalize } from 'normalizr';
-import 'reflect-metadata';
 
-const cacheNames = ['_dataCache', '_relationshipCache', '_changes'];
-const internals = [...cacheNames, '_options', '_connected'].reduce((acc, key) => {
-  acc[key] = true
-  return acc;
-}, {});
+const cacheNames = ['_dataCache', '_relationshipCache'];
+
 
 const getCacheName = (target, key) => key in (target.constructor as typeof Model).relationships ? '_relationshipCache' : '_dataCache';
 
-const proxyGetter = (target: Model, key: string, receiver) => {
-  if(!(key in target) ) createAccessor(target, key);
-  return target[key];
-}
 const proxySetter = (target: Model, key: string, value) => {
   if(!(key in target)) {
     createAccessor(target, key)
@@ -81,52 +73,23 @@ function createAccessor (target: Model, key) {
     }
   })
 }
-const internalSet = (target, key, value) => {
-  if(!(key in target)) {
-    createAccessor(target, key)
-  }
-  target[getCacheName(target, key)][key] = value
-}
-
-const hydrate = (husk: Model, fountain = {}) => {
-  Object.keys(fountain).forEach(([key, value]) => {
-    internalSet(husk, key, value)
-  })
-}
 
 export function getIdValue<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
 
-function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = {}) {
-  const schema = model.constructor as typeof Model;
-  Object.entries(data).forEach(([key, value]) => {
-    const isRelationship = key in schema.relationships;
-    if (!isRelationship) {
-      model._dataCache[key] = value;
-    } else {
-      const relationshipDef = schema.relationships[key];
-      const load = { ...options?.load?.[key] };
-      model._relationshipCache[key] = isList(relationshipDef)
-        ? getRelationshipSchema(relationshipDef).findByIds(
-          (value as Array<any>).map(v => getIdValue(v, getRelationshipSchema(relationshipDef))),
-          { load }
-        )
-        : value && relationshipDef.find(getIdValue(value, getRelationshipSchema(relationshipDef)), { load });
-    }
-  });
-}
-
+const reserved = [...cacheNames, '_id', '_connected'].reduce((acc, key) => {
+  acc[key] = true
+  return acc
+}, {})
 
 export class Model implements IModel {
-  private _options: any = {};
   public static _path: string;
   public static entityName: string;
   public static _store: Store<any>;
   static id: string | SchemaFunction = "id";
   _dataCache;
   _relationshipCache;
-  _changes;
   _connected = false;
   _id;
   
@@ -134,17 +97,16 @@ export class Model implements IModel {
   constructor(data: any, opts: any = {}) {
     Object.defineProperties(this, {
       ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
-      _connected: {value: !!(opts.connected), enumerable: false, configurable: true},
+      _connected: {value: !!(opts?.connected), enumerable: false, configurable: true},
+      _id:{value: data ? getIdValue(data, this.constructor as typeof Model) : null, enumerable: false, configurable: true}
     });
 
     if(data) {
-      this._id = getIdValue(data, this.constructor as typeof Model)
       Object.keys(data).forEach(key => createAccessor(this, key))
     }
 
     
     return new Proxy<Model>(this, {
-      get: proxyGetter,
       set: proxySetter,
     })
   }
@@ -162,26 +124,25 @@ export class Model implements IModel {
       })
       .then(id => {
         this._connected = true;
-        this.$resetChanges();
         return id;
       });
   }
 
   async $save(): Promise<number | string> {
-    let result;
-    const constructor = this.constructor as typeof Model;
-    if(this._connected) {
-      result = this.$update({ ...this._changes });
-    } else {
-      const data = {...this._dataCache, ...this._relationshipCache, ...this._changes};
-      result = (constructor)._store.dispatch(`${constructor._path}/add`,data)
-      .then(res => {
-        this._connected = true;
-        this.$resetChanges()
-        return res
-      })
-    }
-    return ;
+    return new Promise(resolve => {
+      const constructor = this.constructor as typeof Model;
+      if(this._connected) {
+        console.warn('No need calling $save');
+      } else {
+        const data = {...this._dataCache, ...this._relationshipCache};
+        resolve((constructor)._store.dispatch(`${constructor._path}/add`,data)
+        .then(res => {
+          this._id = res
+          this._connected = true;
+          return res
+        }));
+      }
+    })
   }
 
   async $addRelated(related, data): Promise<string | number> {
@@ -192,34 +153,8 @@ export class Model implements IModel {
         related,
         data
       })
-      .then(ids => {
-        if (['*', related].some(prop => this._options?.load?.[prop])) {
-          const relationshipDef = (this.constructor as typeof Model).relationships[related];
-          const shouldBeArray = isList(relationshipDef);
-          data = shouldBeArray
-            ? mergeUnique((this[related] || []).concat(!Array.isArray(data) ? [data] : data), item =>
-              getIdValue(item, shouldBeArray ? relationshipDef[0] : relationshipDef)
-            )
-            : data;
-        }
-        return ids;
-      });
   }
 
-  async $fresh(): Promise<this> {
-    // Todo: populate with new data
-    const newModel = (this.constructor as typeof Model).find(this._id, this._options);
-    hydrate(this, newModel);
-    return this;
-  }
-
-
-
-  $resetChanges() {
-    Object.keys(this._changes).forEach(key => {
-      delete this._changes[key];
-    });
-  }
   async $removeRelated(related, relatedId): Promise<string | number> {
     const constructor = this.constructor as typeof Model;
     return constructor._store
@@ -227,28 +162,6 @@ export class Model implements IModel {
         id: this._id,
         related,
         relatedId
-      })
-      .then(ids => {
-        if (['*', related].some(prop => this._options?.load?.[prop])) {
-          const relationshipDef = (this.constructor as typeof Model).relationships[related];
-          let data;
-          if (isList(relationshipDef)) {
-            if (!relatedId) {
-              data = [];
-            } else {
-              const items: Model[] = this[related];
-              const ids = Array.isArray(relatedId) ? relatedId : [relatedId];
-              data = items
-                ? items.filter(item => !ids.includes(getIdValue(item, getRelationshipSchema(relationshipDef))))
-                : [];
-            }
-          } else {
-            data = null;
-          }
-          setCurrentPropsFromRaw(this, { [related]: data }, this._options);
-        }
-
-        return ids;
       });
   }
   static find<T>(this: IModelStatic<T>, id: string | number, opts: FindOptions = {}): T {

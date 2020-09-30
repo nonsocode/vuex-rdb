@@ -1,4 +1,4 @@
-import { Model } from '../../../dist/vuex-rdb.es';
+import { Model } from '../../../dist/vuex-rdb';
 import {Post} from './Post'
 export  class User extends Model {
   static entityName = 'user';
@@ -12,6 +12,10 @@ export  class User extends Model {
   get times() {
     console.log(this)
     return this.x * this.y
+  }
+
+  method() {
+    console.log(this)
   }
 }
 window.User = User

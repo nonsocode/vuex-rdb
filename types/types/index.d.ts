@@ -62,14 +62,6 @@ export interface IModel {
      * transform them to actual models
      */
     $save(): Promise<string | number>;
-    /**
-     * Updates `this` model with fresh properties from the db
-     */
-    $fresh(): Promise<this>;
-    /**
-     * Reset any pending changes yet to be committed to the db;
-     */
-    $resetChanges(): void;
     [key: string]: any;
 }
 export declare type IModelStatic<T> = {
