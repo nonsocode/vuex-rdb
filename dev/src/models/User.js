@@ -14,3 +14,4 @@ export  class User extends Model {
     return this.x * this.y
   }
 }
+window.User = User

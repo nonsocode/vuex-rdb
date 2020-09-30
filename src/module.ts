@@ -2,7 +2,7 @@ import { normalize } from 'normalizr';
 import { entitySchemas } from './registrar';
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { identity, isFunction, mergeUnique } from './utils';
-import {getId, Model} from './model';
+import {getIdValue, Model} from './model';
 import {PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath} from './types';
 import {Module, Store} from 'vuex';
 import Vue from 'vue';
@@ -35,6 +35,10 @@ export function createModule<T>(
     mutations: {
       [Mutations.ADD](state, { id, entity }) {
         Vue.set(state, id, {...state[id], ...entity});
+      },
+      [Mutations.SET_PROP](state, { id, key, value }) {
+        if(state[id] == null) { throw new Error('Entity does not exist')}
+        Vue.set(state, id, {...state[id], [key]: value});
       }
     },
     actions: {
@@ -63,7 +67,7 @@ export function createModule<T>(
         if (isList(relationshipDef)) {
           const items = (Array.isArray(data) ? data : [data]).filter(identity);
           data = item[related] || [];
-          data = mergeUnique(data.concat(items), item => getId(item, getRelationshipSchema(relationshipDef)));
+          data = mergeUnique(data.concat(items), item => getIdValue(item, getRelationshipSchema(relationshipDef)));
         }
 
         return dispatch(Actions.UPDATE, {
@@ -94,7 +98,7 @@ export function createModule<T>(
               return dispatch(Actions.UPDATE, {
                 id,
                 data: {
-                  [related]: relatedItems.filter(item => !relatedIds.includes(getId(item, relatedSchema)))
+                  [related]: relatedItems.filter(item => !relatedIds.includes(getIdValue(item, relatedSchema)))
                 }
               });
             })
@@ -127,8 +131,8 @@ export function createModule<T>(
           // the value is computed. We don't want an update to change the id
           // otherwise it'll break consistency
           newItems = items.map(item => ({ ...item, ...data }));
-          const oldIds = items.map(item => getId(item, schema));
-          const newIds = newItems.map(item => getId(item, schema));
+          const oldIds = items.map(item => getIdValue(item, schema));
+          const newIds = newItems.map(item => getIdValue(item, schema));
           const idHasChanged = oldIds.some((id, index) => id !== newIds[index]);
           if (idHasChanged) {
             throw new Error('Invalid Update: This would cause a change in the computed id.');
@@ -145,6 +149,7 @@ export function createModule<T>(
       }
     },
     getters: {
+      [Getters.GET_RAW]: (state) => id => state[id],
       [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, opts: any = {}) => {
         const data = state[id];
         if (!data) {
@@ -179,7 +184,7 @@ export function createModule<T>(
           }
           return data;
         }, {});
-        return new schema({ ...dataWithoutRelationships, ...relatedData }, { load: loadable }, true);
+        return new schema({ ...dataWithoutRelationships, ...relatedData }, { load: loadable, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
         return function(ids = [], opts = {}) {

@@ -1,9 +1,12 @@
 import {isFunction, mergeUnique} from './utils';
-import {Actions, FindOptions, Getters, IModel, IModelStatic, Relationship} from './types';
+import {Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relationship} from './types';
 import {Store} from 'vuex';
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
+import { entitySchemas, nameModelMap } from './registrar';
+import { normalize } from 'normalizr';
+import 'reflect-metadata';
 
 const cacheNames = ['_dataCache', '_relationshipCache', '_changes'];
 const internals = [...cacheNames, '_options', '_connected'].reduce((acc, key) => {
@@ -13,27 +16,68 @@ const internals = [...cacheNames, '_options', '_connected'].reduce((acc, key) =>
 
 const getCacheName = (target, key) => key in (target.constructor as typeof Model).relationships ? '_relationshipCache' : '_dataCache';
 
-const externalGet = (target: Model, key: string, receiver) => {
-  if(key in target) return target[key];
-  return  target._changes[key] !== undefined ? target._changes[key] : target[getCacheName(target, key)][key];
+const proxyGetter = (target: Model, key: string, receiver) => {
+  if(!(key in target) ) createAccessor(target, key);
+  return target[key];
 }
-const externalSet = (target: Model, key: string, value) => {
+const proxySetter = (target: Model, key: string, value) => {
   if(!(key in target)) {
     createAccessor(target, key)
   }
-  if(internals[key]) {target[key] = value}
-  else {target._changes[key] = value;}
+  target[key] = value
   return true
 }
 
-function createAccessor (target, key) {
+function createAccessor (target: Model, key) {
+  const constructor = target.constructor as typeof Model;
+  const store = constructor._store;
+  const isRelationship = key in constructor.relationships;
+  const relationshipDef = isRelationship ? constructor.relationships[key] : null
+
   Object.defineProperty(target, key, {
     enumerable: true,
     get() {
-      return this._changes[key] !== undefined ? this._changes[key] : this[getCacheName(this, key)][key];
+      if(target._connected) {
+        const raw: any = store.getters[`${constructor._path}/${Getters.GET_RAW}`](this._id);
+        const value = raw[key];
+        if(isRelationship) {
+          const Related = getRelationshipSchema(relationshipDef);
+          if(isList(relationshipDef)) {
+            return Related.findByIds(value || []);
+          }
+          return target._relationshipCache[key] ??=  Related.find(value)
+        } else {
+          return raw[key]
+        }
+      }
+      return this[getCacheName(this, key)][key];
     },
     set(value) {
-      this._changes[key] = value
+      if(target._connected) {
+        if(value != null) {
+          if(isRelationship) {
+            const list = isList(relationshipDef);
+            const Related = getRelationshipSchema(relationshipDef);
+            if(list) {
+              value = Array.isArray(value) ? value : [value];
+            } 
+            const entitySchema = entitySchemas.get(Related);
+            const { entities, result } = normalize(value, list ? [entitySchema] : entitySchema);
+            Object.entries(entities).forEach(([entityName, entities]) => {
+              Object.entries(entities).forEach(([id, entity]) => {
+                if (!entity) {
+                  return;
+                }
+                store.commit(`${nameModelMap.get(entityName)._path}/${Mutations.ADD}`, { id, entity }, { root: true });
+              });
+            });
+            value = result;
+          } 
+        }
+        return constructor._store.commit(`${constructor._path}/${Mutations.SET_PROP}`, {id: this._id, key, value})
+      } else {
+        this[getCacheName(this, key)][key] = value
+      }
     }
   })
 }
@@ -45,12 +89,12 @@ const internalSet = (target, key, value) => {
 }
 
 const hydrate = (husk: Model, fountain = {}) => {
-  Object.entries(fountain).forEach(([key, value]) => {
+  Object.keys(fountain).forEach(([key, value]) => {
     internalSet(husk, key, value)
   })
 }
 
-export function getId<T>(model: T, schema: typeof Model): string | number {
+export function getIdValue<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
 
@@ -65,10 +109,10 @@ function setCurrentPropsFromRaw<T>(model: Model, data: any = {}, options: any = 
       const load = { ...options?.load?.[key] };
       model._relationshipCache[key] = isList(relationshipDef)
         ? getRelationshipSchema(relationshipDef).findByIds(
-          (value as Array<any>).map(v => getId(v, getRelationshipSchema(relationshipDef))),
+          (value as Array<any>).map(v => getIdValue(v, getRelationshipSchema(relationshipDef))),
           { load }
         )
-        : value && relationshipDef.find(getId(value, getRelationshipSchema(relationshipDef)), { load });
+        : value && relationshipDef.find(getIdValue(value, getRelationshipSchema(relationshipDef)), { load });
     }
   });
 }
@@ -83,32 +127,30 @@ export class Model implements IModel {
   _dataCache;
   _relationshipCache;
   _changes;
-  private _connected = false;
+  _connected = false;
+  _id;
   
 
-  constructor(data: any, opts: any = {}, connected = false) {
+  constructor(data: any, opts: any = {}) {
     Object.defineProperties(this, {
       ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
-      _options: { value: { ...opts }, enumerable: false },
-      _connected: {value: connected, enumerable: false, configurable: true}
+      _connected: {value: !!(opts.connected), enumerable: false, configurable: true},
     });
-    this._connected = connected;
+
     if(data) {
-      hydrate(this, data)
+      this._id = getIdValue(data, this.constructor as typeof Model)
+      Object.keys(data).forEach(key => createAccessor(this, key))
     }
+
     
     return new Proxy<Model>(this, {
-      get: externalGet,
-      set: externalSet,
+      get: proxyGetter,
+      set: proxySetter,
     })
   }
 
   static get relationships(): Record<string, Relationship> {
     return {};
-  }
-
-  protected get _id(): string | number {
-    return getId(this, this.constructor as typeof Model);
   }
 
   async $update(data = {}): Promise<string | number> {
@@ -119,7 +161,7 @@ export class Model implements IModel {
         data
       })
       .then(id => {
-        setCurrentPropsFromRaw(this, data, this._options);
+        this._connected = true;
         this.$resetChanges();
         return id;
       });
@@ -134,7 +176,6 @@ export class Model implements IModel {
       const data = {...this._dataCache, ...this._relationshipCache, ...this._changes};
       result = (constructor)._store.dispatch(`${constructor._path}/add`,data)
       .then(res => {
-        setCurrentPropsFromRaw(this, data, this._options);
         this._connected = true;
         this.$resetChanges()
         return res
@@ -157,10 +198,9 @@ export class Model implements IModel {
           const shouldBeArray = isList(relationshipDef);
           data = shouldBeArray
             ? mergeUnique((this[related] || []).concat(!Array.isArray(data) ? [data] : data), item =>
-              getId(item, shouldBeArray ? relationshipDef[0] : relationshipDef)
+              getIdValue(item, shouldBeArray ? relationshipDef[0] : relationshipDef)
             )
             : data;
-          setCurrentPropsFromRaw(this, { [related]: data }, this._options);
         }
         return ids;
       });
@@ -173,9 +213,7 @@ export class Model implements IModel {
     return this;
   }
 
-  $changes() {
-    return { ...this._changes };
-  }
+
 
   $resetChanges() {
     Object.keys(this._changes).forEach(key => {
@@ -201,7 +239,7 @@ export class Model implements IModel {
               const items: Model[] = this[related];
               const ids = Array.isArray(relatedId) ? relatedId : [relatedId];
               data = items
-                ? items.filter(item => !ids.includes(getId(item, getRelationshipSchema(relationshipDef))))
+                ? items.filter(item => !ids.includes(getIdValue(item, getRelationshipSchema(relationshipDef))))
                 : [];
             }
           } else {

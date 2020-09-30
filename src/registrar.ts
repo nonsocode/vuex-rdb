@@ -5,6 +5,7 @@ import { getRelationshipSchema, isList } from './relationships';
 type DepTree<T> = Map<typeof Model, Map<typeof Model, Set<string>>>;
 
 export const entitySchemas: Map<typeof Model, normalizerSchema.Entity> = new Map();
+export const nameModelMap: Map<string, typeof Model> = new Map();
 
 export const pendingItems: DepTree<any> = new Map();
 
@@ -47,6 +48,7 @@ function cyclicResolve(modelSchema: typeof Model, result: Map<typeof Model, norm
     }
   );
   result.set(modelSchema, entity);
+  nameModelMap.set(modelSchema.entityName, modelSchema);
   pendingItems.get(modelSchema).forEach((keys, dependency) => {
     cyclicResolve(dependency, result);
     keys.forEach(key => {

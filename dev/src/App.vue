@@ -2,7 +2,9 @@
   <div>
     <div>Yall playing</div>
     <button @click="createUser">ClickMe</button>
-    {{ user }}
+    <pre>{{ user }}</pre>
+    <pre>{{ posts }}</pre>
+    <pre>{{ comments }}</pre>
   </div>
 </template>
 <script>
@@ -11,7 +13,13 @@
   export default {
     computed: {
       user() {
-        return User.find(1, {load: 'posts.comments'});
+        return User.find(1);
+      },
+      posts() {
+        return this.user?.posts
+      },
+      comments() {
+        return this.posts?.flatMap(post => post.comments) 
       }
     },
     methods: {

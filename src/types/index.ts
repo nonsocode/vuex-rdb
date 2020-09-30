@@ -4,7 +4,8 @@ import {Store} from 'vuex';
 import {Model} from '../model';
 
 export enum Mutations {
-  ADD = '_ADD'
+  ADD = '_ADD',
+  SET_PROP = 'SET_PROP'
 }
 
 export enum Actions {
@@ -17,6 +18,7 @@ export enum Actions {
 
 export enum Getters {
   FIND = 'find',
+  GET_RAW = 'getRaw',
   FIND_BY_IDS = 'findByIds',
   ALL = 'all'
 }
@@ -74,10 +76,6 @@ export interface IModel {
    */
   $fresh(): Promise<this>;
 
-  /**
-   * Get the list of pending changes yet to be committed to the DB
-   */
-  $changes(): any;
 
   /**
    * Reset any pending changes yet to be committed to the db;
