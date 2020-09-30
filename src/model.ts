@@ -37,7 +37,7 @@ function createAccessor (target: Model, key) {
           if(isList(relationshipDef)) {
             return Related.findByIds(value || []);
           }
-          return target._relationshipCache[key] ??=  Related.find(value)
+          return Related.find(value)
         } else {
           return raw[key]
         }
@@ -98,7 +98,7 @@ export class Model implements IModel {
     Object.defineProperties(this, {
       ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
       _connected: {value: !!(opts?.connected), enumerable: false, configurable: true},
-      _id:{value: data ? getIdValue(data, this.constructor as typeof Model) : null, enumerable: false, configurable: true}
+      _id:{value: data ? getIdValue(data, this.constructor as typeof Model) : null, enumerable: false, configurable: false, writable: true}
     });
 
     if(data) {

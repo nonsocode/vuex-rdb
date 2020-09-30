@@ -1,11 +1,12 @@
-import { Model } from '../../../dist/vuex-rdb';
+import { Model } from '../../../dist/vuex-rdb.es';
 import {Post} from './Post'
 export  class User extends Model {
   static entityName = 'user';
 
   static get relationships() {
     return {
-      posts: [Post]
+      posts: [Post],
+      issue: Issue
     }
   }
 
@@ -18,4 +19,12 @@ export  class User extends Model {
     console.log(this)
   }
 }
+
+export class Issue extends Model {
+  static entityName = "issue"
+  static  id(model) {
+    return model.name + "#"
+  }
+}
 window.User = User
+window.Issue = Issue

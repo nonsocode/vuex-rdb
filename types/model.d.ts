@@ -2,7 +2,6 @@ import { FindOptions, IModel, IModelStatic, Relationship } from './types';
 import { Store } from 'vuex';
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
-import 'reflect-metadata';
 export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
 export declare class Model implements IModel {
     static _path: string;
