@@ -340,9 +340,6 @@ var Model = /** @class */ (function () {
             return acc;
         }, {});
     };
-    Model.prototype.toString = function () {
-        return 'cali';
-    };
     Object.defineProperty(Model, "relationships", {
         get: function () {
             return {};

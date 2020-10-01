@@ -15,7 +15,6 @@ export declare class Model implements IModel {
     _id: any;
     constructor(data: any, opts?: any);
     toJSON(...args: any[]): {};
-    toString(): string;
     static get relationships(): Record<string, Relationship>;
     $update(data?: {}): Promise<string | number>;
     $save(): Promise<number | string>;
