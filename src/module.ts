@@ -156,8 +156,8 @@ export function createModule<T>(
         if (!data) {
           return;
         }
-        
-        return new schema(data, { connected: true });
+        const load = relations(opts.load)
+        return new schema(data, { load, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
         return function(ids = [], opts = {}) {

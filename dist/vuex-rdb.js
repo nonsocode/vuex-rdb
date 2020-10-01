@@ -107,8 +107,46 @@ function mergeUnique(items, key) {
 function isFunction(fn) {
     return fn instanceof Function;
 }
+function isString(string) {
+    return typeof string === 'string';
+}
+function createObject(object) {
+    var o = Object.create(null);
+    Object.entries(object).forEach(function (_a) {
+        var _b = __read(_a, 2), key = _b[0], value = _b[1];
+        o[key] = value;
+    });
+    return o;
+}
 
 var isList = function (definition) { return Array.isArray(definition); };
+function relations(relatives) {
+    if ([null, undefined].includes(relatives)) {
+        return {};
+    }
+    else if (!Array.isArray(relatives) && !isString(relatives)) {
+        return relatives;
+    }
+    if (isString(relatives)) {
+        relatives = [relatives];
+    }
+    if (Array.isArray(relatives)) {
+        var result_1 = {};
+        relatives.forEach(function (relative) {
+            var t = result_1;
+            var paths = relative.split('.');
+            for (var i = 0; i < paths.length; i++) {
+                if (paths[i] === '*' || t['*']) {
+                    t['*'] = true;
+                    break;
+                }
+                t[paths[i]] = t[paths[i]] || {};
+                t = t[paths[i]];
+            }
+        });
+        return result_1;
+    }
+}
 function getRelationshipSchema(relationship) {
     return isList(relationship) ? relationship[0] : relationship;
 }
@@ -184,14 +222,22 @@ var Getters;
     Getters["ALL"] = "all";
 })(Getters || (Getters = {}));
 
+var _a;
 var cacheNames = ['_dataCache', '_relationshipCache'];
+var reservedKeys = createObject((_a = { toJSON: true, _isVue: true }, _a[Symbol.toStringTag] = true, _a));
 var getCacheName = function (target, key) { return key in target.constructor.relationships ? '_relationshipCache' : '_dataCache'; };
 var proxySetter = function (target, key, value) {
-    if (!(key in target)) {
+    if (!(key in target) && !(key in reservedKeys)) {
         createAccessor(target, key);
     }
     target[key] = value;
     return true;
+};
+var proxyGetter = function (target, key, value) {
+    if (!(key in target) && !(key in reservedKeys)) {
+        createAccessor(target, key);
+    }
+    return target[key];
 };
 function createAccessor(target, key) {
     var constructor = target.constructor;
@@ -205,11 +251,12 @@ function createAccessor(target, key) {
                 var raw = store.getters[constructor._path + "/" + Getters.GET_RAW](this._id);
                 var value = raw[key];
                 if (isRelationship) {
+                    var opts = { load: target._load[key] || {} };
                     var Related = getRelationshipSchema(relationshipDef);
                     if (isList(relationshipDef)) {
-                        return Related.findByIds(value || []);
+                        return value && Related.findByIds(value, opts);
                     }
-                    return Related.find(value);
+                    return Related.find(value, opts);
                 }
                 else {
                     return raw[key];
@@ -261,14 +308,47 @@ var Model = /** @class */ (function () {
         var _this = this;
         if (opts === void 0) { opts = {}; }
         this._connected = false;
-        Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true }, _id: { value: data ? getIdValue(data, this.constructor) : null, enumerable: false, configurable: false, writable: true } }));
+        Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true }, _load: { value: ((opts === null || opts === void 0 ? void 0 : opts.load) || createObject({})), enumerable: false, configurable: true }, _id: { value: data ? getIdValue(data, this.constructor) : null, enumerable: false, configurable: false, writable: true } }));
         if (data) {
             Object.keys(data).forEach(function (key) { return createAccessor(_this, key); });
         }
         return new Proxy(this, {
             set: proxySetter,
+            get: proxyGetter,
         });
     }
+    Model.prototype.toJSON = function () {
+        var _this = this;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        console.log.apply(console, __spread([this.constructor.entityName, 'json'], args));
+        var constructor = this.constructor;
+        return Object.entries(this).reduce(function (acc, _a) {
+            var _b = __read(_a, 2), key = _b[0], val = _b[1];
+            if (!(key in constructor.relationships)) {
+                acc[key] = val;
+            }
+            else {
+                if ([key, '*'].some(function (prop) { return prop in _this._load; })) {
+                    if (val == null) {
+                        acc[key] = val;
+                    }
+                    else if (Array.isArray(val)) {
+                        acc[key] = val.map(function (item) { return item.toJSON(); });
+                    }
+                    else {
+                        acc[key] = val.toJSON();
+                    }
+                }
+            }
+            return acc;
+        }, {});
+    };
+    Model.prototype.toString = function () {
+        return 'cali';
+    };
     Object.defineProperty(Model, "relationships", {
         get: function () {
             return {};
@@ -519,11 +599,13 @@ function createModule(schema, keyMap, options, store) {
         getters: (_c = {},
             _c[Getters.GET_RAW] = function (state) { return function (id) { return state[id]; }; },
             _c[Getters.FIND] = function (state, getters, rootState, rootGetters) { return function (id, opts) {
+                if (opts === void 0) { opts = {}; }
                 var data = getters[Getters.GET_RAW](id);
                 if (!data) {
                     return;
                 }
-                return new schema(data, { connected: true });
+                var load = relations(opts.load);
+                return new schema(data, { load: load, connected: true });
             }; },
             _c[Getters.FIND_BY_IDS] = function (state, getters) {
                 return function (ids, opts) {

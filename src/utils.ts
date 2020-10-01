@@ -19,3 +19,15 @@ export function isFunction<P extends Function>(fn: any): fn is P {
 export function isString(string: any): string is string {
   return typeof string === 'string';
 }
+
+export function createObject(object: object) {
+  const o = Object.create(null);
+  Object.entries(object).forEach(([key, value]) => {
+    o[key] = value;
+  })
+  return o;
+}
+
+export function ucFirst(str: string) {
+  return str.charAt(0).toUpperCase() + str.substring(1);
+}

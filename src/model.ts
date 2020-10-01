@@ -1,4 +1,4 @@
-import {isFunction, mergeUnique} from './utils';
+import {createObject, isFunction, mergeUnique, ucFirst} from './utils';
 import {Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relationship} from './types';
 import {Store} from 'vuex';
 import { schema } from 'normalizr';
@@ -9,15 +9,24 @@ import { normalize } from 'normalizr';
 
 const cacheNames = ['_dataCache', '_relationshipCache'];
 
+const reservedKeys = createObject({toJSON: true, _isVue: true, [Symbol.toStringTag]: true})
 
 const getCacheName = (target, key) => key in (target.constructor as typeof Model).relationships ? '_relationshipCache' : '_dataCache';
 
 const proxySetter = (target: Model, key: string, value) => {
-  if(!(key in target)) {
+  
+  if(!(key in target) && !(key in reservedKeys)) {
     createAccessor(target, key)
   }
   target[key] = value
   return true
+}
+const proxyGetter = (target: Model, key: string | symbol, value) => {
+  
+  if(!(key in target)  && !(key in reservedKeys)) {
+    createAccessor(target, key)
+  }
+  return target[key]
 }
 
 function createAccessor (target: Model, key) {
@@ -33,11 +42,12 @@ function createAccessor (target: Model, key) {
         const raw: any = store.getters[`${constructor._path}/${Getters.GET_RAW}`](this._id);
         const value = raw[key];
         if(isRelationship) {
+          const opts = {load: target._load[key] || {}};
           const Related = getRelationshipSchema(relationshipDef);
           if(isList(relationshipDef)) {
-            return Related.findByIds(value || []);
+            return value && Related.findByIds(value, opts);
           }
-          return Related.find(value)
+          return Related.find(value, opts)
         } else {
           return raw[key]
         }
@@ -88,6 +98,8 @@ export class Model implements IModel {
   public static entityName: string;
   public static _store: Store<any>;
   static id: string | SchemaFunction = "id";
+  
+  _load;
   _dataCache;
   _relationshipCache;
   _connected = false;
@@ -98,6 +110,7 @@ export class Model implements IModel {
     Object.defineProperties(this, {
       ...Object.fromEntries(cacheNames.map(cacheName => [cacheName, {value:{}}])),
       _connected: {value: !!(opts?.connected), enumerable: false, configurable: true},
+      _load: {value: (opts?.load || createObject({})), enumerable: false, configurable: true},
       _id:{value: data ? getIdValue(data, this.constructor as typeof Model) : null, enumerable: false, configurable: false, writable: true}
     });
 
@@ -108,7 +121,29 @@ export class Model implements IModel {
     
     return new Proxy<Model>(this, {
       set: proxySetter,
+      get: proxyGetter,
     })
+  }
+
+  toJSON(...args) {
+    console.log((this.constructor as any).entityName, 'json', ...args)
+    const constructor = this.constructor as typeof Model
+    return Object.entries(this).reduce((acc, [key, val]) => {
+      if(!(key in constructor.relationships)) {
+        acc[key] = val
+      } else {
+        if([key, '*'].some(prop => prop in this._load)) {
+          if(val == null) {
+            acc[key] = val
+          } else if (Array.isArray(val)) {
+            acc[key] = val.map(item => item.toJSON())
+          } else {
+            acc[key] = val.toJSON()
+          }
+        }
+      }
+      return acc;
+    }, {})
   }
 
   static get relationships(): Record<string, Relationship> {
@@ -127,6 +162,7 @@ export class Model implements IModel {
         return id;
       });
   }
+
 
   async $save(): Promise<number | string> {
     return new Promise(resolve => {

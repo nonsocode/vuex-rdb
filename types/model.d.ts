@@ -8,11 +8,14 @@ export declare class Model implements IModel {
     static entityName: string;
     static _store: Store<any>;
     static id: string | SchemaFunction;
+    _load: any;
     _dataCache: any;
     _relationshipCache: any;
     _connected: boolean;
     _id: any;
     constructor(data: any, opts?: any);
+    toJSON(...args: any[]): {};
+    toString(): string;
     static get relationships(): Record<string, Relationship>;
     $update(data?: {}): Promise<string | number>;
     $save(): Promise<number | string>;

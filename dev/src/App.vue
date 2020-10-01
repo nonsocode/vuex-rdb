@@ -1,11 +1,31 @@
 <template>
   <div>
-    <div>Yall playing</div>
-    <button @click="createUser">ClickMe</button>
-    <button @click="something">ClickMe</button>
-    <pre v-if="user">{{ user }}</pre>
-    <!-- <pre>{{ posts }}</pre> -->
-    <!-- <pre>{{ comments }}</pre> -->
+    <button @click="createUser">Add user</button>
+    <div style="display: flex;">
+      <form style="display: flex; flex-direction:column" @submit.prevent="user.$save()" :key="user.id" v-for="user in users">
+        <label for="id">
+          <input type="text" id="id" v-model="user.id" />
+        </label>
+        <label for="name">
+          name
+          <input type="text" id="name" v-model="user.name" />
+        </label>
+        <label for="type">
+          type
+          <input type="text" id="type" v-model="user.type" />
+        </label>
+        <label for="age">
+          user
+          <input type="number" id="age" v-model.number="user.age" />
+        </label>
+        <button>Save</button>
+        <pre>{{ user }}</pre>
+      </form>
+    </div>
+  <div>
+    All users
+    <pre>{{allUsers}}</pre>
+  </div>
   </div>
 </template>
 <script>
@@ -13,35 +33,20 @@
   import { User } from './models/User';
   export default {
     computed: {
-      user() {
-        // return User.find(1);
-        return {}
+      allUsers() {
+        return User.all({load: 'posts.user.posts.user.post'});
       }
-      // posts() {
-      //   return this.user?.posts
-      // },
-      // comments() {
-      //   return this.posts?.flatMap(post => post.comments)
-      // }
     },
-    data(){
+    data() {
       return {
-        falter: {
-          type: 'preview'
-        }
-      }
+        users: []
+      };
     },
     methods: {
-      something() {
-          this.falter.falter = this.falter
-      },
       createUser() {
         const u = new User();
-        (u.id = 1), (u.name = 'nonso');
-        u.company = 'Article';
-        u.posts = [{ id: 2, title: 'the post', comments: [{ id: 1, text: 'Chuck Norris', user: { id: 1 } }] }];
-
-        u.$save();
+        u.id = Math.floor(Math.random() * 10000000);
+        this.users.push(u)
       }
     }
   };

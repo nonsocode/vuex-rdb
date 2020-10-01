@@ -1,15 +1,28 @@
-import Vuex from 'vuex';
+import Vuex, { Store } from 'vuex';
 import Vue from 'vue';
 import { Model, generateDatabasePlugin } from '../../dist/vuex-rdb.es';
 import { User, Post, Comment, Issue } from './models';
 Vue.use(Vuex);
 
-export default new Vuex.Store({
+const store =  new Vuex.Store({
   plugins: [
     generateDatabasePlugin({
       schemas: [User, Post, Comment, Issue]
     })
   ]
 });
-
+store.dispatch('database/user/add', {
+  id: 1,
+  name: 'nonso',
+  posts:[
+    {
+      id: 5,
+      title: 'frugal lord',
+      user: {
+        id: 4
+      }
+    }
+  ]
+})
 window.User = User
+export default store
