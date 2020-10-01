@@ -125,8 +125,7 @@ export class Model implements IModel {
     })
   }
 
-  toJSON(...args) {
-    console.log((this.constructor as any).entityName, 'json', ...args)
+  toJSON() {
     const constructor = this.constructor as typeof Model
     return Object.entries(this).reduce((acc, [key, val]) => {
       if(!(key in constructor.relationships)) {

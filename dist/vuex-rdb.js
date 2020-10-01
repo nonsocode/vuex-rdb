@@ -319,11 +319,6 @@ var Model = /** @class */ (function () {
     }
     Model.prototype.toJSON = function () {
         var _this = this;
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        console.log.apply(console, __spread([this.constructor.entityName, 'json'], args));
         var constructor = this.constructor;
         return Object.entries(this).reduce(function (acc, _a) {
             var _b = __read(_a, 2), key = _b[0], val = _b[1];
