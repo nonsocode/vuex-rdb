@@ -1,6 +1,7 @@
 import { schema as normalizerSchema } from 'normalizr';
 import { Model } from './model';
 import { getRelationshipSchema, isList } from './relationships';
+import { createObject } from './utils';
 
 type DepTree<T> = Map<typeof Model, Map<typeof Model, Set<string>>>;
 
@@ -23,7 +24,11 @@ export function registerSchema<T>(schema: typeof Model) {
   if (entitySchemas.has(schema)) {
     return 'registered';
   }
-  const definitions = Object.entries(schema.relationships || {});
+  schema._relationships = createObject({
+    ...schema._relationships,
+    ...schema.relationships
+  })
+  const definitions = Object.entries(schema._relationships || {});
 
   dependOn(schema);
   if (definitions.length) {
@@ -52,7 +57,7 @@ function cyclicResolve(modelSchema: typeof Model, result: Map<typeof Model, norm
   pendingItems.get(modelSchema).forEach((keys, dependency) => {
     cyclicResolve(dependency, result);
     keys.forEach(key => {
-      const relationshipData = modelSchema.relationships[key];
+      const relationshipData = modelSchema._relationships[key];
       const relationshipSchema = result.get(getRelationshipSchema(relationshipData));
       const childEnt = isList(relationshipData) ? [relationshipSchema] : relationshipSchema;
       entity.define({

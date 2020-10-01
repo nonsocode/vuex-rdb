@@ -7,6 +7,8 @@ export declare class Model implements IModel {
     static _path: string;
     static entityName: string;
     static _store: Store<any>;
+    static _fields: Record<string, boolean>;
+    static _relationships: Record<string, Relationship>;
     static id: string | SchemaFunction;
     _load: any;
     _dataCache: any;
@@ -16,6 +18,7 @@ export declare class Model implements IModel {
     constructor(data: any, opts?: any);
     toJSON(): {};
     static get relationships(): Record<string, Relationship>;
+    static get fields(): Record<string, true> | string[];
     $update(data?: {}): Promise<string | number>;
     $save(): Promise<number | string>;
     $addRelated(related: any, data: any): Promise<string | number>;

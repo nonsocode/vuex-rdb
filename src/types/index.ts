@@ -153,7 +153,7 @@ export type IModelStatic<T> = {
   addAll?(items: any[]): Promise<Array<string | number>>;
 };
 
-export type Relationship = typeof Model | typeof Model[];
+export type Relationship = typeof Model | [typeof Model];
 
 export interface PluginOptions<T> {
   /**

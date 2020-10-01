@@ -28,10 +28,45 @@
   </div>
   </div>
 </template>
-<script>
+<script lang="ts">
   import Vue from 'vue';
   import { User } from './models/User';
-  export default {
+
+function logged() {
+  return (target: Object, propertyName: string | symbol): void => {
+    console.log('prop access', propertyName)
+  }
+}
+function f() {
+  console.log("f(): evaluated");
+  return function (
+    target,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    console.log("f(): called");
+  };
+}
+
+function g() {
+  console.log("g(): evaluated");
+  return function (
+    target,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    console.log("g(): called");
+  };
+}
+class Man {
+  @logged
+  name: string
+
+  @f @g
+  dance(){}
+}
+  window.man = new Man;
+  export default Vue.extend({
     computed: {
       allUsers() {
         return User.all({load: 'posts.user.posts.user.post'});
@@ -39,15 +74,17 @@
     },
     data() {
       return {
-        users: []
+        users: [],
+        man: new Man
       };
     },
     methods: {
       createUser() {
-        const u = new User();
+        const u: any = new User();
         u.id = Math.floor(Math.random() * 10000000);
         this.users.push(u)
       }
     }
-  };
+  });
+window.Man = Man
 </script>

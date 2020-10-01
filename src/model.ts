@@ -11,7 +11,7 @@ const cacheNames = ['_dataCache', '_relationshipCache'];
 
 const reservedKeys = createObject({toJSON: true, _isVue: true, [Symbol.toStringTag]: true})
 
-const getCacheName = (target, key) => key in (target.constructor as typeof Model).relationships ? '_relationshipCache' : '_dataCache';
+const getCacheName = (target, key) => key in (target.constructor as typeof Model)._relationships ? '_relationshipCache' : '_dataCache';
 
 const proxySetter = (target: Model, key: string, value) => {
   
@@ -22,18 +22,20 @@ const proxySetter = (target: Model, key: string, value) => {
   return true
 }
 const proxyGetter = (target: Model, key: string | symbol, value) => {
-  
-  if(!(key in target)  && !(key in reservedKeys)) {
-    createAccessor(target, key)
-  }
+  /* This useful only when the fields aren't known upfront but can add a lot of unnecessary props 
+   when non existent fields are accessed
+   */
+  // if(!(key in target)  && !(key in reservedKeys)) {
+  //   createAccessor(target, key)
+  // }
   return target[key]
 }
 
 function createAccessor (target: Model, key) {
   const constructor = target.constructor as typeof Model;
   const store = constructor._store;
-  const isRelationship = key in constructor.relationships;
-  const relationshipDef = isRelationship ? constructor.relationships[key] : null
+  const isRelationship = key in constructor._relationships;
+  const relationshipDef = isRelationship ? constructor._relationships[key] : null
 
   Object.defineProperty(target, key, {
     enumerable: true,
@@ -85,7 +87,7 @@ function createAccessor (target: Model, key) {
 }
 
 export function getIdValue<T>(model: T, schema: typeof Model): string | number {
-  return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
+  return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
 
 const reserved = [...cacheNames, '_id', '_connected'].reduce((acc, key) => {
@@ -97,6 +99,8 @@ export class Model implements IModel {
   public static _path: string;
   public static entityName: string;
   public static _store: Store<any>;
+  public static _fields: Record<string, boolean> = {};
+  public static _relationships: Record<string, Relationship> = {}
   static id: string | SchemaFunction = "id";
   
   _load;
@@ -104,6 +108,7 @@ export class Model implements IModel {
   _relationshipCache;
   _connected = false;
   _id;
+
   
 
   constructor(data: any, opts: any = {}) {
@@ -113,11 +118,17 @@ export class Model implements IModel {
       _load: {value: (opts?.load || createObject({})), enumerable: false, configurable: true},
       _id:{value: data ? getIdValue(data, this.constructor as typeof Model) : null, enumerable: false, configurable: false, writable: true}
     });
+    const {_relationships, _fields} = this.constructor as typeof Model;
+    console.log({_relationships, _fields})
 
     if(data) {
       Object.keys(data).forEach(key => createAccessor(this, key))
     }
 
+    Object.keys({..._relationships, ..._fields}).forEach(key => {
+      if(key in this) return;
+      createAccessor(this, key)
+    })
     
     return new Proxy<Model>(this, {
       set: proxySetter,
@@ -128,7 +139,7 @@ export class Model implements IModel {
   toJSON() {
     const constructor = this.constructor as typeof Model
     return Object.entries(this).reduce((acc, [key, val]) => {
-      if(!(key in constructor.relationships)) {
+      if(!(key in constructor._relationships)) {
         acc[key] = val
       } else {
         if([key, '*'].some(prop => prop in this._load)) {
@@ -146,6 +157,10 @@ export class Model implements IModel {
   }
 
   static get relationships(): Record<string, Relationship> {
+    return {};
+  }
+  
+  static get fields(): Record<string, true> | string[] {
     return {};
   }
 

@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
-    "serve": "parcel --out-dir serve dev/public/index.html"
+    "serve": "parcel --out-dir serve dev/index.html"
   },
   "peerDependencies": {
     "vue": "^2.5.0",

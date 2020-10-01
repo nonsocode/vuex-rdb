@@ -161,7 +161,8 @@ function registerSchema(schema) {
     if (entitySchemas.has(schema)) {
         return 'registered';
     }
-    var definitions = Object.entries(schema.relationships || {});
+    schema._relationships = createObject(__assign(__assign({}, schema._relationships), schema.relationships));
+    var definitions = Object.entries(schema._relationships || {});
     dependOn(schema);
     if (definitions.length) {
         definitions.forEach(function (_a) {
@@ -185,7 +186,7 @@ function cyclicResolve(modelSchema, result) {
         cyclicResolve(dependency, result);
         keys.forEach(function (key) {
             var _a;
-            var relationshipData = modelSchema.relationships[key];
+            var relationshipData = modelSchema._relationships[key];
             var relationshipSchema = result.get(getRelationshipSchema(relationshipData));
             var childEnt = isList(relationshipData) ? [relationshipSchema] : relationshipSchema;
             entity.define((_a = {},
@@ -219,7 +220,7 @@ var Getters;
 var _a;
 var cacheNames = ['_dataCache', '_relationshipCache'];
 var reservedKeys = createObject((_a = { toJSON: true, _isVue: true }, _a[Symbol.toStringTag] = true, _a));
-var getCacheName = function (target, key) { return key in target.constructor.relationships ? '_relationshipCache' : '_dataCache'; };
+var getCacheName = function (target, key) { return key in target.constructor._relationships ? '_relationshipCache' : '_dataCache'; };
 var proxySetter = function (target, key, value) {
     if (!(key in target) && !(key in reservedKeys)) {
         createAccessor(target, key);
@@ -228,16 +229,19 @@ var proxySetter = function (target, key, value) {
     return true;
 };
 var proxyGetter = function (target, key, value) {
-    if (!(key in target) && !(key in reservedKeys)) {
-        createAccessor(target, key);
-    }
+    /* This useful only when the fields aren't known upfront but can add a lot of unnecessary props
+     when non existent fields are accessed
+     */
+    // if(!(key in target)  && !(key in reservedKeys)) {
+    //   createAccessor(target, key)
+    // }
     return target[key];
 };
 function createAccessor(target, key) {
     var constructor = target.constructor;
     var store = constructor._store;
-    var isRelationship = key in constructor.relationships;
-    var relationshipDef = isRelationship ? constructor.relationships[key] : null;
+    var isRelationship = key in constructor._relationships;
+    var relationshipDef = isRelationship ? constructor._relationships[key] : null;
     Object.defineProperty(target, key, {
         enumerable: true,
         get: function () {
@@ -303,9 +307,16 @@ var Model = /** @class */ (function () {
         if (opts === void 0) { opts = {}; }
         this._connected = false;
         Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true }, _load: { value: ((opts === null || opts === void 0 ? void 0 : opts.load) || createObject({})), enumerable: false, configurable: true }, _id: { value: data ? getIdValue(data, this.constructor) : null, enumerable: false, configurable: false, writable: true } }));
+        var _a = this.constructor, _relationships = _a._relationships, _fields = _a._fields;
+        console.log({ _relationships: _relationships, _fields: _fields });
         if (data) {
             Object.keys(data).forEach(function (key) { return createAccessor(_this, key); });
         }
+        Object.keys(__assign(__assign({}, _relationships), _fields)).forEach(function (key) {
+            if (key in _this)
+                return;
+            createAccessor(_this, key);
+        });
         return new Proxy(this, {
             set: proxySetter,
             get: proxyGetter,
@@ -316,7 +327,7 @@ var Model = /** @class */ (function () {
         var constructor = this.constructor;
         return Object.entries(this).reduce(function (acc, _a) {
             var _b = __read(_a, 2), key = _b[0], val = _b[1];
-            if (!(key in constructor.relationships)) {
+            if (!(key in constructor._relationships)) {
                 acc[key] = val;
             }
             else {
@@ -336,6 +347,13 @@ var Model = /** @class */ (function () {
         }, {});
     };
     Object.defineProperty(Model, "relationships", {
+        get: function () {
+            return {};
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Model, "fields", {
         get: function () {
             return {};
         },
@@ -429,6 +447,8 @@ var Model = /** @class */ (function () {
     Model.addAll = function (items) {
         return this._store.dispatch(this._path + "/" + Actions.ADD_ALL, items);
     };
+    Model._fields = {};
+    Model._relationships = {};
     Model.id = "id";
     return Model;
 }());
@@ -442,7 +462,7 @@ function generateModuleName(namespace, key) {
 function createModule(schema, keyMap, options, store) {
     var _a, _b, _c;
     var entitySchema = entitySchemas.get(schema);
-    var relationKeys = Object.keys(schema.relationships || {});
+    var relationKeys = Object.keys(schema._relationships || {});
     Object.defineProperties(schema, {
         _path: {
             value: keyMap[schema.entityName]
@@ -487,14 +507,14 @@ function createModule(schema, keyMap, options, store) {
                 var _c;
                 var state = _a.state, dispatch = _a.dispatch, getters = _a.getters;
                 var id = _b.id, related = _b.related, data = _b.data;
-                if (!(related in schema.relationships)) {
+                if (!(related in schema._relationships)) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var item = getters[Getters.FIND](id, { load: [related] });
                 if (!item) {
                     throw new Error("The item doesn't exist");
                 }
-                var relationshipDef = schema.relationships[related];
+                var relationshipDef = schema._relationships[related];
                 if (isList(relationshipDef)) {
                     var items = (Array.isArray(data) ? data : [data]).filter(identity);
                     data = item[related] || [];
@@ -511,7 +531,7 @@ function createModule(schema, keyMap, options, store) {
                 var _c;
                 var dispatch = _a.dispatch, getters = _a.getters;
                 var id = _b.id, related = _b.related, relatedId = _b.relatedId;
-                if (!(related in schema.relationships)) {
+                if (!(related in schema._relationships)) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var ids = Array.isArray(id) ? id : [id];
@@ -520,7 +540,7 @@ function createModule(schema, keyMap, options, store) {
                     console.warn('Invalid id Provided');
                     return;
                 }
-                var relationshipDef = schema.relationships[related];
+                var relationshipDef = schema._relationships[related];
                 var relatedSchema = getRelationshipSchema(relationshipDef);
                 if (isList(relationshipDef)) {
                     var relatedIds_1 = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];
@@ -608,6 +628,26 @@ function createModule(schema, keyMap, options, store) {
     };
 }
 
+function Field() {
+    return function (target, propname) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject(null);
+        }
+        constructor._fields[propname] = true;
+    };
+}
+
+function Relationship(relationship) {
+    return function (target, propname) {
+        var constructor = target.constructor;
+        if (constructor._relationships == null) {
+            constructor._relationships = createObject(null);
+        }
+        constructor._relationships[propname] = isFunction(relationship) ? relationship() : relationship;
+    };
+}
+
 var defaultPluginOptions = {
     schemas: [],
     namespace: 'database'
@@ -615,6 +655,7 @@ var defaultPluginOptions = {
 function generateDatabasePlugin(options) {
     options = __assign(__assign({}, defaultPluginOptions), options);
     return function (store) {
+        console.log('registering plugin');
         var schemaModuleNameMap = {};
         options.schemas.forEach(function (schema) {
             schemaModuleNameMap[schema.entityName] = generateModuleName(options.namespace, schema.entityName);
@@ -640,4 +681,4 @@ function generateDatabasePlugin(options) {
     };
 }
 
-export { Model, generateDatabasePlugin };
+export { Field, Model, Relationship, generateDatabasePlugin };

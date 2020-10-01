@@ -20,7 +20,7 @@ export function createModule<T>(
   store: Store<any>
 ): Module<ModelState, any> {
   const entitySchema = entitySchemas.get(schema);
-  const relationKeys = Object.keys(schema.relationships || {});
+  const relationKeys = Object.keys(schema._relationships || {});
   Object.defineProperties(schema, {
     _path: {
       value: keyMap[schema.entityName]
@@ -56,14 +56,14 @@ export function createModule<T>(
         return result;
       },
       [Actions.ADD_RELATED]({ state, dispatch, getters }, { id, related, data }) {
-        if (!(related in schema.relationships)) {
+        if (!(related in schema._relationships)) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const item: Model = getters[Getters.FIND](id, { load: [related] });
         if (!item) {
           throw new Error("The item doesn't exist");
         }
-        const relationshipDef = schema.relationships[related];
+        const relationshipDef = schema._relationships[related];
 
         if (isList(relationshipDef)) {
           const items = (Array.isArray(data) ? data : [data]).filter(identity);
@@ -79,7 +79,7 @@ export function createModule<T>(
         });
       },
       [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId }) {
-        if (!(related in schema.relationships)) {
+        if (!(related in schema._relationships)) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const ids = Array.isArray(id) ? id : [id];
@@ -89,7 +89,7 @@ export function createModule<T>(
           return;
         }
 
-        const relationshipDef = schema.relationships[related];
+        const relationshipDef = schema._relationships[related];
         const relatedSchema = getRelationshipSchema(relationshipDef);
         if (isList(relationshipDef)) {
           const relatedIds = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];
@@ -143,7 +143,7 @@ export function createModule<T>(
           newItems = items.map(item => ({
             ...(isFunction(schema.id) ? item : null),
             ...data,
-            [idName]: id
+            [idName as string]: id
           }));
         }
         return dispatch(Actions.ADD_ALL, newItems);
@@ -181,4 +181,9 @@ function relationGetters(data, key, schema, keyMap, rootGetters) {
     identifier = [];
   }
   return { getter, identifier };
+}
+
+function resolveModel(schema: typeof Model, rawData: object, options: any = {}) {
+  const idValue = getIdValue(rawData, schema);
+  const loadOptions = {}
 }

@@ -140,7 +140,7 @@ export declare type IModelStatic<T> = {
      */
     addAll?(items: any[]): Promise<Array<string | number>>;
 };
-export declare type Relationship = typeof Model | typeof Model[];
+export declare type Relationship = typeof Model | [typeof Model];
 export interface PluginOptions<T> {
     /**
      * The namespace of the database in the Vuex store
