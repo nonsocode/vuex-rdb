@@ -179,8 +179,7 @@ function registerSchema(schema) {
     if (!schema._fields) {
         schema._fields = createObject({});
     }
-    console.log('id of ', schema, schema.id);
-    if (typeof schema.id == 'string') {
+    if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
         schema._fields[schema.id] = new FieldDefinition().lock();
     }
     Object.entries(schema.relationships || {}).forEach(function (_a) {

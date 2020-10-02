@@ -4,7 +4,7 @@ import {terser} from 'rollup-plugin-terser';
 import commonjs from '@rollup/plugin-commonjs';
 const commonConfig = {
   input: 'src/index.ts',
-  external: ['normalizr', 'vuex', 'vue'],
+  external: ['hash-sum', 'vuex', 'vue'],
   output: {
     file: 'dist/vuex-rdb.js',
     format: 'cjs',
@@ -19,7 +19,7 @@ const commonConfig = {
 
 const esConfig = {
   input: 'src/index.ts',
-  external: ['normalizr', 'vuex', 'vue'],
+  external: ['hash-sum', 'vuex', 'vue'],
   output: {
     file: 'dist/vuex-rdb.es.js',
     format: 'es',

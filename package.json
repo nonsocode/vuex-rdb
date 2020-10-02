@@ -1,6 +1,6 @@
 {
   "name": "vuex-rdb",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "description": "An Active record database for vuex",
   "main": "dist/vuex-rdb.js",
   "typings": "types/index.d.ts",
@@ -40,11 +40,11 @@
     "tslib": "^2.0.1",
     "typescript": "^4.0.0",
     "vue": "^2.6.12",
+    "vue-hot-reload-api": "^2.3.4",
     "vue-template-compiler": "^2.6.12",
     "vuex": "^3.5.1"
   },
   "dependencies": {
-    "hash-sum": "^2.0.0",
-    "vue-hot-reload-api": "^2.3.4"
+    "hash-sum": "^2.0.0"
   }
 }
