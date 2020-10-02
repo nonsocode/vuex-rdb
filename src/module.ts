@@ -38,7 +38,6 @@ export function createModule<T>(
       [Mutations.SET_PROP](state, { id, key, value }) {
         if(state[id] == null) { throw new Error('Entity does not exist')}
         Vue.set(state[id], key, value)
-        // Vue.set(state, id, {...state[id], [key]: value});
       }
     },
     actions: {
@@ -155,7 +154,8 @@ export function createModule<T>(
         if (!data) {
           return;
         }
-        const load = relations(opts.load)
+        const load = relations(opts.load, schema._fields)
+        console.log(load)
         return new schema(data, { load, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {

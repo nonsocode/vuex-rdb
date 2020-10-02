@@ -244,7 +244,7 @@ var Getters;
 })(Getters || (Getters = {}));
 
 var isList = function (definition) { return Array.isArray(definition); };
-function relations(relatives) {
+function relations(relatives, schemaFields) {
     if ([null, undefined].includes(relatives)) {
         return {};
     }
@@ -257,19 +257,33 @@ function relations(relatives) {
     if (Array.isArray(relatives)) {
         var result_1 = {};
         relatives.forEach(function (relative) {
+            var fieldDefs = schemaFields;
             var t = result_1;
             var paths = relative.split('.');
             for (var i = 0; i < paths.length; i++) {
-                if (paths[i] === '*' || t['*']) {
-                    t['*'] = true;
+                if (paths[i] === '*') {
+                    if (fieldDefs) {
+                        fillRelationships(t, fieldDefs);
+                    }
                     break;
                 }
-                t[paths[i]] = t[paths[i]] || {};
+                var fieldDef = fieldDefs === null || fieldDefs === void 0 ? void 0 : fieldDefs[paths[i]];
+                t[paths[i]] = t[paths[i]] || createObject({});
                 t = t[paths[i]];
+                fieldDefs = fieldDef && getRelationshipSchema(fieldDef)._fields;
             }
         });
         return result_1;
     }
+}
+function fillRelationships(t, fieldDefs) {
+    Object.entries(fieldDefs).forEach(function (_a) {
+        var _b = __read(_a, 2), key = _b[0], def = _b[1];
+        if (key in t || !def.isRelationship) {
+            return;
+        }
+        t[key] = createObject({});
+    });
 }
 function getRelationshipSchema(field) {
     if (!field.isRelationship)
@@ -605,7 +619,6 @@ function createModule(schema, keyMap, options, store) {
                     throw new Error('Entity does not exist');
                 }
                 Vue.set(state[id], key, value);
-                // Vue.set(state, id, {...state[id], [key]: value});
             },
             _a),
         actions: (_b = {},
@@ -730,7 +743,8 @@ function createModule(schema, keyMap, options, store) {
                 if (!data) {
                     return;
                 }
-                var load = relations(opts.load);
+                var load = relations(opts.load, schema._fields);
+                console.log(load);
                 return new schema(data, { load: load, connected: true });
             }; },
             _c[Getters.FIND_BY_IDS] = function (state, getters) {
