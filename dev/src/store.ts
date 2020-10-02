@@ -19,10 +19,12 @@ store.dispatch('database/user/add', {
       id: 5,
       title: 'frugal lord',
       user: {
-        id: 4
+        id: 1
       }
     }
   ]
 })
 window.User = User
+window.Post = Post
+
 export default store

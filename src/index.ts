@@ -1,9 +1,8 @@
-import { registerSchema, resolveCyclicDependencies } from './registrar';
+import { registerSchema } from './registrar';
 import {createModule, generateModuleName} from './module';
 import {EntityName, PluginOptions, StorePath} from './types';
 import {Model} from './model';
 import { Field } from './annotations/field';
-import { Relationship } from './annotations/relationship';
 const defaultPluginOptions = {
   schemas: [],
   namespace: 'database'
@@ -18,7 +17,7 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
       registerSchema(schema);
     });
 
-    resolveCyclicDependencies();
+    // resolveCyclicDependencies();
 
     const modules = {};
     options.schemas.forEach(schema => {
@@ -34,4 +33,4 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
     }
   };
 }
-export { Model, Field, Relationship };
+export { Model, Field };

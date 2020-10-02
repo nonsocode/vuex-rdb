@@ -71,6 +71,18 @@ function __generator(thisArg, body) {
     }
 }
 
+function __values(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+
 function __read(o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -119,6 +131,124 @@ function createObject(object) {
     return o;
 }
 
+var FieldDefinition = /** @class */ (function () {
+    function FieldDefinition(options) {
+        if (options === void 0) { options = {}; }
+        this.entity = options.entity;
+        this._default = options.default;
+    }
+    Object.defineProperty(FieldDefinition.prototype, "default", {
+        get: function () {
+            return isFunction(this._default) ? this._default() : this._default;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(FieldDefinition.prototype, "isRelationship", {
+        get: function () {
+            return !([null, undefined].includes(this.entity));
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(FieldDefinition.prototype, "isList", {
+        get: function () {
+            return this.isRelationship && Array.isArray(this.entity);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    return FieldDefinition;
+}());
+
+var entitySchemas = new Map();
+var nameModelMap = new Map();
+// function dependOn<T, U>(dependant: typeof Model, dependee?: typeof Model, keyName?: string) {
+//   let innerMap: Map<typeof Model, Set<string>> = pendingItems.has(dependant) ? pendingItems.get(dependant) : new Map();
+//   if (dependee) {
+//     let keySet: Set<string> = innerMap.has(dependee) ? innerMap.get(dependee) : new Set();
+//     keySet.add(keyName);
+//     innerMap.set(dependee, keySet);
+//   }
+//   pendingItems.set(dependant, innerMap);
+// }
+function registerSchema(schema) {
+    nameModelMap.set(schema.entityName, schema);
+    // if (entitySchemas.has(schema)) {
+    //   return 'registered';
+    // }
+    if (!schema._fields) {
+        schema._fields = createObject({});
+    }
+    Object.entries(schema.relationships || {}).forEach(function (_a) {
+        var _b = __read(_a, 2), key = _b[0], value = _b[1];
+        if (key in schema._fields)
+            return;
+        schema._fields[key] = new FieldDefinition({
+            entity: Array.isArray(value) ? [value[0].entityName] : value.entityName
+        });
+    });
+    Object.keys(schema.fields || {}).forEach(function (key) {
+        if (key in schema._fields)
+            return;
+        schema._fields[key] = new FieldDefinition();
+    });
+    // const definitions = Object.entries(schema._relationships || {});
+    // dependOn(schema);
+    // if (definitions.length) {
+    //   definitions.forEach(([key, dependee]) => {
+    //     dependOn(schema, isList(dependee) ? dependee[0] : dependee, key);
+    //   });
+    // }
+}
+// export function resolveCyclicDependencies() {
+//   pendingItems.forEach((value, dep) => cyclicResolve(dep, entitySchemas));
+// }
+// function cyclicResolve(modelSchema: typeof Model, result: Map<typeof Model, normalizerSchema.Entity>) {
+//   if (result.has(modelSchema)) return;
+//   const entity = new normalizerSchema.Entity(
+//     modelSchema.entityName,
+//     {},
+//     {
+//       idAttribute: modelSchema.id || 'id'
+//     }
+//   );
+//   result.set(modelSchema, entity);
+//   nameModelMap.set(modelSchema.entityName, modelSchema);
+//   pendingItems.get(modelSchema).forEach((keys, dependency) => {
+//     cyclicResolve(dependency, result);
+//     keys.forEach(key => {
+//       const relationshipData = modelSchema._relationships[key];
+//       const relationshipSchema = result.get(getRelationshipSchema(relationshipData));
+//       const childEnt = isList(relationshipData) ? [relationshipSchema] : relationshipSchema;
+//       entity.define({
+//         [key]: childEnt
+//       });
+//     });
+//   });
+// }
+
+var Mutations;
+(function (Mutations) {
+    Mutations["ADD"] = "_ADD";
+    Mutations["SET_PROP"] = "SET_PROP";
+})(Mutations || (Mutations = {}));
+var Actions;
+(function (Actions) {
+    Actions["ADD"] = "add";
+    Actions["ADD_RELATED"] = "addRelated";
+    Actions["REMOVE_RELATED"] = "removeRelated";
+    Actions["ADD_ALL"] = "addAll";
+    Actions["UPDATE"] = "update";
+})(Actions || (Actions = {}));
+var Getters;
+(function (Getters) {
+    Getters["FIND"] = "find";
+    Getters["GET_RAW"] = "getRaw";
+    Getters["FIND_BY_IDS"] = "findByIds";
+    Getters["ALL"] = "all";
+})(Getters || (Getters = {}));
+
 var isList = function (definition) { return Array.isArray(definition); };
 function relations(relatives) {
     if ([null, undefined].includes(relatives)) {
@@ -147,86 +277,19 @@ function relations(relatives) {
         return result_1;
     }
 }
-function getRelationshipSchema(relationship) {
-    return isList(relationship) ? relationship[0] : relationship;
+function getRelationshipSchema(field) {
+    if (!field.isRelationship)
+        return null;
+    return field.isList ? nameModelMap.get(field.entity[0]) : nameModelMap.get(field.entity);
 }
-
-var entitySchemas = new Map();
-var nameModelMap = new Map();
-var pendingItems = new Map();
-function dependOn(dependant, dependee, keyName) {
-    var innerMap = pendingItems.has(dependant) ? pendingItems.get(dependant) : new Map();
-    if (dependee) {
-        var keySet = innerMap.has(dependee) ? innerMap.get(dependee) : new Set();
-        keySet.add(keyName);
-        innerMap.set(dependee, keySet);
-    }
-    pendingItems.set(dependant, innerMap);
-}
-function registerSchema(schema) {
-    if (entitySchemas.has(schema)) {
-        return 'registered';
-    }
-    schema._relationships = createObject(__assign(__assign({}, schema._relationships), schema.relationships));
-    var definitions = Object.entries(schema._relationships || {});
-    dependOn(schema);
-    if (definitions.length) {
-        definitions.forEach(function (_a) {
-            var _b = __read(_a, 2), key = _b[0], dependee = _b[1];
-            dependOn(schema, isList(dependee) ? dependee[0] : dependee, key);
-        });
-    }
-}
-function resolveCyclicDependencies() {
-    pendingItems.forEach(function (value, dep) { return cyclicResolve(dep, entitySchemas); });
-}
-function cyclicResolve(modelSchema, result) {
-    if (result.has(modelSchema))
-        return;
-    var entity = new normalizr.schema.Entity(modelSchema.entityName, {}, {
-        idAttribute: modelSchema.id || 'id'
-    });
-    result.set(modelSchema, entity);
-    nameModelMap.set(modelSchema.entityName, modelSchema);
-    pendingItems.get(modelSchema).forEach(function (keys, dependency) {
-        cyclicResolve(dependency, result);
-        keys.forEach(function (key) {
-            var _a;
-            var relationshipData = modelSchema._relationships[key];
-            var relationshipSchema = result.get(getRelationshipSchema(relationshipData));
-            var childEnt = isList(relationshipData) ? [relationshipSchema] : relationshipSchema;
-            entity.define((_a = {},
-                _a[key] = childEnt,
-                _a));
-        });
-    });
-}
-
-var Mutations;
-(function (Mutations) {
-    Mutations["ADD"] = "_ADD";
-    Mutations["SET_PROP"] = "SET_PROP";
-})(Mutations || (Mutations = {}));
-var Actions;
-(function (Actions) {
-    Actions["ADD"] = "add";
-    Actions["ADD_RELATED"] = "addRelated";
-    Actions["REMOVE_RELATED"] = "removeRelated";
-    Actions["ADD_ALL"] = "addAll";
-    Actions["UPDATE"] = "update";
-})(Actions || (Actions = {}));
-var Getters;
-(function (Getters) {
-    Getters["FIND"] = "find";
-    Getters["GET_RAW"] = "getRaw";
-    Getters["FIND_BY_IDS"] = "findByIds";
-    Getters["ALL"] = "all";
-})(Getters || (Getters = {}));
 
 var _a;
 var cacheNames = ['_dataCache', '_relationshipCache'];
 var reservedKeys = createObject((_a = { toJSON: true, _isVue: true }, _a[Symbol.toStringTag] = true, _a));
-var getCacheName = function (target, key) { return key in target.constructor._relationships ? '_relationshipCache' : '_dataCache'; };
+var getCacheName = function (target, key) {
+    var _fields = target.constructor._fields;
+    return (key in _fields && _fields[key].isRelationship) ? '_relationshipCache' : '_dataCache';
+};
 var proxySetter = function (target, key, value) {
     if (!(key in target) && !(key in reservedKeys)) {
         createAccessor(target, key);
@@ -244,20 +307,19 @@ var proxyGetter = function (target, key, value) {
     return target[key];
 };
 function createAccessor(target, key) {
-    var constructor = target.constructor;
-    var store = constructor._store;
-    var isRelationship = key in constructor._relationships;
-    var relationshipDef = isRelationship ? constructor._relationships[key] : null;
+    var _a = target.constructor, _path = _a._path, _store = _a._store, _fields = _a._fields;
+    var isRelationship = key in _fields && _fields[key].isRelationship;
+    var relationshipDef = isRelationship ? _fields[key] : null;
     Object.defineProperty(target, key, {
         enumerable: true,
         get: function () {
             if (target._connected) {
-                var raw = store.getters[constructor._path + "/" + Getters.GET_RAW](this._id);
+                var raw = _store.getters[_path + "/" + Getters.GET_RAW](this._id);
                 var value = raw[key];
                 if (isRelationship) {
                     var opts = { load: target._load[key] || {} };
                     var Related = getRelationshipSchema(relationshipDef);
-                    if (isList(relationshipDef)) {
+                    if (relationshipDef.isList) {
                         return value && Related.findByIds(value, opts);
                     }
                     return Related.find(value, opts);
@@ -272,13 +334,12 @@ function createAccessor(target, key) {
             if (target._connected) {
                 if (value != null) {
                     if (isRelationship) {
-                        var list = isList(relationshipDef);
                         var Related = getRelationshipSchema(relationshipDef);
-                        if (list) {
+                        if (relationshipDef.isList) {
                             value = Array.isArray(value) ? value : [value];
                         }
                         var entitySchema = entitySchemas.get(Related);
-                        var _a = normalizr.normalize(value, list ? [entitySchema] : entitySchema), entities = _a.entities, result = _a.result;
+                        var _a = normalize(value, relationshipDef.entity), entities = _a.entities, result = _a.result;
                         Object.entries(entities).forEach(function (_a) {
                             var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
                             Object.entries(entities).forEach(function (_a) {
@@ -286,13 +347,13 @@ function createAccessor(target, key) {
                                 if (!entity) {
                                     return;
                                 }
-                                store.commit(nameModelMap.get(entityName)._path + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
+                                _store.commit(nameModelMap.get(entityName)._path + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
                             });
                         });
                         value = result;
                     }
                 }
-                return constructor._store.commit(constructor._path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value });
+                return _store.commit(_path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value });
             }
             else {
                 this[getCacheName(this, key)][key] = value;
@@ -313,12 +374,11 @@ var Model = /** @class */ (function () {
         if (opts === void 0) { opts = {}; }
         this._connected = false;
         Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true }, _load: { value: ((opts === null || opts === void 0 ? void 0 : opts.load) || createObject({})), enumerable: false, configurable: true }, _id: { value: data ? getIdValue(data, this.constructor) : null, enumerable: false, configurable: false, writable: true } }));
-        var _a = this.constructor, _relationships = _a._relationships, _fields = _a._fields;
-        console.log({ _relationships: _relationships, _fields: _fields });
+        var _fields = this.constructor._fields;
         if (data) {
             Object.keys(data).forEach(function (key) { return createAccessor(_this, key); });
         }
-        Object.keys(__assign(__assign({}, _relationships), _fields)).forEach(function (key) {
+        Object.keys(__assign({}, _fields)).forEach(function (key) {
             if (key in _this)
                 return;
             createAccessor(_this, key);
@@ -333,7 +393,7 @@ var Model = /** @class */ (function () {
         var constructor = this.constructor;
         return Object.entries(this).reduce(function (acc, _a) {
             var _b = __read(_a, 2), key = _b[0], val = _b[1];
-            if (!(key in constructor._relationships)) {
+            if (!(key in constructor._fields && constructor._fields[key].isRelationship)) {
                 acc[key] = val;
             }
             else {
@@ -459,6 +519,67 @@ var Model = /** @class */ (function () {
     return Model;
 }());
 
+function normalize(raw, entityName, visited, entities, depth) {
+    var e_1, _a;
+    if (visited === void 0) { visited = new Map(); }
+    if (entities === void 0) { entities = createObject({}); }
+    if (depth === void 0) { depth = 0; }
+    var resolvedEntityName = Array.isArray(entityName) ? entityName[0] : entityName;
+    var schema = nameModelMap.get(resolvedEntityName);
+    var fields = schema._fields;
+    var normalized = {};
+    var result;
+    if (raw == null) {
+        result = null;
+    }
+    else if (Array.isArray(raw)) {
+        result = raw.map(function (r) {
+            var result = normalize(r, resolvedEntityName, visited, entities, depth + 1).result;
+            return result;
+        }).filter(function (id) { return id != null; });
+    }
+    else {
+        if (visited.has(raw)) {
+            result = visited.get(raw);
+        }
+        else {
+            var id = getIdValue(raw, schema);
+            result = id;
+            visited.set(raw, id);
+            try {
+                for (var _b = __values(Object.entries(raw)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var _d = __read(_c.value, 2), key = _d[0], value = _d[1];
+                    if (key in fields && fields[key].isRelationship) {
+                        var result_1 = normalize(value, fields[key].entity, visited, entities, depth + 1).result;
+                        normalized[key] = result_1;
+                    }
+                    else {
+                        normalized[key] = value;
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            if (!(resolvedEntityName in entities)) {
+                entities[resolvedEntityName] = createObject({});
+            }
+            entities[resolvedEntityName][id] = __assign(__assign({}, entities[resolvedEntityName][id]), normalized);
+        }
+    }
+    return {
+        result: result,
+        entities: entities
+    };
+}
+window.normalize = normalize;
+window.normalizr = normalizr.normalize;
+window.Schema = normalizr.schema;
+
 function generateModuleName(namespace, key) {
     namespace = namespace || '';
     var chunks = namespace.split('/');
@@ -468,7 +589,6 @@ function generateModuleName(namespace, key) {
 function createModule(schema, keyMap, options, store) {
     var _a, _b, _c;
     var entitySchema = entitySchemas.get(schema);
-    var relationKeys = Object.keys(schema._relationships || {});
     Object.defineProperties(schema, {
         _path: {
             value: keyMap[schema.entityName]
@@ -496,7 +616,7 @@ function createModule(schema, keyMap, options, store) {
             _a),
         actions: (_b = {},
             _b[Actions.ADD] = function (ctx, item) {
-                var _a = normalizr.normalize(item, entitySchema), entities = _a.entities, result = _a.result;
+                var _a = normalize(item, schema.entityName), entities = _a.entities, result = _a.result;
                 Object.entries(entities).forEach(function (_a) {
                     var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
                     Object.entries(entities).forEach(function (_a) {
@@ -513,15 +633,15 @@ function createModule(schema, keyMap, options, store) {
                 var _c;
                 var state = _a.state, dispatch = _a.dispatch, getters = _a.getters;
                 var id = _b.id, related = _b.related, data = _b.data;
-                if (!(related in schema._relationships)) {
+                if (!(related in schema._fields) && schema._fields[related].isRelationship) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var item = getters[Getters.FIND](id, { load: [related] });
                 if (!item) {
                     throw new Error("The item doesn't exist");
                 }
-                var relationshipDef = schema._relationships[related];
-                if (isList(relationshipDef)) {
+                var relationshipDef = schema._fields[related];
+                if (relationshipDef.isList) {
                     var items = (Array.isArray(data) ? data : [data]).filter(identity);
                     data = item[related] || [];
                     data = mergeUnique(data.concat(items), function (item) { return getIdValue(item, getRelationshipSchema(relationshipDef)); });
@@ -537,7 +657,7 @@ function createModule(schema, keyMap, options, store) {
                 var _c;
                 var dispatch = _a.dispatch, getters = _a.getters;
                 var id = _b.id, related = _b.related, relatedId = _b.relatedId;
-                if (!(related in schema._relationships)) {
+                if (!(related in schema._fields) && schema._fields[related].isRelationship) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var ids = Array.isArray(id) ? id : [id];
@@ -546,7 +666,7 @@ function createModule(schema, keyMap, options, store) {
                     console.warn('Invalid id Provided');
                     return;
                 }
-                var relationshipDef = schema._relationships[related];
+                var relationshipDef = schema._fields[related];
                 var relatedSchema = getRelationshipSchema(relationshipDef);
                 if (isList(relationshipDef)) {
                     var relatedIds_1 = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];
@@ -634,23 +754,14 @@ function createModule(schema, keyMap, options, store) {
     };
 }
 
-function Field() {
+function Field(options) {
+    if (options === void 0) { options = {}; }
     return function (target, propname) {
         var constructor = target.constructor;
         if (constructor._fields == null) {
             constructor._fields = createObject(null);
         }
-        constructor._fields[propname] = true;
-    };
-}
-
-function Relationship(relationship) {
-    return function (target, propname) {
-        var constructor = target.constructor;
-        if (constructor._relationships == null) {
-            constructor._relationships = createObject(null);
-        }
-        constructor._relationships[propname] = isFunction(relationship) ? relationship() : relationship;
+        constructor._fields[propname] = new FieldDefinition(options);
     };
 }
 
@@ -667,7 +778,7 @@ function generateDatabasePlugin(options) {
             schemaModuleNameMap[schema.entityName] = generateModuleName(options.namespace, schema.entityName);
             registerSchema(schema);
         });
-        resolveCyclicDependencies();
+        // resolveCyclicDependencies();
         var modules = {};
         options.schemas.forEach(function (schema) {
             modules[schema.entityName] = createModule(schema, schemaModuleNameMap, options, store);
@@ -689,5 +800,4 @@ function generateDatabasePlugin(options) {
 
 exports.Field = Field;
 exports.Model = Model;
-exports.Relationship = Relationship;
 exports.generateDatabasePlugin = generateDatabasePlugin;

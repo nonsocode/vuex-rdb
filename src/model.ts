@@ -5,13 +5,16 @@ import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
 import { getRelationshipSchema, isList } from './relationships';
 import { entitySchemas, nameModelMap } from './registrar';
-import { normalize } from 'normalizr';
+import { normalize } from './normalize';
+import { FieldDefinition } from './FieldDefinition';
 
 const cacheNames = ['_dataCache', '_relationshipCache'];
 
 const reservedKeys = createObject({toJSON: true, _isVue: true, [Symbol.toStringTag]: true})
 
-const getCacheName = (target, key) => key in (target.constructor as typeof Model)._relationships ? '_relationshipCache' : '_dataCache';
+const getCacheName = (target, key) => {
+  const {_fields} = target.constructor as typeof Model
+  return (key in _fields && _fields[key].isRelationship) ? '_relationshipCache' : '_dataCache';}
 
 const proxySetter = (target: Model, key: string, value) => {
   
@@ -32,21 +35,20 @@ const proxyGetter = (target: Model, key: string | symbol, value) => {
 }
 
 function createAccessor (target: Model, key) {
-  const constructor = target.constructor as typeof Model;
-  const store = constructor._store;
-  const isRelationship = key in constructor._relationships;
-  const relationshipDef = isRelationship ? constructor._relationships[key] : null
+  const {_path, _store, _fields} = target.constructor as typeof Model;
+  const isRelationship = key in _fields && _fields[key].isRelationship;
+  const relationshipDef = isRelationship ? _fields[key] : null
 
   Object.defineProperty(target, key, {
     enumerable: true,
     get() {
       if(target._connected) {
-        const raw: any = store.getters[`${constructor._path}/${Getters.GET_RAW}`](this._id);
+        const raw: any = _store.getters[`${_path}/${Getters.GET_RAW}`](this._id);
         const value = raw[key];
         if(isRelationship) {
           const opts = {load: target._load[key] || {}};
           const Related = getRelationshipSchema(relationshipDef);
-          if(isList(relationshipDef)) {
+          if(relationshipDef.isList) {
             return value && Related.findByIds(value, opts);
           }
           return Related.find(value, opts)
@@ -60,25 +62,24 @@ function createAccessor (target: Model, key) {
       if(target._connected) {
         if(value != null) {
           if(isRelationship) {
-            const list = isList(relationshipDef);
             const Related = getRelationshipSchema(relationshipDef);
-            if(list) {
+            if(relationshipDef.isList) {
               value = Array.isArray(value) ? value : [value];
             } 
             const entitySchema = entitySchemas.get(Related);
-            const { entities, result } = normalize(value, list ? [entitySchema] : entitySchema);
+            const { entities, result } = normalize(value, relationshipDef.entity);
             Object.entries(entities).forEach(([entityName, entities]) => {
               Object.entries(entities).forEach(([id, entity]) => {
                 if (!entity) {
                   return;
                 }
-                store.commit(`${nameModelMap.get(entityName)._path}/${Mutations.ADD}`, { id, entity }, { root: true });
+                _store.commit(`${nameModelMap.get(entityName)._path}/${Mutations.ADD}`, { id, entity }, { root: true });
               });
             });
             value = result;
           } 
         }
-        return constructor._store.commit(`${constructor._path}/${Mutations.SET_PROP}`, {id: this._id, key, value})
+        return _store.commit(`${_path}/${Mutations.SET_PROP}`, {id: this._id, key, value})
       } else {
         this[getCacheName(this, key)][key] = value
       }
@@ -99,7 +100,7 @@ export class Model implements IModel {
   public static _path: string;
   public static entityName: string;
   public static _store: Store<any>;
-  public static _fields: Record<string, boolean> = {};
+  public static _fields: Record<string, FieldDefinition> = {};
   public static _relationships: Record<string, Relationship> = {}
   static id: string | SchemaFunction = "id";
   
@@ -118,14 +119,13 @@ export class Model implements IModel {
       _load: {value: (opts?.load || createObject({})), enumerable: false, configurable: true},
       _id:{value: data ? getIdValue(data, this.constructor as typeof Model) : null, enumerable: false, configurable: false, writable: true}
     });
-    const {_relationships, _fields} = this.constructor as typeof Model;
-    console.log({_relationships, _fields})
+    const {_fields} = this.constructor as typeof Model;
 
     if(data) {
       Object.keys(data).forEach(key => createAccessor(this, key))
     }
 
-    Object.keys({..._relationships, ..._fields}).forEach(key => {
+    Object.keys({..._fields}).forEach(key => {
       if(key in this) return;
       createAccessor(this, key)
     })
@@ -139,7 +139,7 @@ export class Model implements IModel {
   toJSON() {
     const constructor = this.constructor as typeof Model
     return Object.entries(this).reduce((acc, [key, val]) => {
-      if(!(key in constructor._relationships)) {
+      if(!(key in constructor._fields && constructor._fields[key].isRelationship)) {
         acc[key] = val
       } else {
         if([key, '*'].some(prop => prop in this._load)) {

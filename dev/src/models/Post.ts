@@ -9,6 +9,7 @@ export  class Post extends Model {
   static get relationships() {
     return {
       comments: [Comment],
+      user: User
     }
   }
 }

@@ -10,16 +10,17 @@ export class Issue extends Model {
 export  class User extends Model {
   static entityName = 'user';
 
-  @Field()
   public hope!: string;
 
-  @Relationship(() => Post)
   public post!: Post;
   
-  @Relationship(() => Issue)
   public issue!: Issue
   
-
+  static get relationships() {
+    return {
+      posts: [Post]
+    }
+  }
 }
 window.User = User
 window.Issue = Issue

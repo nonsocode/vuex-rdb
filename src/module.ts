@@ -1,4 +1,4 @@
-import { normalize } from 'normalizr';
+import { normalize } from './normalize';
 import { entitySchemas } from './registrar';
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { identity, isFunction, mergeUnique } from './utils';
@@ -20,7 +20,6 @@ export function createModule<T>(
   store: Store<any>
 ): Module<ModelState, any> {
   const entitySchema = entitySchemas.get(schema);
-  const relationKeys = Object.keys(schema._relationships || {});
   Object.defineProperties(schema, {
     _path: {
       value: keyMap[schema.entityName]
@@ -44,7 +43,7 @@ export function createModule<T>(
     },
     actions: {
       [Actions.ADD](ctx, item) {
-        const { entities, result } = normalize(item, entitySchema);
+        const { entities, result } = normalize(item, schema.entityName);
         Object.entries(entities).forEach(([entityName, entities]) => {
           Object.entries(entities).forEach(([id, entity]) => {
             if (!entity) {
@@ -56,16 +55,16 @@ export function createModule<T>(
         return result;
       },
       [Actions.ADD_RELATED]({ state, dispatch, getters }, { id, related, data }) {
-        if (!(related in schema._relationships)) {
+        if (!(related in schema._fields) && schema._fields[related].isRelationship) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const item: Model = getters[Getters.FIND](id, { load: [related] });
         if (!item) {
           throw new Error("The item doesn't exist");
         }
-        const relationshipDef = schema._relationships[related];
+        const relationshipDef = schema._fields[related];
 
-        if (isList(relationshipDef)) {
+        if (relationshipDef.isList) {
           const items = (Array.isArray(data) ? data : [data]).filter(identity);
           data = item[related] || [];
           data = mergeUnique(data.concat(items), item => getIdValue(item, getRelationshipSchema(relationshipDef)));
@@ -79,7 +78,7 @@ export function createModule<T>(
         });
       },
       [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId }) {
-        if (!(related in schema._relationships)) {
+        if (!(related in schema._fields) && schema._fields[related].isRelationship) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const ids = Array.isArray(id) ? id : [id];
@@ -89,7 +88,7 @@ export function createModule<T>(
           return;
         }
 
-        const relationshipDef = schema._relationships[related];
+        const relationshipDef = schema._fields[related];
         const relatedSchema = getRelationshipSchema(relationshipDef);
         if (isList(relationshipDef)) {
           const relatedIds = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];
@@ -170,18 +169,7 @@ export function createModule<T>(
     }
   };
 }
-function relationGetters(data, key, schema, keyMap, rootGetters) {
-  const relDefinition = schema.relationships[key];
-  const relatedSchema = getRelationshipSchema(relDefinition);
-  const getterType = isList(relDefinition) ? Getters.FIND_BY_IDS : Getters.FIND;
-  const getterPath = `${keyMap[relatedSchema.entityName]}/${getterType}`;
-  const getter = rootGetters[getterPath];
-  let identifier = data[key];
-  if ([null, undefined].includes(identifier) && isList(relDefinition)) {
-    identifier = [];
-  }
-  return { getter, identifier };
-}
+
 
 function resolveModel(schema: typeof Model, rawData: object, options: any = {}) {
   const idValue = getIdValue(rawData, schema);

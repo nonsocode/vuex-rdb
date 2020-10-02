@@ -2,12 +2,13 @@ import { FindOptions, IModel, IModelStatic, Relationship } from './types';
 import { Store } from 'vuex';
 import { schema } from 'normalizr';
 import SchemaFunction = schema.SchemaFunction;
+import { FieldDefinition } from './FieldDefinition';
 export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
 export declare class Model implements IModel {
     static _path: string;
     static entityName: string;
     static _store: Store<any>;
-    static _fields: Record<string, boolean>;
+    static _fields: Record<string, FieldDefinition>;
     static _relationships: Record<string, Relationship>;
     static id: string | SchemaFunction;
     _load: any;
