@@ -1,10 +1,13 @@
+import { Model } from 'src';
 import { isFunction } from 'src/utils';
 import { FieldDefinitionOptions } from './annotations/field';
+import { getRelationshipSchema } from './relationships';
+import { Relationship } from './types';
 
 
 export class FieldDefinition {
   _default: any;
-  _entity: string;
+  _entity: string | (() => Relationship);
   _list: boolean;
 
   constructor(options: FieldDefinitionOptions = {}) {
@@ -23,9 +26,13 @@ export class FieldDefinition {
   }
 
   get entity(): string | [string] {
-    return this.isList ? [this._entity] : this._entity
+    const entityName = isFunction(this._entity) ? getRelationshipSchema(this._entity()).entityName : this._entity
+    return this.isList ? [entityName] : entityName
   }
   get isList() {
+    if(isFunction(this._entity)) {
+      return Array.isArray(this._entity())
+    }
     return !!this._list;
   } 
 
@@ -33,7 +40,7 @@ export class FieldDefinition {
     this._list = !!val
   }
 
-  setEntity(entity: string) {
+  setEntity(entity: string | (() => Relationship)) {
     this._entity = entity
     return this
   }

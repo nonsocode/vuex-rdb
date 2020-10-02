@@ -10,7 +10,6 @@ const defaultPluginOptions = {
 export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
   options = { ...defaultPluginOptions, ...options };
   return store => {
-    console.log('registering plugin')
     const schemaModuleNameMap: Record<EntityName, StorePath> = {};
     options.schemas.forEach(schema => {
       schemaModuleNameMap[schema.entityName] = generateModuleName(options.namespace, schema.entityName);

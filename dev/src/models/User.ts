@@ -16,8 +16,8 @@ export  class User extends Model {
   @Field()
   public age: number
 
-  @Field(['post'])
-  public post!: Post;
+  @Field(() => [Post])
+  public posts!: Post[];
 
   @Field('issue')
   public issue!: Issue

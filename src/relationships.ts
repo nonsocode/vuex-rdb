@@ -44,7 +44,12 @@ function fillRelationships(t: object, fieldDefs: Record<string, FieldDefinition>
   })
 }
 
-export function getRelationshipSchema(field: FieldDefinition): typeof Model {
-  if(!field.isRelationship) return null
-  return field.isList ? nameModelMap.get(field.entity[0]) : nameModelMap.get(field.entity as string)
+export function getRelationshipSchema(field: FieldDefinition | Relationship): typeof Model {
+  if(field instanceof FieldDefinition) {
+    if(!field.isRelationship) return null
+    return field.isList ? nameModelMap.get(field.entity[0]) : nameModelMap.get(field.entity as string)
+  } else {
+    return Array.isArray(field) ? field[0] : field
+  }
 }
+

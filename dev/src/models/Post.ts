@@ -4,7 +4,7 @@ import { User } from './User';
 export  class Post extends Model {
   static entityName = 'post';
 
-  @Field({entity: 'user'})
+  @Field(() => User)
   public user!: User
 
   @Field(['comment'])

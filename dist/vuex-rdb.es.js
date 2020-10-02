@@ -124,6 +124,59 @@ function createObject(object) {
     return o;
 }
 
+var isList = function (definition) { return Array.isArray(definition); };
+function relations(relatives, schemaFields) {
+    if ([null, undefined].includes(relatives)) {
+        return {};
+    }
+    else if (!Array.isArray(relatives) && !isString(relatives)) {
+        return relatives;
+    }
+    if (isString(relatives)) {
+        relatives = [relatives];
+    }
+    if (Array.isArray(relatives)) {
+        var result_1 = {};
+        relatives.forEach(function (relative) {
+            var fieldDefs = schemaFields;
+            var t = result_1;
+            var paths = relative.split('.');
+            for (var i = 0; i < paths.length; i++) {
+                if (paths[i] === '*') {
+                    if (fieldDefs) {
+                        fillRelationships(t, fieldDefs);
+                    }
+                    break;
+                }
+                var fieldDef = fieldDefs === null || fieldDefs === void 0 ? void 0 : fieldDefs[paths[i]];
+                t[paths[i]] = t[paths[i]] || createObject({});
+                t = t[paths[i]];
+                fieldDefs = fieldDef && getRelationshipSchema(fieldDef)._fields;
+            }
+        });
+        return result_1;
+    }
+}
+function fillRelationships(t, fieldDefs) {
+    Object.entries(fieldDefs).forEach(function (_a) {
+        var _b = __read(_a, 2), key = _b[0], def = _b[1];
+        if (key in t || !def.isRelationship) {
+            return;
+        }
+        t[key] = createObject({});
+    });
+}
+function getRelationshipSchema(field) {
+    if (field instanceof FieldDefinition) {
+        if (!field.isRelationship)
+            return null;
+        return field.isList ? nameModelMap.get(field.entity[0]) : nameModelMap.get(field.entity);
+    }
+    else {
+        return Array.isArray(field) ? field[0] : field;
+    }
+}
+
 var FieldDefinition = /** @class */ (function () {
     function FieldDefinition(options) {
         if (options === void 0) { options = {}; }
@@ -147,13 +200,17 @@ var FieldDefinition = /** @class */ (function () {
     });
     Object.defineProperty(FieldDefinition.prototype, "entity", {
         get: function () {
-            return this.isList ? [this._entity] : this._entity;
+            var entityName = isFunction(this._entity) ? getRelationshipSchema(this._entity()).entityName : this._entity;
+            return this.isList ? [entityName] : entityName;
         },
         enumerable: false,
         configurable: true
     });
     Object.defineProperty(FieldDefinition.prototype, "isList", {
         get: function () {
+            if (isFunction(this._entity)) {
+                return Array.isArray(this._entity());
+            }
             return !!this._list;
         },
         enumerable: false,
@@ -218,54 +275,6 @@ var Getters;
     Getters["FIND_BY_IDS"] = "findByIds";
     Getters["ALL"] = "all";
 })(Getters || (Getters = {}));
-
-var isList = function (definition) { return Array.isArray(definition); };
-function relations(relatives, schemaFields) {
-    if ([null, undefined].includes(relatives)) {
-        return {};
-    }
-    else if (!Array.isArray(relatives) && !isString(relatives)) {
-        return relatives;
-    }
-    if (isString(relatives)) {
-        relatives = [relatives];
-    }
-    if (Array.isArray(relatives)) {
-        var result_1 = {};
-        relatives.forEach(function (relative) {
-            var fieldDefs = schemaFields;
-            var t = result_1;
-            var paths = relative.split('.');
-            for (var i = 0; i < paths.length; i++) {
-                if (paths[i] === '*') {
-                    if (fieldDefs) {
-                        fillRelationships(t, fieldDefs);
-                    }
-                    break;
-                }
-                var fieldDef = fieldDefs === null || fieldDefs === void 0 ? void 0 : fieldDefs[paths[i]];
-                t[paths[i]] = t[paths[i]] || createObject({});
-                t = t[paths[i]];
-                fieldDefs = fieldDef && getRelationshipSchema(fieldDef)._fields;
-            }
-        });
-        return result_1;
-    }
-}
-function fillRelationships(t, fieldDefs) {
-    Object.entries(fieldDefs).forEach(function (_a) {
-        var _b = __read(_a, 2), key = _b[0], def = _b[1];
-        if (key in t || !def.isRelationship) {
-            return;
-        }
-        t[key] = createObject({});
-    });
-}
-function getRelationshipSchema(field) {
-    if (!field.isRelationship)
-        return null;
-    return field.isList ? nameModelMap.get(field.entity[0]) : nameModelMap.get(field.entity);
-}
 
 var _a;
 var cacheNames = ['_dataCache', '_relationshipCache'];
@@ -755,6 +764,9 @@ function Field(options) {
         else if (Array.isArray(options)) {
             definition.setEntity(options[0]).setList(true);
         }
+        else if (isFunction(options)) {
+            definition.setEntity(options);
+        }
         else {
             definition = new FieldDefinition(options);
         }
@@ -769,7 +781,6 @@ var defaultPluginOptions = {
 function generateDatabasePlugin(options) {
     options = __assign(__assign({}, defaultPluginOptions), options);
     return function (store) {
-        console.log('registering plugin');
         var schemaModuleNameMap = {};
         options.schemas.forEach(function (schema) {
             schemaModuleNameMap[schema.entityName] = generateModuleName(options.namespace, schema.entityName);
