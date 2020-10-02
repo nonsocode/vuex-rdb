@@ -1,10 +1,11 @@
 import { normalize } from './normalize';
-import { entitySchemas } from './registrar';
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { identity, isFunction, mergeUnique } from './utils';
 import {getIdValue, Model} from './model';
 import {PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath} from './types';
 import {Module, Store} from 'vuex';
+const sum = require('hash-sum');
+
 import Vue from 'vue';
 export function generateModuleName(namespace, key) {
   namespace = namespace || '';
@@ -19,7 +20,6 @@ export function createModule<T>(
   options: PluginOptions<T>,
   store: Store<any>
 ): Module<ModelState, any> {
-  const entitySchema = entitySchemas.get(schema);
   Object.defineProperties(schema, {
     _path: {
       value: keyMap[schema.entityName]
@@ -155,8 +155,7 @@ export function createModule<T>(
           return;
         }
         const load = relations(opts.load, schema._fields)
-        console.log(load)
-        return new schema(data, { load, connected: true });
+        return resolveModel(schema, data, { load, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
         return function(ids = [], opts = {}) {
@@ -170,8 +169,11 @@ export function createModule<T>(
   };
 }
 
+const modelCache = {}
 
 function resolveModel(schema: typeof Model, rawData: object, options: any = {}) {
-  const idValue = getIdValue(rawData, schema);
-  const loadOptions = {}
+  const id = getIdValue(rawData, schema);
+  const entity = schema.entityName
+  const load = options?.load
+  return modelCache[sum({id, entity, load})] ??= new schema(rawData, options)
 }

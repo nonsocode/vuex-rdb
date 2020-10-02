@@ -4,11 +4,13 @@ import { FieldDefinitionOptions } from './annotations/field';
 
 export class FieldDefinition {
   _default: any;
-  entity: string | [string];
+  _entity: string;
+  _list: boolean;
 
   constructor(options: FieldDefinitionOptions = {}) {
-    this.entity = options.entity;
+    this._entity = options.entity;
     this._default = options.default;
+    this._list = options.list
   }
 
 
@@ -19,7 +21,25 @@ export class FieldDefinition {
   get isRelationship() {
     return !([null, undefined].includes(this.entity));
   }
+
+  get entity(): string | [string] {
+    return this.isList ? [this._entity] : this._entity
+  }
   get isList() {
-    return this.isRelationship && Array.isArray(this.entity);
+    return !!this._list;
+  } 
+
+  setList(val: boolean) {
+    this._list = !!val
+  }
+
+  setEntity(entity: string) {
+    this._entity = entity
+    return this
+  }
+
+  lock(): this {
+    Object.freeze(this);
+    return this;
   }
 }

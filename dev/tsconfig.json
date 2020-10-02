@@ -11,6 +11,7 @@
     "moduleResolution": "node",
     "baseUrl": "./src",
     "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "paths": {
       "~/*": [ "./*" ]

@@ -45,7 +45,6 @@
   },
   "dependencies": {
     "hash-sum": "^2.0.0",
-    "normalizr": "^3.6.0",
     "vue-hot-reload-api": "^2.3.4"
   }
 }

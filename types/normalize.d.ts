@@ -2,10 +2,3 @@ export declare function normalize(raw: any, entityName: string | [string], visit
     result: any;
     entities: {};
 };
-declare global {
-    interface Window {
-        normalize: any;
-        Schema: any;
-        normalizr: any;
-    }
-}

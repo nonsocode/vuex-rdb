@@ -1,7 +1,6 @@
 import { getIdValue } from './model';
 import { nameModelMap } from './registrar';
 import { createObject } from './utils';
-import {normalize as normalizr, schema} from 'normalizr'
 
 export function normalize(raw, entityName: string | [string], visited = new Map<any, string | number>(), entities = createObject({}), depth = 0) {
   const resolvedEntityName = Array.isArray(entityName) ? entityName[0] : entityName
@@ -43,14 +42,3 @@ export function normalize(raw, entityName: string | [string], visited = new Map<
     entities
   }
 }
-
-declare global {
-  interface Window {
-      normalize:any;
-      Schema: any;
-      normalizr:any;
-  }
-}
-window.normalize = normalize;
-window.normalizr = normalizr;
-window.Schema = schema;

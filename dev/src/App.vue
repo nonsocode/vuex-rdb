@@ -25,18 +25,24 @@
   <div>
     All users
     <pre>{{allUsers}}</pre>
+    All posts
+    <pre>{{allPosts}}</pre>
   </div>
   </div>
 </template>
 <script lang="ts">
   import Vue from 'vue';
   import { User } from './models/User';
+  import { Post } from './models/Post';
 
 
   export default Vue.extend({
     computed: {
       allUsers() {
-        return User.all({load: ['posts.*', 'posts.comments.users']});
+        return User.all({load: ['posts.user.*', 'posts.comments.users']});
+      },
+      allPosts() {
+        return Post.all({load: ['user.posts.*']})
       }
     },
     data() {

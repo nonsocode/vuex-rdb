@@ -1,5 +1,3 @@
-import { schema } from 'normalizr';
-import SchemaFunction = schema.SchemaFunction;
 import { Store } from 'vuex';
 import { Model } from '../model';
 export declare enum Mutations {
@@ -71,7 +69,7 @@ export declare type IModelStatic<T> = {
      * receives a model-like param as input and returns the id;
      * @default id
      */
-    id?: string | SchemaFunction;
+    id?: string | ((...args: any[]) => string | number);
     /**
      * The name of the entity
      */

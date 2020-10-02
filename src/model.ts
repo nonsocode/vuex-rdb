@@ -1,10 +1,8 @@
 import {createObject, isFunction, mergeUnique, ucFirst} from './utils';
 import {Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relationship} from './types';
 import {Store} from 'vuex';
-import { schema } from 'normalizr';
-import SchemaFunction = schema.SchemaFunction;
-import { getRelationshipSchema, isList } from './relationships';
-import { entitySchemas, nameModelMap } from './registrar';
+import { getRelationshipSchema } from './relationships';
+import {  nameModelMap } from './registrar';
 import { normalize } from './normalize';
 import { FieldDefinition } from './FieldDefinition';
 
@@ -66,7 +64,6 @@ function createAccessor (target: Model, key) {
             if(relationshipDef.isList) {
               value = Array.isArray(value) ? value : [value];
             } 
-            const entitySchema = entitySchemas.get(Related);
             const { entities, result } = normalize(value, relationshipDef.entity);
             Object.entries(entities).forEach(([entityName, entities]) => {
               Object.entries(entities).forEach(([id, entity]) => {
@@ -100,9 +97,8 @@ export class Model implements IModel {
   public static _path: string;
   public static entityName: string;
   public static _store: Store<any>;
-  public static _fields: Record<string, FieldDefinition> = {};
-  public static _relationships: Record<string, Relationship> = {}
-  static id: string | SchemaFunction = "id";
+  public static _fields: Record<string, FieldDefinition>;
+  static id: string | ((...args: any[]) => string | number) = "id";
   
   _load;
   _dataCache;

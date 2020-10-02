@@ -1,6 +1,5 @@
 'use strict';
 
-var normalizr = require('normalizr');
 var Vue = require('vue');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
@@ -134,8 +133,9 @@ function createObject(object) {
 var FieldDefinition = /** @class */ (function () {
     function FieldDefinition(options) {
         if (options === void 0) { options = {}; }
-        this.entity = options.entity;
+        this._entity = options.entity;
         this._default = options.default;
+        this._list = options.list;
     }
     Object.defineProperty(FieldDefinition.prototype, "default", {
         get: function () {
@@ -151,82 +151,59 @@ var FieldDefinition = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(FieldDefinition.prototype, "isList", {
+    Object.defineProperty(FieldDefinition.prototype, "entity", {
         get: function () {
-            return this.isRelationship && Array.isArray(this.entity);
+            return this.isList ? [this._entity] : this._entity;
         },
         enumerable: false,
         configurable: true
     });
+    Object.defineProperty(FieldDefinition.prototype, "isList", {
+        get: function () {
+            return !!this._list;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    FieldDefinition.prototype.setList = function (val) {
+        this._list = !!val;
+    };
+    FieldDefinition.prototype.setEntity = function (entity) {
+        this._entity = entity;
+        return this;
+    };
+    FieldDefinition.prototype.lock = function () {
+        Object.freeze(this);
+        return this;
+    };
     return FieldDefinition;
 }());
 
-var entitySchemas = new Map();
 var nameModelMap = new Map();
-// function dependOn<T, U>(dependant: typeof Model, dependee?: typeof Model, keyName?: string) {
-//   let innerMap: Map<typeof Model, Set<string>> = pendingItems.has(dependant) ? pendingItems.get(dependant) : new Map();
-//   if (dependee) {
-//     let keySet: Set<string> = innerMap.has(dependee) ? innerMap.get(dependee) : new Set();
-//     keySet.add(keyName);
-//     innerMap.set(dependee, keySet);
-//   }
-//   pendingItems.set(dependant, innerMap);
-// }
 function registerSchema(schema) {
     nameModelMap.set(schema.entityName, schema);
-    // if (entitySchemas.has(schema)) {
-    //   return 'registered';
-    // }
     if (!schema._fields) {
         schema._fields = createObject({});
+    }
+    console.log('id of ', schema, schema.id);
+    if (typeof schema.id == 'string') {
+        schema._fields[schema.id] = new FieldDefinition().lock();
     }
     Object.entries(schema.relationships || {}).forEach(function (_a) {
         var _b = __read(_a, 2), key = _b[0], value = _b[1];
         if (key in schema._fields)
             return;
         schema._fields[key] = new FieldDefinition({
-            entity: Array.isArray(value) ? [value[0].entityName] : value.entityName
-        });
+            entity: Array.isArray(value) ? value[0].entityName : value.entityName,
+            list: Array.isArray(value)
+        }).lock();
     });
     Object.keys(schema.fields || {}).forEach(function (key) {
         if (key in schema._fields)
             return;
-        schema._fields[key] = new FieldDefinition();
+        schema._fields[key] = new FieldDefinition().lock();
     });
-    // const definitions = Object.entries(schema._relationships || {});
-    // dependOn(schema);
-    // if (definitions.length) {
-    //   definitions.forEach(([key, dependee]) => {
-    //     dependOn(schema, isList(dependee) ? dependee[0] : dependee, key);
-    //   });
-    // }
 }
-// export function resolveCyclicDependencies() {
-//   pendingItems.forEach((value, dep) => cyclicResolve(dep, entitySchemas));
-// }
-// function cyclicResolve(modelSchema: typeof Model, result: Map<typeof Model, normalizerSchema.Entity>) {
-//   if (result.has(modelSchema)) return;
-//   const entity = new normalizerSchema.Entity(
-//     modelSchema.entityName,
-//     {},
-//     {
-//       idAttribute: modelSchema.id || 'id'
-//     }
-//   );
-//   result.set(modelSchema, entity);
-//   nameModelMap.set(modelSchema.entityName, modelSchema);
-//   pendingItems.get(modelSchema).forEach((keys, dependency) => {
-//     cyclicResolve(dependency, result);
-//     keys.forEach(key => {
-//       const relationshipData = modelSchema._relationships[key];
-//       const relationshipSchema = result.get(getRelationshipSchema(relationshipData));
-//       const childEnt = isList(relationshipData) ? [relationshipSchema] : relationshipSchema;
-//       entity.define({
-//         [key]: childEnt
-//       });
-//     });
-//   });
-// }
 
 var Mutations;
 (function (Mutations) {
@@ -352,7 +329,6 @@ function createAccessor(target, key) {
                         if (relationshipDef.isList) {
                             value = Array.isArray(value) ? value : [value];
                         }
-                        var entitySchema = entitySchemas.get(Related);
                         var _a = normalize(value, relationshipDef.entity), entities = _a.entities, result = _a.result;
                         Object.entries(entities).forEach(function (_a) {
                             var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
@@ -527,8 +503,6 @@ var Model = /** @class */ (function () {
     Model.addAll = function (items) {
         return this._store.dispatch(this._path + "/" + Actions.ADD_ALL, items);
     };
-    Model._fields = {};
-    Model._relationships = {};
     Model.id = "id";
     return Model;
 }());
@@ -590,10 +564,8 @@ function normalize(raw, entityName, visited, entities, depth) {
         entities: entities
     };
 }
-window.normalize = normalize;
-window.normalizr = normalizr.normalize;
-window.Schema = normalizr.schema;
 
+var sum = require('hash-sum');
 function generateModuleName(namespace, key) {
     namespace = namespace || '';
     var chunks = namespace.split('/');
@@ -602,7 +574,6 @@ function generateModuleName(namespace, key) {
 }
 function createModule(schema, keyMap, options, store) {
     var _a, _b, _c;
-    var entitySchema = entitySchemas.get(schema);
     Object.defineProperties(schema, {
         _path: {
             value: keyMap[schema.entityName]
@@ -750,8 +721,7 @@ function createModule(schema, keyMap, options, store) {
                     return;
                 }
                 var load = relations(opts.load, schema._fields);
-                console.log(load);
-                return new schema(data, { load: load, connected: true });
+                return resolveModel(schema, data, { load: load, connected: true });
             }; },
             _c[Getters.FIND_BY_IDS] = function (state, getters) {
                 return function (ids, opts) {
@@ -767,15 +737,35 @@ function createModule(schema, keyMap, options, store) {
             _c)
     };
 }
+var modelCache = {};
+function resolveModel(schema, rawData, options) {
+    var _a;
+    var _b;
+    if (options === void 0) { options = {}; }
+    var id = getIdValue(rawData, schema);
+    var entity = schema.entityName;
+    var load = options === null || options === void 0 ? void 0 : options.load;
+    return (_a = modelCache[_b = sum({ id: id, entity: entity, load: load })]) !== null && _a !== void 0 ? _a : (modelCache[_b] = new schema(rawData, options));
+}
 
 function Field(options) {
     if (options === void 0) { options = {}; }
     return function (target, propname) {
         var constructor = target.constructor;
         if (constructor._fields == null) {
-            constructor._fields = createObject(null);
+            constructor._fields = createObject({});
         }
-        constructor._fields[propname] = new FieldDefinition(options);
+        var definition = new FieldDefinition();
+        if (typeof options == 'string') {
+            definition.setEntity(options);
+        }
+        else if (Array.isArray(options)) {
+            definition.setEntity(options[0]).setList(true);
+        }
+        else {
+            definition = new FieldDefinition(options);
+        }
+        constructor._fields[propname] = definition.lock();
     };
 }
 
