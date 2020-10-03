@@ -16,7 +16,6 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
       registerSchema(schema);
     });
 
-    // resolveCyclicDependencies();
 
     const modules = {};
     options.schemas.forEach(schema => {

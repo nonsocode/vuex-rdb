@@ -7,6 +7,7 @@ import {Module, Store} from 'vuex';
 const sum = require('hash-sum');
 
 import Vue from 'vue';
+import { normalizeAndStore } from './modelUtils';
 export function generateModuleName(namespace, key) {
   namespace = namespace || '';
   const chunks = namespace.split('/');
@@ -21,12 +22,8 @@ export function createModule<T>(
   store: Store<any>
 ): Module<ModelState, any> {
   Object.defineProperties(schema, {
-    _path: {
-      value: keyMap[schema.entityName]
-    },
-    _store: {
-      value: store
-    }
+    _path: { value: keyMap[schema.entityName]},
+    _store: { value: store }
   });
   return {
     namespaced: true,
@@ -42,16 +39,7 @@ export function createModule<T>(
     },
     actions: {
       [Actions.ADD](ctx, item) {
-        const { entities, result } = normalize(item, schema.entityName);
-        Object.entries(entities).forEach(([entityName, entities]) => {
-          Object.entries(entities).forEach(([id, entity]) => {
-            if (!entity) {
-              return;
-            }
-            ctx.commit(`${keyMap[entityName]}/${Mutations.ADD}`, { id, entity }, { root: true });
-          });
-        });
-        return result;
+        return normalizeAndStore(store, item, schema.entityName);
       },
       [Actions.ADD_RELATED]({ state, dispatch, getters }, { id, related, data }) {
         if (!(related in schema._fields) && schema._fields[related].isRelationship) {

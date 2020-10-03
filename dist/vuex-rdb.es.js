@@ -14,6 +14,20 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+    return extendStatics(d, b);
+};
+
+function __extends(d, b) {
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
 
 var __assign = function() {
     __assign = Object.assign || function __assign(t) {
@@ -276,8 +290,120 @@ var Getters;
     Getters["ALL"] = "all";
 })(Getters || (Getters = {}));
 
+function normalize(raw, entityName, visited, entities, depth) {
+    var e_1, _a;
+    if (visited === void 0) { visited = new Map(); }
+    if (entities === void 0) { entities = createObject({}); }
+    if (depth === void 0) { depth = 0; }
+    var resolvedEntityName = Array.isArray(entityName) ? entityName[0] : entityName;
+    var schema = nameModelMap.get(resolvedEntityName);
+    var fields = schema._fields;
+    var normalized = {};
+    var result;
+    if (raw == null) {
+        result = null;
+    }
+    else if (Array.isArray(raw)) {
+        result = raw.map(function (r) {
+            var result = normalize(r, resolvedEntityName, visited, entities, depth + 1).result;
+            return result;
+        }).filter(function (id) { return id != null; });
+    }
+    else {
+        if (visited.has(raw)) {
+            result = visited.get(raw);
+        }
+        else {
+            var id = getIdValue(raw, schema);
+            result = id;
+            visited.set(raw, id);
+            try {
+                for (var _b = __values(Object.entries(raw)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var _d = __read(_c.value, 2), key = _d[0], value = _d[1];
+                    if (key in fields && fields[key].isRelationship) {
+                        var result_1 = normalize(value, fields[key].entity, visited, entities, depth + 1).result;
+                        normalized[key] = result_1;
+                    }
+                    else {
+                        normalized[key] = value;
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            if (!(resolvedEntityName in entities)) {
+                entities[resolvedEntityName] = createObject({});
+            }
+            entities[resolvedEntityName][id] = __assign(__assign({}, entities[resolvedEntityName][id]), normalized);
+        }
+    }
+    return {
+        result: result,
+        entities: entities
+    };
+}
+
+function getConstructor(model) {
+    return model.constructor;
+}
+function normalizeAndStore(store, data, entityName) {
+    var _a = normalize(data, entityName), entities = _a.entities, result = _a.result;
+    Object.entries(entities).forEach(function (_a) {
+        var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
+        Object.entries(entities).forEach(function (_a) {
+            var _b = __read(_a, 2), id = _b[0], entity = _b[1];
+            if (!entity) {
+                return;
+            }
+            store.commit(nameModelMap.get(entityName)._path + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
+        });
+    });
+    return result;
+}
+
+var ModelArray = /** @class */ (function (_super) {
+    __extends(ModelArray, _super);
+    function ModelArray(context, key, items) {
+        var _this = _super.call(this) || this;
+        Object.defineProperties(_this, {
+            _context: { value: context },
+            _key: { value: key },
+            _store: { value: getConstructor(context)._store }
+        });
+        _super.prototype.push.apply(_this, items);
+        Object.setPrototypeOf(_this, ModelArray.prototype);
+        return _this;
+    }
+    ModelArray.prototype.push = function () {
+        var _this = this;
+        var _a;
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i] = arguments[_i];
+        }
+        var ContextSchema = getConstructor(this._context);
+        var fieldDefinition = ContextSchema._fields[this._key];
+        var Schema = getRelationshipSchema(fieldDefinition);
+        var _path = ContextSchema._path;
+        var rawContext = this._store.getters[ContextSchema._path + "/" + Getters.GET_RAW](getIdValue(this._context, ContextSchema));
+        var referenceArray = rawContext[this._key] || [];
+        items.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema.entityName); });
+        var ids = items.map(function (item) { return getIdValue(item, Schema); });
+        this._store.commit(_path + "/" + Mutations.SET_PROP, { id: this._context._id, key: this._key, value: __spread(referenceArray, ids) });
+        _super.prototype.push.apply(this, __spread(Schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
+        return this.length;
+    };
+    ModelArray.prototype._extractUtils = function () { };
+    return ModelArray;
+}(Array));
+window.ModelArray = ModelArray;
+
 var cacheNames = ['data', 'relationship'];
-var getConstructor = function (model) { return model.constructor; };
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
 var parseIfLiteral = function (id, Schema) {
     return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
@@ -309,7 +435,7 @@ function createAccessor(target, key) {
                     var opts = { load: target._load[key] || {} };
                     var Related = getRelationshipSchema(relationshipDef);
                     if (relationshipDef.isList) {
-                        return value && Related.findByIds(value, opts);
+                        return value && new ModelArray(target, key, Related.findByIds(value, opts));
                     }
                     return Related.find(value, opts);
                 }
@@ -327,20 +453,9 @@ function createAccessor(target, key) {
                     if (relationshipDef.isList) {
                         value = Array.isArray(value) ? value : [value].filter(identity);
                     }
-                }
-                if (target._connected) {
-                    var _a = normalize(value, relationshipDef.entity), entities = _a.entities, result = _a.result;
-                    Object.entries(entities).forEach(function (_a) {
-                        var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
-                        Object.entries(entities).forEach(function (_a) {
-                            var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                            if (!entity) {
-                                return;
-                            }
-                            _store.commit(nameModelMap.get(entityName)._path + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
-                        });
-                    });
-                    value = result;
+                    if (target._connected) {
+                        value = normalizeAndStore(_store, value, relationshipDef.entity);
+                    }
                 }
             }
             target._connected
@@ -352,10 +467,6 @@ function createAccessor(target, key) {
 function getIdValue(model, schema) {
     return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
-var reserved = __spread(cacheNames, ['_id', '_connected']).reduce(function (acc, key) {
-    acc[key] = true;
-    return acc;
-}, {});
 var Model = /** @class */ (function () {
     function Model(data, opts) {
         var _this = this;
@@ -514,64 +625,6 @@ var Model = /** @class */ (function () {
     return Model;
 }());
 
-function normalize(raw, entityName, visited, entities, depth) {
-    var e_1, _a;
-    if (visited === void 0) { visited = new Map(); }
-    if (entities === void 0) { entities = createObject({}); }
-    if (depth === void 0) { depth = 0; }
-    var resolvedEntityName = Array.isArray(entityName) ? entityName[0] : entityName;
-    var schema = nameModelMap.get(resolvedEntityName);
-    var fields = schema._fields;
-    var normalized = {};
-    var result;
-    if (raw == null) {
-        result = null;
-    }
-    else if (Array.isArray(raw)) {
-        result = raw.map(function (r) {
-            var result = normalize(r, resolvedEntityName, visited, entities, depth + 1).result;
-            return result;
-        }).filter(function (id) { return id != null; });
-    }
-    else {
-        if (visited.has(raw)) {
-            result = visited.get(raw);
-        }
-        else {
-            var id = getIdValue(raw, schema);
-            result = id;
-            visited.set(raw, id);
-            try {
-                for (var _b = __values(Object.entries(raw)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var _d = __read(_c.value, 2), key = _d[0], value = _d[1];
-                    if (key in fields && fields[key].isRelationship) {
-                        var result_1 = normalize(value, fields[key].entity, visited, entities, depth + 1).result;
-                        normalized[key] = result_1;
-                    }
-                    else {
-                        normalized[key] = value;
-                    }
-                }
-            }
-            catch (e_1_1) { e_1 = { error: e_1_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_1) throw e_1.error; }
-            }
-            if (!(resolvedEntityName in entities)) {
-                entities[resolvedEntityName] = createObject({});
-            }
-            entities[resolvedEntityName][id] = __assign(__assign({}, entities[resolvedEntityName][id]), normalized);
-        }
-    }
-    return {
-        result: result,
-        entities: entities
-    };
-}
-
 var sum = require('hash-sum');
 function generateModuleName(namespace, key) {
     namespace = namespace || '';
@@ -582,12 +635,8 @@ function generateModuleName(namespace, key) {
 function createModule(schema, keyMap, options, store) {
     var _a, _b, _c;
     Object.defineProperties(schema, {
-        _path: {
-            value: keyMap[schema.entityName]
-        },
-        _store: {
-            value: store
-        }
+        _path: { value: keyMap[schema.entityName] },
+        _store: { value: store }
     });
     return {
         namespaced: true,
@@ -607,18 +656,7 @@ function createModule(schema, keyMap, options, store) {
             _a),
         actions: (_b = {},
             _b[Actions.ADD] = function (ctx, item) {
-                var _a = normalize(item, schema.entityName), entities = _a.entities, result = _a.result;
-                Object.entries(entities).forEach(function (_a) {
-                    var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
-                    Object.entries(entities).forEach(function (_a) {
-                        var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                        if (!entity) {
-                            return;
-                        }
-                        ctx.commit(keyMap[entityName] + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
-                    });
-                });
-                return result;
+                return normalizeAndStore(store, item, schema.entityName);
             },
             _b[Actions.ADD_RELATED] = function (_a, _b) {
                 var _c;
@@ -791,7 +829,6 @@ function generateDatabasePlugin(options) {
             schemaModuleNameMap[schema.entityName] = generateModuleName(options.namespace, schema.entityName);
             registerSchema(schema);
         });
-        // resolveCyclicDependencies();
         var modules = {};
         options.schemas.forEach(function (schema) {
             modules[schema.entityName] = createModule(schema, schemaModuleNameMap, options, store);

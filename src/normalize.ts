@@ -1,8 +1,9 @@
 import { getIdValue } from './model';
 import { nameModelMap } from './registrar';
+import { Normalized } from './types';
 import { createObject } from './utils';
 
-export function normalize(raw, entityName: string | [string], visited = new Map<any, string | number>(), entities = createObject({}), depth = 0) {
+export function normalize(raw, entityName: string | [string], visited = new Map<any, string | number>(), entities = createObject({}), depth = 0): Normalized {
   const resolvedEntityName = Array.isArray(entityName) ? entityName[0] : entityName
   const schema = nameModelMap.get(resolvedEntityName);
   const fields = schema._fields;

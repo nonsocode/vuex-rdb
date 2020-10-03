@@ -2,13 +2,13 @@ import { createObject, identity, isFunction, mergeUnique, ucFirst } from './util
 import { Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relationship } from './types';
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
-import { nameModelMap } from './registrar';
-import { normalize } from './normalize';
 import { FieldDefinition } from './FieldDefinition';
+import { getConstructor, normalizeAndStore } from './modelUtils';
 import Vue from 'vue';
+import { ModelArray } from './modelArray';
+
 const cacheNames = ['data', 'relationship'];
 
-const getConstructor = (model: Model): typeof Model => model.constructor as typeof Model;
 const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, Schema: typeof Model): any => {
   return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
@@ -40,7 +40,7 @@ function createAccessor(target: Model, key) {
           const opts = { load: target._load[key] || {} };
           const Related = getRelationshipSchema(relationshipDef);
           if (relationshipDef.isList) {
-            return value && Related.findByIds(value, opts);
+            return value && new ModelArray(target, key, Related.findByIds(value, opts));
           }
           return Related.find(value, opts);
         } else {
@@ -57,18 +57,9 @@ function createAccessor(target: Model, key) {
           if (relationshipDef.isList) {
             value = Array.isArray(value) ? value : [value].filter(identity);
           }
-        }
-        if (target._connected) {
-          const { entities, result } = normalize(value, relationshipDef.entity);
-          Object.entries(entities).forEach(([entityName, entities]) => {
-            Object.entries(entities).forEach(([id, entity]) => {
-              if (!entity) {
-                return;
-              }
-              _store.commit(`${nameModelMap.get(entityName)._path}/${Mutations.ADD}`, { id, entity }, { root: true });
-            });
-          });
-          value = result;
+          if (target._connected) {
+            value = normalizeAndStore(_store, value, relationshipDef.entity)
+          }
         }
       }
 
@@ -82,11 +73,6 @@ function createAccessor(target: Model, key) {
 export function getIdValue<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
-
-const reserved = [...cacheNames, '_id', '_connected'].reduce((acc, key) => {
-  acc[key] = true;
-  return acc;
-}, {});
 
 export class Model implements IModel {
   public static _path: string;

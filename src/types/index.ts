@@ -26,6 +26,11 @@ export interface TypeFunction<T> extends Function {
 }
 export type ModelState = Record<string|number, any>
 
+export type IdValue = string | number
+export type Normalized = {
+  result: IdValue | IdValue[],
+  entities: Record<string, Record<IdValue, object>>
+}
 
 export interface IModel {
   /**

@@ -22,6 +22,11 @@ export interface TypeFunction<T> extends Function {
     (this: null, data: any): T;
 }
 export declare type ModelState = Record<string | number, any>;
+export declare type IdValue = string | number;
+export declare type Normalized = {
+    result: IdValue | IdValue[];
+    entities: Record<string, Record<IdValue, object>>;
+};
 export interface IModel {
     /**
      * Update the properties of the model with the given data. You don't need to pass the full model.

@@ -1,3 +1,4 @@
+import { Model } from './model';
 import {TypeOrFunction} from './types';
 
 export const identity = k => k;
