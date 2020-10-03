@@ -282,22 +282,27 @@ var Getters;
     Getters["ALL"] = "all";
 })(Getters || (Getters = {}));
 
-var _a;
 var cacheNames = ['data', 'relationship'];
-var reservedKeys = createObject((_a = { toJSON: true, _isVue: true }, _a[Symbol.toStringTag] = true, _a));
+var getConstructor = function (model) { return model.constructor; };
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
 var parseIfLiteral = function (id, Schema) {
     return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
 };
 var proxySetter = function (target, key, value) {
-    if (!(key in target) && !(key in reservedKeys)) {
+    if (!(key in target)) {
         createAccessor(target, key);
     }
     target[key] = value;
     return true;
 };
+function cacheDefaults(model) {
+    Object.entries(getConstructor(model)._fields).forEach(function (_a) {
+        var _b = __read(_a, 2), key = _b[0], definition = _b[1];
+        model._caches[getCacheName(definition.isRelationship)][key] = definition.default;
+    });
+}
 function createAccessor(target, key) {
-    var _a = target.constructor, _path = _a._path, _store = _a._store, _fields = _a._fields;
+    var _a = getConstructor(target), _path = _a._path, _store = _a._store, _fields = _a._fields;
     var isRelationship = key in _fields && _fields[key].isRelationship;
     var relationshipDef = isRelationship ? _fields[key] : null;
     Object.defineProperty(target, key, {
@@ -362,44 +367,41 @@ var Model = /** @class */ (function () {
         var _this = this;
         if (opts === void 0) { opts = {}; }
         this._connected = false;
+        var id = data ? getIdValue(data, getConstructor(this)) : null;
         Object.defineProperties(this, {
-            _caches: {
-                value: Object.fromEntries(cacheNames.map(function (name) { return [name, {}]; }))
-            },
+            _caches: { value: Object.fromEntries(cacheNames.map(function (name) { return [name, {}]; })) },
             _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true },
             _load: { value: (opts === null || opts === void 0 ? void 0 : opts.load) || createObject({}), enumerable: false, configurable: true },
-            _id: {
-                value: data ? getIdValue(data, this.constructor) : null,
-                enumerable: false,
-                configurable: false,
-                writable: true
-            }
+            _id: { value: id, enumerable: false, configurable: false, writable: true }
         });
-        if (!this._connected)
-            Vue__default['default'].observable(this._caches);
-        var _fields = this.constructor._fields;
+        var _fields = getConstructor(this)._fields;
         if (data) {
             Object.keys(data).forEach(function (key) { return createAccessor(_this, key); });
+        }
+        else {
+            cacheDefaults(this);
         }
         Object.keys(__assign({}, _fields)).forEach(function (key) {
             if (key in _this)
                 return;
             createAccessor(_this, key);
         });
+        if (!this._connected)
+            Vue__default['default'].observable(this._caches);
         return new Proxy(this, {
             set: proxySetter
         });
     }
     Model.prototype.toJSON = function () {
         var _this = this;
-        var constructor = this.constructor;
+        var constructor = getConstructor(this);
         return Object.entries(this).reduce(function (acc, _a) {
             var _b = __read(_a, 2), key = _b[0], val = _b[1];
             if (!(key in constructor._fields && constructor._fields[key].isRelationship)) {
                 acc[key] = val;
             }
             else {
-                if ([key, '*'].some(function (prop) { return prop in _this._load; })) {
+                if (key in _this._load) {
                     if (val == null) {
                         acc[key] = val;
                     }
@@ -434,7 +436,7 @@ var Model = /** @class */ (function () {
             var constructor;
             var _this = this;
             return __generator(this, function (_a) {
-                constructor = this.constructor;
+                constructor = getConstructor(this);
                 return [2 /*return*/, constructor._store
                         .dispatch(constructor._path + "/update", {
                         id: this._id,
@@ -452,7 +454,7 @@ var Model = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 return [2 /*return*/, new Promise(function (resolve) {
-                        var constructor = _this.constructor;
+                        var constructor = getConstructor(_this);
                         if (_this._connected) {
                             console.warn('No need calling $save');
                         }
@@ -474,7 +476,7 @@ var Model = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             var constructor;
             return __generator(this, function (_a) {
-                constructor = this.constructor;
+                constructor = getConstructor(this);
                 return [2 /*return*/, constructor._store.dispatch(constructor._path + "/addRelated", {
                         id: this._id,
                         related: related,
@@ -487,7 +489,7 @@ var Model = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             var constructor;
             return __generator(this, function (_a) {
-                constructor = this.constructor;
+                constructor = getConstructor(this);
                 return [2 /*return*/, constructor._store.dispatch(constructor._path + "/removeRelated", {
                         id: this._id,
                         related: related,

@@ -8,22 +8,25 @@ import { FieldDefinition } from './FieldDefinition';
 import Vue from 'vue';
 const cacheNames = ['data', 'relationship'];
 
-const reservedKeys = createObject({ toJSON: true, _isVue: true, [Symbol.toStringTag]: true });
-
+const getConstructor = (model: Model): typeof Model => model.constructor as typeof Model;
 const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, Schema: typeof Model): any => {
   return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
 };
 const proxySetter = (target: Model, key: string, value) => {
-  if (!(key in target) && !(key in reservedKeys)) {
+  if (!(key in target)) {
     createAccessor(target, key);
   }
   target[key] = value;
   return true;
 };
-
+function cacheDefaults(model: Model) {
+  Object.entries(getConstructor(model)._fields).forEach(([key, definition]) => {
+    model._caches[getCacheName(definition.isRelationship)][key] = definition.default;
+  });
+}
 function createAccessor(target: Model, key) {
-  const { _path, _store, _fields } = target.constructor as typeof Model;
+  const { _path, _store, _fields } = getConstructor(target);
   const isRelationship = key in _fields && _fields[key].isRelationship;
   const relationshipDef = isRelationship ? _fields[key] : null;
 
@@ -98,24 +101,20 @@ export class Model implements IModel {
   _id;
 
   constructor(data: any, opts: any = {}) {
+    const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
-      _caches: {
-        value: Object.fromEntries(cacheNames.map(name => [name, {}]))
-      },
+      _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
       _connected: { value: !!opts?.connected, enumerable: false, configurable: true },
       _load: { value: opts?.load || createObject({}), enumerable: false, configurable: true },
-      _id: {
-        value: data ? getIdValue(data, this.constructor as typeof Model) : null,
-        enumerable: false,
-        configurable: false,
-        writable: true
-      }
+      _id: { value: id, enumerable: false, configurable: false, writable: true }
     });
-    if (!this._connected) Vue.observable(this._caches);
-    const { _fields } = this.constructor as typeof Model;
+
+    const { _fields } = getConstructor(this);
 
     if (data) {
       Object.keys(data).forEach(key => createAccessor(this, key));
+    } else {
+      cacheDefaults(this);
     }
 
     Object.keys({ ..._fields }).forEach(key => {
@@ -123,18 +122,20 @@ export class Model implements IModel {
       createAccessor(this, key);
     });
 
+    if (!this._connected) Vue.observable(this._caches);
+
     return new Proxy<Model>(this, {
       set: proxySetter
     });
   }
 
   toJSON() {
-    const constructor = this.constructor as typeof Model;
+    const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
       if (!(key in constructor._fields && constructor._fields[key].isRelationship)) {
         acc[key] = val;
       } else {
-        if ([key, '*'].some(prop => prop in this._load)) {
+        if (key in this._load) {
           if (val == null) {
             acc[key] = val;
           } else if (Array.isArray(val)) {
@@ -157,7 +158,7 @@ export class Model implements IModel {
   }
 
   async $update(data = {}): Promise<string | number> {
-    const constructor = this.constructor as typeof Model;
+    const constructor = getConstructor(this);
     return constructor._store
       .dispatch(`${constructor._path}/update`, {
         id: this._id,
@@ -171,7 +172,7 @@ export class Model implements IModel {
 
   async $save(): Promise<number | string> {
     return new Promise(resolve => {
-      const constructor = this.constructor as typeof Model;
+      const constructor = getConstructor(this);
       if (this._connected) {
         console.warn('No need calling $save');
       } else {
@@ -190,7 +191,7 @@ export class Model implements IModel {
   }
 
   async $addRelated(related, data): Promise<string | number> {
-    const constructor = this.constructor as typeof Model;
+    const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._path}/addRelated`, {
       id: this._id,
       related,
@@ -199,7 +200,7 @@ export class Model implements IModel {
   }
 
   async $removeRelated(related, relatedId): Promise<string | number> {
-    const constructor = this.constructor as typeof Model;
+    const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._path}/removeRelated`, {
       id: this._id,
       related,

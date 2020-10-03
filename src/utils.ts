@@ -31,3 +31,7 @@ export function createObject <T>(object: T): T {
 export function ucFirst(str: string) {
   return str.charAt(0).toUpperCase() + str.substring(1);
 }
+
+export function isPrimitive(val) {
+  return [ 'string', 'number', 'bigint', 'boolean'].includes(typeof val)
+}
