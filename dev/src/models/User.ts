@@ -14,6 +14,9 @@ export  class User extends Model {
   public name: string
   
   @Field()
+  public type: string
+  
+  @Field()
   public age: number
 
   @Field(() => [Post])

@@ -14,6 +14,12 @@ const store =  new Vuex.Store({
 store.dispatch('database/user/add', {
   id: 1,
   name: 'nonso',
+  variable: {
+    prof: 'doctor',
+    time: {
+      foo: 'bar'
+    }
+  },
   posts:[
     {
       id: 5,

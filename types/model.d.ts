@@ -9,8 +9,7 @@ export declare class Model implements IModel {
     static _fields: Record<string, FieldDefinition>;
     static id: string | ((...args: any[]) => string | number);
     _load: any;
-    _dataCache: any;
-    _relationshipCache: any;
+    _caches: any;
     _connected: boolean;
     _id: any;
     constructor(data: any, opts?: any);

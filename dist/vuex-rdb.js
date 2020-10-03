@@ -283,11 +283,11 @@ var Getters;
 })(Getters || (Getters = {}));
 
 var _a;
-var cacheNames = ['_dataCache', '_relationshipCache'];
+var cacheNames = ['data', 'relationship'];
 var reservedKeys = createObject((_a = { toJSON: true, _isVue: true }, _a[Symbol.toStringTag] = true, _a));
-var getCacheName = function (target, key) {
-    var _fields = target.constructor._fields;
-    return (key in _fields && _fields[key].isRelationship) ? '_relationshipCache' : '_dataCache';
+var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
+var parseIfLiteral = function (id, Schema) {
+    return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
 };
 var proxySetter = function (target, key, value) {
     if (!(key in target) && !(key in reservedKeys)) {
@@ -295,15 +295,6 @@ var proxySetter = function (target, key, value) {
     }
     target[key] = value;
     return true;
-};
-var proxyGetter = function (target, key, value) {
-    /* This useful only when the fields aren't known upfront but can add a lot of unnecessary props
-     when non existent fields are accessed
-     */
-    // if(!(key in target)  && !(key in reservedKeys)) {
-    //   createAccessor(target, key)
-    // }
-    return target[key];
 };
 function createAccessor(target, key) {
     var _a = target.constructor, _path = _a._path, _store = _a._store, _fields = _a._fields;
@@ -327,35 +318,35 @@ function createAccessor(target, key) {
                     return raw[key];
                 }
             }
-            return this[getCacheName(this, key)][key];
+            return this._caches[getCacheName(isRelationship)][key];
         },
         set: function (value) {
-            if (target._connected) {
-                if (value != null) {
-                    if (isRelationship) {
-                        var Related = getRelationshipSchema(relationshipDef);
-                        if (relationshipDef.isList) {
-                            value = Array.isArray(value) ? value : [value];
-                        }
-                        var _a = normalize(value, relationshipDef.entity), entities = _a.entities, result = _a.result;
-                        Object.entries(entities).forEach(function (_a) {
-                            var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
-                            Object.entries(entities).forEach(function (_a) {
-                                var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                                if (!entity) {
-                                    return;
-                                }
-                                _store.commit(nameModelMap.get(entityName)._path + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
-                            });
-                        });
-                        value = result;
+            if (value != null) {
+                if (isRelationship) {
+                    var Related = getRelationshipSchema(relationshipDef);
+                    value = parseIfLiteral(value, Related);
+                    if (relationshipDef.isList) {
+                        value = Array.isArray(value) ? value : [value].filter(identity);
                     }
                 }
-                return _store.commit(_path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value });
+                if (target._connected) {
+                    var _a = normalize(value, relationshipDef.entity), entities = _a.entities, result = _a.result;
+                    Object.entries(entities).forEach(function (_a) {
+                        var _b = __read(_a, 2), entityName = _b[0], entities = _b[1];
+                        Object.entries(entities).forEach(function (_a) {
+                            var _b = __read(_a, 2), id = _b[0], entity = _b[1];
+                            if (!entity) {
+                                return;
+                            }
+                            _store.commit(nameModelMap.get(entityName)._path + "/" + Mutations.ADD, { id: id, entity: entity }, { root: true });
+                        });
+                    });
+                    value = result;
+                }
             }
-            else {
-                this[getCacheName(this, key)][key] = value;
-            }
+            target._connected
+                ? _store.commit(_path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value })
+                : Vue__default['default'].set(this._caches[getCacheName(isRelationship)], key, value);
         }
     });
 }
@@ -371,7 +362,21 @@ var Model = /** @class */ (function () {
         var _this = this;
         if (opts === void 0) { opts = {}; }
         this._connected = false;
-        Object.defineProperties(this, __assign(__assign({}, Object.fromEntries(cacheNames.map(function (cacheName) { return [cacheName, { value: {} }]; }))), { _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true }, _load: { value: ((opts === null || opts === void 0 ? void 0 : opts.load) || createObject({})), enumerable: false, configurable: true }, _id: { value: data ? getIdValue(data, this.constructor) : null, enumerable: false, configurable: false, writable: true } }));
+        Object.defineProperties(this, {
+            _caches: {
+                value: Object.fromEntries(cacheNames.map(function (name) { return [name, {}]; }))
+            },
+            _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true },
+            _load: { value: (opts === null || opts === void 0 ? void 0 : opts.load) || createObject({}), enumerable: false, configurable: true },
+            _id: {
+                value: data ? getIdValue(data, this.constructor) : null,
+                enumerable: false,
+                configurable: false,
+                writable: true
+            }
+        });
+        if (!this._connected)
+            Vue__default['default'].observable(this._caches);
         var _fields = this.constructor._fields;
         if (data) {
             Object.keys(data).forEach(function (key) { return createAccessor(_this, key); });
@@ -382,8 +387,7 @@ var Model = /** @class */ (function () {
             createAccessor(_this, key);
         });
         return new Proxy(this, {
-            set: proxySetter,
-            get: proxyGetter,
+            set: proxySetter
         });
     }
     Model.prototype.toJSON = function () {
@@ -400,10 +404,10 @@ var Model = /** @class */ (function () {
                         acc[key] = val;
                     }
                     else if (Array.isArray(val)) {
-                        acc[key] = val.map(function (item) { return item.toJSON(); });
+                        acc[key] = val.map(function (item) { return (item.toJSON ? item.toJSON() : item); });
                     }
                     else {
-                        acc[key] = val.toJSON();
+                        acc[key] = val.toJSON ? val.toJSON() : val;
                     }
                 }
             }
@@ -453,9 +457,10 @@ var Model = /** @class */ (function () {
                             console.warn('No need calling $save');
                         }
                         else {
-                            var data = __assign(__assign({}, _this._dataCache), _this._relationshipCache);
-                            resolve((constructor)._store.dispatch(constructor._path + "/add", data)
-                                .then(function (res) {
+                            var data = cacheNames.reduce(function (acc, name) {
+                                return __assign(__assign({}, acc), _this._caches[name]);
+                            }, {});
+                            resolve(constructor._store.dispatch(constructor._path + "/add", data).then(function (res) {
                                 _this._id = res;
                                 _this._connected = true;
                                 return res;
@@ -470,8 +475,7 @@ var Model = /** @class */ (function () {
             var constructor;
             return __generator(this, function (_a) {
                 constructor = this.constructor;
-                return [2 /*return*/, constructor._store
-                        .dispatch(constructor._path + "/addRelated", {
+                return [2 /*return*/, constructor._store.dispatch(constructor._path + "/addRelated", {
                         id: this._id,
                         related: related,
                         data: data
@@ -484,8 +488,7 @@ var Model = /** @class */ (function () {
             var constructor;
             return __generator(this, function (_a) {
                 constructor = this.constructor;
-                return [2 /*return*/, constructor._store
-                        .dispatch(constructor._path + "/removeRelated", {
+                return [2 /*return*/, constructor._store.dispatch(constructor._path + "/removeRelated", {
                         id: this._id,
                         related: related,
                         relatedId: relatedId
@@ -511,7 +514,7 @@ var Model = /** @class */ (function () {
     Model.addAll = function (items) {
         return this._store.dispatch(this._path + "/" + Actions.ADD_ALL, items);
     };
-    Model.id = "id";
+    Model.id = 'id';
     return Model;
 }());
 

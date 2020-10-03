@@ -52,7 +52,7 @@
     },
     methods: {
       createUser() {
-        const u: any = new User();
+        const u: any = new User(null,  {load: {posts:{}}});
         u.id = Math.floor(Math.random() * 10000000);
         this.users.push(u)
       }
