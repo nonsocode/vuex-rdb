@@ -26,7 +26,8 @@ function cacheDefaults(model: Model) {
   });
 }
 function createAccessor(target: Model, key) {
-  const { _path, _store, _fields } = getConstructor(target);
+  const Schema =  getConstructor(target)
+  const { _path, _store, _fields, id } = Schema;
   const isRelationship = key in _fields && _fields[key].isRelationship;
   const relationshipDef = isRelationship ? _fields[key] : null;
 
@@ -58,7 +59,13 @@ function createAccessor(target: Model, key) {
             value = Array.isArray(value) ? value : [value].filter(identity);
           }
           if (target._connected) {
-            value = normalizeAndStore(_store, value, relationshipDef.entity)
+            value = normalizeAndStore(_store, value, relationshipDef.entity);
+          }
+        } else if (target._connected && isFunction(id)) {
+          const oldId = getIdValue(target, Schema);
+          const newId = getIdValue({...target, [key]: value}, Schema);
+          if(oldId != newId) {
+            throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
           }
         }
       }

@@ -5,7 +5,7 @@ import { getRelationshipSchema } from './relationships';
 import { Relationship } from './types';
 
 
-export class FieldDefinition {
+export class FieldDefinition{
   _default: any;
   _entity: string | (() => Relationship);
   _list: boolean;

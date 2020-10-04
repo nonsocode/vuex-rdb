@@ -120,7 +120,7 @@ export function createModule<T>(
           newItems = items.map(item => ({ ...item, ...data }));
           const oldIds = items.map(item => getIdValue(item, schema));
           const newIds = newItems.map(item => getIdValue(item, schema));
-          const idHasChanged = oldIds.some((id, index) => id !== newIds[index]);
+          const idHasChanged = oldIds.some((id, index) => id != newIds[index]);
           if (idHasChanged) {
             throw new Error('Invalid Update: This would cause a change in the computed id.');
           }

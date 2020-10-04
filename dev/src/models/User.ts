@@ -2,8 +2,19 @@ import { Model, Field } from '../../../dist/vuex-rdb.es';
 import { Post } from './Post';
 export class Issue extends Model {
   static entityName = 'issue';
+
+  @Field({default: () => Date.now()})
+  public timestamp: number;
+
+  @Field({default: 'broken'})
+  public type: string;
+  
+  @Field()
+  public entity: string
+
+
   static id(model) {
-    return model.name + '#';
+    return model.type + '#' + model.timestamp;
   }
 }
 

@@ -1,60 +1,53 @@
 <template>
   <div>
-    <button @click="createUser">Add user</button>
+    <button @click="createIsue">Add Isue</button>
     <div style="display: flex;">
-      <form style="display: flex; flex-direction:column" @submit.prevent="user.$save()" :key="user.id" v-for="user in users">
-        <label for="id">
-          <input type="text" id="id" v-model="user.id" />
-        </label>
-        <label for="name">
-          name
-          <input type="text" id="name" v-model="user.name" />
-        </label>
+      <template  v-for="(issue, index) in issues">
+      <form :key="index + 'f'" style="display: flex; flex-direction:column" @submit.prevent="issue.$save()" >
         <label for="type">
           type
-          <input type="text" id="type" v-model="user.type" />
+          <input type="text" id="type" v-model="issue.type" />
         </label>
-        <label for="age">
-          user
-          <input type="number" id="age" v-model.number="user.age" />
+        <label for="entity">
+          entity
+          <input type="text" id="entity" v-model="issue.entity" />
+        </label>
+        <label for="timestamp">
+          timestamp
+          <input type="number" id="timestamp" v-model.number="issue.timestamp" />
         </label>
         <button>Save</button>
-        <pre>{{ user }}</pre>
       </form>
+      <pre :key="index + 'p'">{{issue}}</pre>
+      </template>
     </div>
   <div>
     All users
-    <pre>{{allUsers}}</pre>
-    All posts
-    <pre>{{allPosts}}</pre>
+    <pre>{{all}}</pre>
   </div>
   </div>
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { User } from './models/User';
+  import { Issue, User } from './models/User';
   import { Post } from './models/Post';
 
 
   export default Vue.extend({
     computed: {
-      allUsers() {
-        return User.all({load: ['posts.user.*', 'posts.comments.users']});
-      },
-      allPosts() {
-        return Post.all({load: ['user.posts.*']})
+      all() {
+        return Issue.all()
       }
     },
     data() {
       return {
-        users: [],
+        issues: [],
       };
     },
     methods: {
-      createUser() {
-        const u: any = new User(null,  {load: {posts:{}}});
-        u.id = Math.floor(Math.random() * 10000000);
-        this.users.push(u)
+      createIsue() {
+        const issue = new Issue
+        this.issues.push(issue)
       }
     },
   });

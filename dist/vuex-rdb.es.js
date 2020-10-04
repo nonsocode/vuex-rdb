@@ -422,7 +422,8 @@ function cacheDefaults(model) {
     });
 }
 function createAccessor(target, key) {
-    var _a = getConstructor(target), _path = _a._path, _store = _a._store, _fields = _a._fields;
+    var Schema = getConstructor(target);
+    var _path = Schema._path, _store = Schema._store, _fields = Schema._fields, id = Schema.id;
     var isRelationship = key in _fields && _fields[key].isRelationship;
     var relationshipDef = isRelationship ? _fields[key] : null;
     Object.defineProperty(target, key, {
@@ -446,6 +447,7 @@ function createAccessor(target, key) {
             return this._caches[getCacheName(isRelationship)][key];
         },
         set: function (value) {
+            var _a;
             if (value != null) {
                 if (isRelationship) {
                     var Related = getRelationshipSchema(relationshipDef);
@@ -455,6 +457,13 @@ function createAccessor(target, key) {
                     }
                     if (target._connected) {
                         value = normalizeAndStore(_store, value, relationshipDef.entity);
+                    }
+                }
+                else if (target._connected && isFunction(id)) {
+                    var oldId = getIdValue(target, Schema);
+                    var newId = getIdValue(__assign(__assign({}, target), (_a = {}, _a[key] = value, _a)), Schema);
+                    if (oldId != newId) {
+                        throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
                     }
                 }
             }
@@ -742,7 +751,7 @@ function createModule(schema, keyMap, options, store) {
                     newItems = items.map(function (item) { return (__assign(__assign({}, item), data)); });
                     var oldIds = items.map(function (item) { return getIdValue(item, schema); });
                     var newIds_1 = newItems.map(function (item) { return getIdValue(item, schema); });
-                    var idHasChanged = oldIds.some(function (id, index) { return id !== newIds_1[index]; });
+                    var idHasChanged = oldIds.some(function (id, index) { return id != newIds_1[index]; });
                     if (idHasChanged) {
                         throw new Error('Invalid Update: This would cause a change in the computed id.');
                     }
