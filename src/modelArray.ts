@@ -20,24 +20,72 @@ export class ModelArray<T extends Model> extends Array<T> {
   }
 
   push(...items) {
-    const ContextSchema = getConstructor(this._context);
-    const fieldDefinition = ContextSchema._fields[this._key];
-    const Schema = getRelationshipSchema(fieldDefinition);
-    const { _path } = ContextSchema;
-    const rawContext = this._store.getters[`${ContextSchema._path}/${Getters.GET_RAW}`](
-      getIdValue(this._context, ContextSchema)
-    );
+    const { Schema, rawContext } = this._extractUtils();
     const referenceArray = rawContext[this._key] || [];
     items.forEach(item => normalizeAndStore(this._store, item, Schema.entityName));
 
     const ids = items.map(item => getIdValue(item, Schema));
 
-    this._store.commit(`${_path}/${Mutations.SET_PROP}`, { id: this._context._id, key: this._key, value: [...referenceArray, ...ids] });
-    super.push(...Schema.findByIds(ids, { load: this._context._load?.[this._key] }) as any);
+    this._mutateContext([...referenceArray, ...ids]);
+    super.push(...(Schema.findByIds(ids, { load: this._context._load?.[this._key] }) as any));
     return this.length;
   }
 
-  _extractUtils() {}
+  pop() {
+    const { Schema } = this._extractUtils()
+    const removed = super.pop();
+
+    this._mutateContext(this.map(item => getIdValue(item, Schema)))
+    return removed;
+  }
+  
+  unshift(...items) {
+    const { Schema,  rawContext } = this._extractUtils();
+    const referenceArray = rawContext[this._key] || [];
+    items.forEach(item => normalizeAndStore(this._store, item, Schema.entityName));
+
+    const ids = items.map(item => getIdValue(item, Schema));
+
+    this._mutateContext([...ids, ...referenceArray])
+
+    super.unshift(...(Schema.findByIds(ids, { load: this._context._load?.[this._key] }) as any));
+    return this.length;
+  }
+
+  shift() {
+    const { Schema } = this._extractUtils()
+    const removed = super.shift();
+    this._mutateContext(this.map(item => getIdValue(item, Schema)))
+    return removed;
+  }
+
+  //todo 
+
+  _mutateContext(value) {
+    const { contextPath } = this._extractUtils();
+    this._store.commit(`${contextPath}/${Mutations.SET_PROP}`, {
+      id: this._context._id,
+      key: this._key,
+      value
+    });
+  }
+
+  _extractUtils() {
+    const ContextSchema = getConstructor(this._context);
+    const contextFieldDefinition = ContextSchema._fields[this._key];
+    const Schema = getRelationshipSchema(contextFieldDefinition);
+    const { _path } = ContextSchema;
+    const rawContext = this._store.getters[`${ContextSchema._path}/${Getters.GET_RAW}`](
+      getIdValue(this._context, ContextSchema)
+    );
+    return {
+      ContextSchema,
+      contextFieldDefinition,
+      contextPath: _path,
+      rawContext,
+      Schema
+    };
+  }
 }
 
 declare global {

@@ -61,7 +61,7 @@ function createAccessor(target: Model, key) {
           if (target._connected) {
             value = normalizeAndStore(_store, value, relationshipDef.entity);
           }
-        } else if (target._connected && isFunction(id)) {
+        } else if (target._connected &&( isFunction(id) || id == key)) {
           const oldId = getIdValue(target, Schema);
           const newId = getIdValue({...target, [key]: value}, Schema);
           if(oldId != newId) {

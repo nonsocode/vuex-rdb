@@ -1,4 +1,5 @@
 <template>
+<div>
   <div>
     <button @click="createIsue">Add Isue</button>
     <div style="display: flex;">
@@ -26,6 +27,34 @@
     <pre>{{all}}</pre>
   </div>
   </div>
+  <div>
+    <button @click="createUser">Add USER</button>
+    <div style="display: flex;">
+      <template  v-for="(user, index) in users">
+      <form :key="index + 'f'" style="display: flex; flex-direction:column" @submit.prevent="user.$save()" >
+        <label for="type">
+          type
+          <input type="text" id="type" v-model="user.type" />
+        </label>
+        <label for="name">
+          name
+          <input type="text" id="name" v-model="user.name" />
+        </label>
+        <label for="age">
+          age
+          <input type="number" id="age" v-model.number="user.age" />
+        </label>
+        <button>Save</button>
+      </form>
+      <pre :key="index + 'p'">{{user}}</pre>
+      </template>
+    </div>
+  <div>
+    All users
+    <pre>{{allUsers}}</pre>
+  </div>
+  </div>
+</div>
 </template>
 <script lang="ts">
   import Vue from 'vue';
@@ -37,17 +66,26 @@
     computed: {
       all() {
         return Issue.all()
+      },
+      allUsers(){
+        return User.all({load: 'issues'})
       }
     },
     data() {
       return {
         issues: [],
+        users: []
       };
     },
     methods: {
       createIsue() {
         const issue = new Issue
         this.issues.push(issue)
+      },
+      createUser(){
+        const user = new User();
+        user.id = Math.floor(Math.random() * 40000);
+        this.users.push(user)
       }
     },
   });

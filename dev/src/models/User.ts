@@ -23,6 +23,9 @@ export class User extends Model {
 
   @Field()
   public name: string;
+  
+   @Field()
+  public id: number;
 
   @Field({ default: 'student' })
   public type: string;
@@ -33,6 +36,6 @@ export class User extends Model {
   @Field({ entity: () => [Post], default: () => [] })
   public posts!: Post[];
 
-  @Field('issue')
-  public issue!: Issue;
+  @Field(['issue'])
+  public issues!: Issue;
 }

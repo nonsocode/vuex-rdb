@@ -4,15 +4,14 @@ import { createObject } from './utils';
 
 export const nameModelMap: Map<string, typeof Model> = new Map();
 
-
 export function registerSchema(schema: typeof Model) {
   nameModelMap.set(schema.entityName, schema);
-  
+
   if (!schema._fields) {
-    schema._fields = createObject({}) 
+    schema._fields = createObject({});
   }
-  if(typeof schema.id == 'string' && !(schema.id in schema._fields)) {
-    schema._fields[schema.id] =  new FieldDefinition().lock();
+  if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
+    schema._fields[schema.id] = new FieldDefinition().lock();
   }
   Object.entries(schema.relationships || {}).forEach(([key, value]) => {
     if (key in schema._fields) return;
@@ -21,7 +20,7 @@ export function registerSchema(schema: typeof Model) {
       list: Array.isArray(value)
     }).lock();
   });
-  Object.keys(schema.fields || {}).forEach((key) => {
+  (Array.isArray(schema.fields) ? schema.fields : Object.keys(schema.fields || {})).forEach(key => {
     if (key in schema._fields) return;
     schema._fields[key] = new FieldDefinition().lock();
   });

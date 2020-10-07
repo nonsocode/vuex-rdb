@@ -268,7 +268,7 @@ function registerSchema(schema) {
             list: Array.isArray(value)
         }).lock();
     });
-    Object.keys(schema.fields || {}).forEach(function (key) {
+    (Array.isArray(schema.fields) ? schema.fields : Object.keys(schema.fields || {})).forEach(function (key) {
         if (key in schema._fields)
             return;
         schema._fields[key] = new FieldDefinition().lock();
@@ -392,19 +392,64 @@ var ModelArray = /** @class */ (function (_super) {
         for (var _i = 0; _i < arguments.length; _i++) {
             items[_i] = arguments[_i];
         }
-        var ContextSchema = getConstructor(this._context);
-        var fieldDefinition = ContextSchema._fields[this._key];
-        var Schema = getRelationshipSchema(fieldDefinition);
-        var _path = ContextSchema._path;
-        var rawContext = this._store.getters[ContextSchema._path + "/" + Getters.GET_RAW](getIdValue(this._context, ContextSchema));
+        var _b = this._extractUtils(), Schema = _b.Schema, rawContext = _b.rawContext;
         var referenceArray = rawContext[this._key] || [];
         items.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema.entityName); });
         var ids = items.map(function (item) { return getIdValue(item, Schema); });
-        this._store.commit(_path + "/" + Mutations.SET_PROP, { id: this._context._id, key: this._key, value: __spread(referenceArray, ids) });
+        this._mutateContext(__spread(referenceArray, ids));
         _super.prototype.push.apply(this, __spread(Schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
         return this.length;
     };
-    ModelArray.prototype._extractUtils = function () { };
+    ModelArray.prototype.pop = function () {
+        var Schema = this._extractUtils().Schema;
+        var removed = _super.prototype.pop.call(this);
+        this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
+        return removed;
+    };
+    ModelArray.prototype.unshift = function () {
+        var _this = this;
+        var _a;
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i] = arguments[_i];
+        }
+        var _b = this._extractUtils(), Schema = _b.Schema, rawContext = _b.rawContext;
+        var referenceArray = rawContext[this._key] || [];
+        items.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema.entityName); });
+        var ids = items.map(function (item) { return getIdValue(item, Schema); });
+        this._mutateContext(__spread(ids, referenceArray));
+        _super.prototype.unshift.apply(this, __spread(Schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
+        return this.length;
+    };
+    ModelArray.prototype.shift = function () {
+        var Schema = this._extractUtils().Schema;
+        var removed = _super.prototype.shift.call(this);
+        this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
+        return removed;
+    };
+    //todo 
+    ModelArray.prototype._mutateContext = function (value) {
+        var contextPath = this._extractUtils().contextPath;
+        this._store.commit(contextPath + "/" + Mutations.SET_PROP, {
+            id: this._context._id,
+            key: this._key,
+            value: value
+        });
+    };
+    ModelArray.prototype._extractUtils = function () {
+        var ContextSchema = getConstructor(this._context);
+        var contextFieldDefinition = ContextSchema._fields[this._key];
+        var Schema = getRelationshipSchema(contextFieldDefinition);
+        var _path = ContextSchema._path;
+        var rawContext = this._store.getters[ContextSchema._path + "/" + Getters.GET_RAW](getIdValue(this._context, ContextSchema));
+        return {
+            ContextSchema: ContextSchema,
+            contextFieldDefinition: contextFieldDefinition,
+            contextPath: _path,
+            rawContext: rawContext,
+            Schema: Schema
+        };
+    };
     return ModelArray;
 }(Array));
 window.ModelArray = ModelArray;
@@ -465,7 +510,7 @@ function createAccessor(target, key) {
                         value = normalizeAndStore(_store, value, relationshipDef.entity);
                     }
                 }
-                else if (target._connected && isFunction(id)) {
+                else if (target._connected && (isFunction(id) || id == key)) {
                     var oldId = getIdValue(target, Schema);
                     var newId = getIdValue(__assign(__assign({}, target), (_a = {}, _a[key] = value, _a)), Schema);
                     if (oldId != newId) {

@@ -6,7 +6,17 @@ export declare class ModelArray<T extends Model> extends Array<T> {
     _store: Store<any>;
     constructor(context: Model, key: string, items: T[]);
     push(...items: any[]): number;
-    _extractUtils(): void;
+    pop(): T;
+    unshift(...items: any[]): number;
+    shift(): T;
+    _mutateContext(value: any): void;
+    _extractUtils(): {
+        ContextSchema: typeof Model;
+        contextFieldDefinition: import("./FieldDefinition").FieldDefinition;
+        contextPath: string;
+        rawContext: any;
+        Schema: typeof Model;
+    };
 }
 declare global {
     interface Window {
