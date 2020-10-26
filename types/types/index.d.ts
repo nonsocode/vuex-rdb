@@ -171,7 +171,7 @@ export interface PluginOptions<T> {
      * The list of Model types to be registered in the Database
      */
     schemas: typeof Model[];
-    strict: boolean;
+    strict?: boolean;
 }
 declare type AppendRecord = {
     [key: string]: AppendRecord;

@@ -85,7 +85,7 @@ export function getIdValue<T>(model: T, schema: typeof Model): string | number {
 }
 
 @ModelDecorator
-export class Model implements IModel {
+export class Model<T extends any = any> implements IModel {
   public static _namespace: string;
   public static entityName: string;
   public static _store: Store<any>;
@@ -97,7 +97,7 @@ export class Model implements IModel {
   _connected = false;
   _id;
 
-  constructor(data: any, opts: any = {}) {
+  constructor(data?: T, opts: any = {}) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },

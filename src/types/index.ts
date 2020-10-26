@@ -186,7 +186,7 @@ export interface PluginOptions<T> {
    */
   schemas: typeof Model[];
   
-  strict: boolean;
+  strict?: boolean;
 }
 
 type AppendRecord = { [key: string]: AppendRecord };

@@ -2,7 +2,7 @@ import { FindOptions, IModel, IModelStatic, Relationship } from './types';
 import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
 export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
-export declare class Model implements IModel {
+export declare class Model<T extends any = any> implements IModel {
     static _namespace: string;
     static entityName: string;
     static _store: Store<any>;
@@ -12,7 +12,7 @@ export declare class Model implements IModel {
     _caches: any;
     _connected: boolean;
     _id: any;
-    constructor(data: any, opts?: any);
+    constructor(data?: T, opts?: any);
     toJSON(parentkey: any, parentNode: any): {};
     static get relationships(): Record<string, Relationship>;
     static get fields(): Record<string, true> | string[];
