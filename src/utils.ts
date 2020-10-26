@@ -1,5 +1,4 @@
-import { Model } from './model';
-import {TypeOrFunction} from './types';
+import {NodeTree, TypeOrFunction} from './types';
 
 export const identity = k => k;
 
@@ -35,4 +34,14 @@ export function ucFirst(str: string) {
 
 export function isPrimitive(val) {
   return [ 'string', 'number', 'bigint', 'boolean'].includes(typeof val)
+}
+
+
+export function hasSeen(item, nodeTree?: NodeTree) {
+  if(!nodeTree) return false;
+  while (nodeTree) {
+    if(nodeTree.item == item) return true;
+    nodeTree = nodeTree.parentNode
+  }
+  return false;
 }

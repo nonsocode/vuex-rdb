@@ -1,8 +1,7 @@
 import { Model } from 'src';
-import { Relationship } from 'src/types';
+import { RelationshipGenerator } from 'src/types';
 export declare type FieldDefinitionOptions = {
-    entity?: string | (() => Relationship);
-    list?: boolean;
+    entity?: RelationshipGenerator;
     default?(): any;
 };
-export declare function Field(options?: FieldDefinitionOptions | string | [string] | (() => Relationship)): (target: Model, propname: string) => void;
+export declare function Field(options?: FieldDefinitionOptions | RelationshipGenerator): (target: Model, propname: string) => void;

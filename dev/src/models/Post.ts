@@ -7,6 +7,6 @@ export  class Post extends Model {
   @Field(() => User)
   public user!: User
 
-  @Field(['comment'])
+  @Field(() => [Comment])
   public comments!: Comment[]
 }

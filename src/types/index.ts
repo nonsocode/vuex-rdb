@@ -1,3 +1,4 @@
+import { FieldDefinition } from 'src/FieldDefinition';
 import {Store} from 'vuex';
 import {Model} from '../model';
 
@@ -25,11 +26,11 @@ export interface TypeFunction<T> extends Function {
   (this: null, data: any): T;
 }
 export type ModelState = Record<string|number, any>
-
+export type Cache =  Map<typeof Model, Record<IdValue, object>>
 export type IdValue = string | number
 export type Normalized = {
   result: IdValue | IdValue[],
-  entities: Record<string, Record<IdValue, object>>
+  entities: Cache
 }
 
 export interface IModel {
@@ -66,10 +67,11 @@ export interface IModel {
   $removeRelated(related: string, ids?: (string | number)[]): Promise<string | number>;
 
   /**
-   * By default, the model is non reactive. you can assign properties to the model like you would any other javascript
+   * Useful when a model is created using `new Model()`.
+   * You can assign properties to the model like you would any other javascript
    * object but the new values won't be saved to the vuex store until this method is called;
    *
-   * If none model-like have been assigned to the relationships on `this` model, calling save would
+   * If none model-like data has been assigned to the relationships on `this` model, calling save would
    * transform them to actual models
    */
   $save(): Promise<string | number>;
@@ -92,6 +94,8 @@ export type IModelStatic<T> = {
    */
   readonly name: string;
   /**
+   * This is an alternative to the `Field(() => RelatedModel)` decorator
+   * 
    * A record of all the possible relationships of this Schema. Currently, two types are supported
    *
    * - list
@@ -112,16 +116,29 @@ export type IModelStatic<T> = {
    * ```
    */
   relationships?: Record<string, Relationship>;
+
   /**
-   * The path in the vuex store
+   * This is an alternative to the `Field()` decorator. 
+   * 
+   * Specify the different fields of the class
+   * in an array or an object that contains the field names as it's keys
+   */
+  fields?: Record<string, true> | string[] 
+
+  /**
+   * The namespace in the vuex store
    * @internal
    */
-  readonly _path?: string;
+  readonly _namespace?: string;
   /**
    * The Vuex store
    * @internal
    */
   readonly _store?: Store<any>;
+  /**
+   * @internal
+   */
+  readonly _fields?: Record<string, FieldDefinition>;
   /**
    * Find a model by the specified identifier
    * @param id
@@ -157,7 +174,7 @@ export type IModelStatic<T> = {
 };
 
 export type Relationship = typeof Model | [typeof Model];
-
+export type RelationshipGenerator = (() => Relationship);
 export interface PluginOptions<T> {
   /**
    * The namespace of the database in the Vuex store
@@ -168,6 +185,8 @@ export interface PluginOptions<T> {
    * The list of Model types to be registered in the Database
    */
   schemas: typeof Model[];
+  
+  strict: boolean;
 }
 
 type AppendRecord = { [key: string]: AppendRecord };
@@ -188,3 +207,7 @@ export type EntityName = string;
 export type StorePath = string;
 
 export declare function generateDatabasePlugin<T>(options: PluginOptions<T>): (store: Store<any>) => any;
+export type NodeTree = {
+  parentNode?: NodeTree,
+  item: any
+}

@@ -20,9 +20,9 @@ export class ModelArray<T extends Model> extends Array<T> {
   }
 
   push(...items) {
-    const { Schema, rawContext } = this._extractUtils();
+    const { Schema, rawContext } = this._extractUtils(true);
     const referenceArray = rawContext[this._key] || [];
-    items.forEach(item => normalizeAndStore(this._store, item, Schema.entityName));
+    items.forEach(item => normalizeAndStore(this._store, item, Schema));
 
     const ids = items.map(item => getIdValue(item, Schema));
 
@@ -32,56 +32,56 @@ export class ModelArray<T extends Model> extends Array<T> {
   }
 
   pop() {
-    const { Schema } = this._extractUtils()
+    const { Schema } = this._extractUtils();
     const removed = super.pop();
 
-    this._mutateContext(this.map(item => getIdValue(item, Schema)))
+    this._mutateContext(this.map(item => getIdValue(item, Schema)));
     return removed;
   }
-  
+
   unshift(...items) {
-    const { Schema,  rawContext } = this._extractUtils();
+    const { Schema, rawContext } = this._extractUtils(true);
     const referenceArray = rawContext[this._key] || [];
-    items.forEach(item => normalizeAndStore(this._store, item, Schema.entityName));
+    items.forEach(item => normalizeAndStore(this._store, item, Schema));
 
     const ids = items.map(item => getIdValue(item, Schema));
 
-    this._mutateContext([...ids, ...referenceArray])
+    this._mutateContext([...ids, ...referenceArray]);
 
     super.unshift(...(Schema.findByIds(ids, { load: this._context._load?.[this._key] }) as any));
     return this.length;
   }
 
   shift() {
-    const { Schema } = this._extractUtils()
+    const { Schema } = this._extractUtils();
     const removed = super.shift();
-    this._mutateContext(this.map(item => getIdValue(item, Schema)))
+    this._mutateContext(this.map(item => getIdValue(item, Schema)));
     return removed;
   }
 
-  //todo 
+  //todo
 
   _mutateContext(value) {
-    const { contextPath } = this._extractUtils();
-    this._store.commit(`${contextPath}/${Mutations.SET_PROP}`, {
+    const { ContextSchema } = this._extractUtils();
+    this._store.commit(`${ContextSchema._namespace}/${Mutations.SET_PROP}`, {
       id: this._context._id,
       key: this._key,
-      value
+      value,
+      schema: ContextSchema
     });
   }
 
-  _extractUtils() {
+  _extractUtils(withRawData = false) {
     const ContextSchema = getConstructor(this._context);
-    const contextFieldDefinition = ContextSchema._fields[this._key];
-    const Schema = getRelationshipSchema(contextFieldDefinition);
-    const { _path } = ContextSchema;
-    const rawContext = this._store.getters[`${ContextSchema._path}/${Getters.GET_RAW}`](
-      getIdValue(this._context, ContextSchema)
-    );
+    const Schema = getRelationshipSchema(ContextSchema._fields[this._key]);
+    const rawContext = withRawData
+      ? this._store.getters[`${ContextSchema._namespace}/${Getters.GET_RAW}`](
+          getIdValue(this._context, ContextSchema),
+          ContextSchema
+        )
+      : null;
     return {
       ContextSchema,
-      contextFieldDefinition,
-      contextPath: _path,
       rawContext,
       Schema
     };

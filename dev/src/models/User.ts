@@ -24,8 +24,11 @@ export class User extends Model {
   @Field()
   public name: string;
   
-   @Field()
+  @Field()
   public id: number;
+  
+  @Field()
+  public prop1: string;
 
   @Field({ default: 'student' })
   public type: string;
@@ -36,6 +39,33 @@ export class User extends Model {
   @Field({ entity: () => [Post], default: () => [] })
   public posts!: Post[];
 
-  @Field(['issue'])
+  @Field(() => [Issue])
   public issues!: Issue;
 }
+export class User2 extends Model {
+  static entityName = 'user';
+
+  @Field()
+  public name: string;
+  
+   @Field()
+  public id: number;
+
+  @Field({ default: 'student' })
+  public type: string;
+
+  @Field()
+  public prop2: string; 
+
+  @Field({ default: () => Math.floor(Math.random() * 80) })
+  public age: number;
+
+  @Field({ entity: () => [Post], default: () => [] })
+  public posts!: Post[];
+
+  @Field(() => [Issue])
+  public issues!: Issue;
+}
+
+window.User = User;
+window.User2 = User2;

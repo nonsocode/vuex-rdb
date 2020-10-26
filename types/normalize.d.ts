@@ -1,2 +1,2 @@
-import { Normalized } from './types';
-export declare function normalize(raw: any, entityName: string | [string], visited?: Map<any, string | number>, entities?: {}, depth?: number): Normalized;
+import { Normalized, Relationship } from './types';
+export declare function normalize(raw: any, entityDef: Relationship, visited?: Map<any, string | number>, entities?: Normalized['entities'], depth?: number): Normalized;

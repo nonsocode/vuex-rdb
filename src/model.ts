@@ -1,4 +1,4 @@
-import { createObject, identity, isFunction, mergeUnique, ucFirst } from './utils';
+import { hasSeen, identity, isFunction } from './utils';
 import { Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relationship } from './types';
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
@@ -9,6 +9,9 @@ import { ModelArray } from './modelArray';
 
 const cacheNames = ['data', 'relationship'];
 
+function ModelDecorator<T extends IModelStatic<any>>(constructor: T) {
+  return constructor;
+}
 const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, Schema: typeof Model): any => {
   return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
@@ -20,14 +23,14 @@ const proxySetter = (target: Model, key: string, value) => {
   target[key] = value;
   return true;
 };
-function cacheDefaults(model: Model) {
+function cacheDefaults(model: Model, overrides = {}) {
   Object.entries(getConstructor(model)._fields).forEach(([key, definition]) => {
-    model._caches[getCacheName(definition.isRelationship)][key] = definition.default;
+    model._caches[getCacheName(definition.isRelationship)][key] = overrides[key] ?? definition.default;
   });
 }
 function createAccessor(target: Model, key) {
-  const Schema =  getConstructor(target)
-  const { _path, _store, _fields, id } = Schema;
+  const Schema = getConstructor(target);
+  const { _namespace: path, _store, _fields, id } = Schema;
   const isRelationship = key in _fields && _fields[key].isRelationship;
   const relationshipDef = isRelationship ? _fields[key] : null;
 
@@ -35,10 +38,10 @@ function createAccessor(target: Model, key) {
     enumerable: true,
     get() {
       if (target._connected) {
-        const raw: any = _store.getters[`${_path}/${Getters.GET_RAW}`](this._id);
+        const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, Schema);
         const value = raw[key];
         if (isRelationship) {
-          const opts = { load: target._load[key] || {} };
+          const opts = { load: target._load?.[key] };
           const Related = getRelationshipSchema(relationshipDef);
           if (relationshipDef.isList) {
             return value && new ModelArray(target, key, Related.findByIds(value, opts));
@@ -61,17 +64,17 @@ function createAccessor(target: Model, key) {
           if (target._connected) {
             value = normalizeAndStore(_store, value, relationshipDef.entity);
           }
-        } else if (target._connected &&( isFunction(id) || id == key)) {
+        } else if (target._connected && (isFunction(id) || id == key)) {
           const oldId = getIdValue(target, Schema);
-          const newId = getIdValue({...target, [key]: value}, Schema);
-          if(oldId != newId) {
+          const newId = getIdValue({ ...target, [key]: value }, Schema);
+          if (oldId != newId) {
             throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
           }
         }
       }
 
       target._connected
-        ? _store.commit(`${_path}/${Mutations.SET_PROP}`, { id: this._id, key, value })
+        ? _store.commit(`${path}/${Mutations.SET_PROP}`, { id: this._id, key, value, schema: Schema })
         : Vue.set(this._caches[getCacheName(isRelationship)], key, value);
     }
   });
@@ -81,8 +84,9 @@ export function getIdValue<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
 
+@ModelDecorator
 export class Model implements IModel {
-  public static _path: string;
+  public static _namespace: string;
   public static entityName: string;
   public static _store: Store<any>;
   public static _fields: Record<string, FieldDefinition>;
@@ -98,44 +102,43 @@ export class Model implements IModel {
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
       _connected: { value: !!opts?.connected, enumerable: false, configurable: true },
-      _load: { value: opts?.load || createObject({}), enumerable: false, configurable: true },
+      _load: { value: opts?.load, enumerable: false, configurable: true },
       _id: { value: id, enumerable: false, configurable: false, writable: true }
     });
 
     const { _fields } = getConstructor(this);
-
-    if (data) {
-      Object.keys(data).forEach(key => createAccessor(this, key));
-    } else {
-      cacheDefaults(this);
-    }
-
-    Object.keys({ ..._fields }).forEach(key => {
-      if (key in this) return;
+    Object.keys(_fields).forEach(key => {
       createAccessor(this, key);
     });
+    if (!this._connected) {
+      cacheDefaults(this, data || {});
+      Vue.observable(this._caches);
+    }
 
-    if (!this._connected) Vue.observable(this._caches);
-
-    return new Proxy<Model>(this, {
-      set: proxySetter
-    });
+    // No need for proxy
+    // return new Proxy<Model>(this, {
+    // set: proxySetter
+    // });
   }
-
-  toJSON() {
+  toJSON(parentkey, parentNode) {
     const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
-      if (!(key in constructor._fields && constructor._fields[key].isRelationship)) {
-        acc[key] = val;
-      } else {
-        if (key in this._load) {
-          if (val == null) {
-            acc[key] = val;
-          } else if (Array.isArray(val)) {
-            acc[key] = val.map(item => (item.toJSON ? item.toJSON() : item));
-          } else {
-            acc[key] = val.toJSON ? val.toJSON() : val;
+      if (key in constructor._fields) {
+        if (constructor._fields[key].isRelationship) {
+          if (!this._load || (this._load && key in this._load)) {
+            const node = { item: this, parentNode };
+            if (val == null) {
+              acc[key] = val;
+            } else if (Array.isArray(val)) {
+              acc[key] = val.map(item =>
+                item.toJSON ? (hasSeen(item, node) ? '>>> Recursive item <<<' : item.toJSON(key, node)) : item
+              );
+            } else {
+              acc[key] = val.toJSON ? (hasSeen(val, node) ? '>>> Recursive item <<<' : val.toJSON(key, node)) : val;
+            }
           }
+        } else {
+          acc[key] = val;
         }
       }
       return acc;
@@ -153,9 +156,10 @@ export class Model implements IModel {
   async $update(data = {}): Promise<string | number> {
     const constructor = getConstructor(this);
     return constructor._store
-      .dispatch(`${constructor._path}/update`, {
+      .dispatch(`${constructor._namespace}/update`, {
         id: this._id,
-        data
+        data,
+        schema: constructor
       })
       .then(id => {
         this._connected = true;
@@ -163,17 +167,18 @@ export class Model implements IModel {
       });
   }
 
+  // @createLogger('save')
   async $save(): Promise<number | string> {
     return new Promise(resolve => {
       const constructor = getConstructor(this);
       if (this._connected) {
         console.warn('No need calling $save');
       } else {
-        const data = cacheNames.reduce((acc, name) => {
+        const item = cacheNames.reduce((acc, name) => {
           return { ...acc, ...this._caches[name] };
         }, {});
         resolve(
-          constructor._store.dispatch(`${constructor._path}/add`, data).then(res => {
+          constructor._store.dispatch(`${constructor._namespace}/add`, { item, schema: constructor }).then(res => {
             this._id = res;
             this._connected = true;
             return res;
@@ -185,34 +190,36 @@ export class Model implements IModel {
 
   async $addRelated(related, data): Promise<string | number> {
     const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._path}/addRelated`, {
+    return constructor._store.dispatch(`${constructor._namespace}/addRelated`, {
       id: this._id,
       related,
-      data
+      data,
+      schema: constructor
     });
   }
 
   async $removeRelated(related, relatedId): Promise<string | number> {
     const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._path}/removeRelated`, {
+    return constructor._store.dispatch(`${constructor._namespace}/removeRelated`, {
       id: this._id,
       related,
-      relatedId
+      relatedId,
+      schema: constructor
     });
   }
   static find<T>(this: IModelStatic<T>, id: string | number, opts: FindOptions = {}): T {
-    return this._store.getters[`${this._path}/${Getters.FIND}`](id, opts);
+    return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
   }
   static findByIds<T>(this: IModelStatic<T>, ids: any[], opts: FindOptions = {}): T[] {
-    return this._store.getters[`${this._path}/${Getters.FIND_BY_IDS}`](ids, opts);
+    return this._store.getters[`${this._namespace}/${Getters.FIND_BY_IDS}`](ids, this, opts);
   }
   static all<T>(this: IModelStatic<T>, opts: FindOptions = {}): T[] {
-    return this._store.getters[`${this._path}/${Getters.ALL}`](opts);
+    return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
   }
   static add(item: any): Promise<string | number> {
-    return this._store.dispatch(`${this._path}/${Actions.ADD}`, item);
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { item, schema: this });
   }
   static addAll(items: any[]): Promise<Array<string | number>> {
-    return this._store.dispatch(`${this._path}/${Actions.ADD_ALL}`, items);
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD_ALL}`, { items, schema: this });
   }
 }

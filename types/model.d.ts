@@ -3,7 +3,7 @@ import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
 export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
 export declare class Model implements IModel {
-    static _path: string;
+    static _namespace: string;
     static entityName: string;
     static _store: Store<any>;
     static _fields: Record<string, FieldDefinition>;
@@ -13,7 +13,7 @@ export declare class Model implements IModel {
     _connected: boolean;
     _id: any;
     constructor(data: any, opts?: any);
-    toJSON(): {};
+    toJSON(parentkey: any, parentNode: any): {};
     static get relationships(): Record<string, Relationship>;
     static get fields(): Record<string, true> | string[];
     $update(data?: {}): Promise<string | number>;

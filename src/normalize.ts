@@ -1,45 +1,54 @@
+import { Model } from 'src';
 import { getIdValue } from './model';
-import { nameModelMap } from './registrar';
-import { Normalized } from './types';
+import { getRelationshipSchema } from './relationships';
+import { Normalized, Relationship } from './types';
 import { createObject } from './utils';
 
-export function normalize(raw, entityName: string | [string], visited = new Map<any, string | number>(), entities = createObject({}), depth = 0): Normalized {
-  const resolvedEntityName = Array.isArray(entityName) ? entityName[0] : entityName
-  const schema = nameModelMap.get(resolvedEntityName);
+export function normalize(
+  raw,
+  entityDef: Relationship,
+  visited = new Map<any, string | number>(),
+  entities: Normalized['entities'] = new Map(),
+  depth = 0
+): Normalized {
+  const schema = getRelationshipSchema(entityDef);
   const fields = schema._fields;
-  let normalized = {}
+  let normalized = {};
   let result;
-  if(raw == null) {
-    result = null
-  } else if (Array.isArray(raw)) {
-    result = raw.map(r => {
-      const {result} = normalize(r, resolvedEntityName, visited, entities, depth + 1);
-      return result
-    }).filter(id => id != null);
+  if (raw == null) {
+    result = null;
+  } else if (Array.isArray(raw) && Array.isArray(entityDef)) {
+    result = raw
+      .map(r => {
+        const { result } = normalize(r, schema, visited, entities, depth + 1);
+        return result;
+      })
+      .filter(id => id != null);
   } else {
-    if(visited.has(raw)) {
-      result = visited.get(raw)
+    if (visited.has(raw)) {
+      result = visited.get(raw);
     } else {
       const id = getIdValue(raw, schema);
       result = id;
       visited.set(raw, id);
-      for(let [key, value] of Object.entries(raw)) {
-        if(key in fields && fields[key].isRelationship) {
-          const {result} = normalize(value, fields[key].entity, visited, entities, depth + 1)
-          normalized[key] = result
+      for (let [key, value] of Object.entries(raw)) {
+        if (key in fields) {
+          normalized[key] = fields[key].isRelationship
+            ? normalize(value, fields[key].entity, visited, entities, depth + 1).result
+            : value;
         } else {
-          normalized[key] = value
+          // Ignore if this property isn't defined on the model
         }
       }
-      if(!(resolvedEntityName in entities)){
-        entities[resolvedEntityName] = createObject({})
+      if (!entities.has(schema)) {
+        entities.set(schema, createObject({}));
       }
-      entities[resolvedEntityName][id] = {...entities[resolvedEntityName][id], ...normalized }
+      entities.get(schema)[id] = { ...entities.get(schema)[id], ...normalized };
     }
   }
 
   return {
     result,
     entities
-  }
+  };
 }

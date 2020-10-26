@@ -50,15 +50,19 @@
       </template>
     </div>
   <div>
-    All users
+    All users 1
     <pre>{{allUsers}}</pre>
+  </div>
+  <div>
+    All users 2
+    <pre>{{allUsers2}}</pre>
   </div>
   </div>
 </div>
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Issue, User } from './models/User';
+  import { Issue, User, User2 } from './models/User';
   import { Post } from './models/Post';
 
 
@@ -68,7 +72,10 @@
         return Issue.all()
       },
       allUsers(){
-        return User.all({load: 'issues'})
+        return User.all({})
+      },
+      allUsers2(){
+        return User2.all()
       }
     },
     data() {

@@ -1,8 +1,7 @@
-import { normalize } from './normalize';
 import { getRelationshipSchema, isList, relations } from './relationships';
-import { identity, isFunction, mergeUnique } from './utils';
+import { createObject, identity, isFunction, mergeUnique } from './utils';
 import {getIdValue, Model} from './model';
-import {PluginOptions, ModelState, Mutations, Actions, Getters, EntityName, StorePath} from './types';
+import { ModelState, Mutations, Actions, Getters, Cache} from './types';
 import {Module, Store} from 'vuex';
 const sum = require('hash-sum');
 
@@ -15,37 +14,29 @@ export function generateModuleName(namespace, key) {
   return chunks.join('/');
 }
 
-export function createModule<T>(
-  schema: typeof Model,
-  keyMap: Record<EntityName, StorePath>,
-  options: PluginOptions<T>,
-  store: Store<any>
-): Module<ModelState, any> {
-  Object.defineProperties(schema, {
-    _path: { value: keyMap[schema.entityName]},
-    _store: { value: store }
-  });
+export function createModule<T>(store: Store<any>): Module<ModelState, any> {
+  
   return {
     namespaced: true,
     state: () => ({}),
     mutations: {
-      [Mutations.ADD](state, { id, entity }) {
-        Vue.set(state, id, {...state[id], ...entity});
+      [Mutations.ADD](state, { id, entity, schema }: {id: string, entity: any, schema: typeof Model}) {
+        Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity});
       },
-      [Mutations.SET_PROP](state, { id, key, value }) {
-        if(state[id] == null) { throw new Error('Entity does not exist')}
-        Vue.set(state[id], key, value)
+      [Mutations.SET_PROP](state, { id, key, value, schema }: {id: string, key: string, value: any, schema: typeof Model}) {
+        if(state[schema.entityName][id] == null) { throw new Error('Entity does not exist')}
+        Vue.set(state[schema.entityName][id], key, value)
       }
     },
     actions: {
-      [Actions.ADD](ctx, item) {
-        return normalizeAndStore(store, item, schema.entityName);
+      [Actions.ADD](ctx, {item, schema}) {
+        return normalizeAndStore(store, item, schema);
       },
-      [Actions.ADD_RELATED]({ state, dispatch, getters }, { id, related, data }) {
+      [Actions.ADD_RELATED]({ dispatch, getters }, { id, related, data, schema }) {
         if (!(related in schema._fields) && schema._fields[related].isRelationship) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
-        const item: Model = getters[Getters.FIND](id, { load: [related] });
+        const item: Model = getters[Getters.FIND](id, { load: [related] }, schema);
         if (!item) {
           throw new Error("The item doesn't exist");
         }
@@ -61,15 +52,16 @@ export function createModule<T>(
           id,
           data: {
             [related]: data
-          }
+          },
+          schema
         });
       },
-      [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId }) {
+      [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId, schema}) {
         if (!(related in schema._fields) && schema._fields[related].isRelationship) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const ids = Array.isArray(id) ? id : [id];
-        const items = getters[Getters.FIND_BY_IDS](ids, { load: [related] });
+        const items = getters[Getters.FIND_BY_IDS](ids, { load: [related] }, schema);
         if (items.length === 0) {
           console.warn('Invalid id Provided');
           return;
@@ -86,7 +78,8 @@ export function createModule<T>(
                 id,
                 data: {
                   [related]: relatedItems.filter(item => !relatedIds.includes(getIdValue(item, relatedSchema)))
-                }
+                },
+                schema
               });
             })
           );
@@ -95,19 +88,20 @@ export function createModule<T>(
             id,
             data: {
               [related]: null
-            }
+            },
+            schema
           });
         }
       },
-      [Actions.ADD_ALL]({ dispatch }, items) {
-        return Promise.all(items.map(item => dispatch(Actions.ADD, item)));
+      [Actions.ADD_ALL]({ dispatch }, {items, schema}) {
+        return Promise.all(items.map(item => dispatch(Actions.ADD, {item, schema})));
       },
-      [Actions.UPDATE]({ getters, dispatch }, { id, data }) {
+      [Actions.UPDATE]({ getters, dispatch }, { id, data, schema }) {
         if (id === null || id === undefined) {
           throw new Error('Id to perform update must be defined');
         }
         const ids = Array.isArray(id) ? id : [id];
-        const items = getters[Getters.FIND_BY_IDS](ids).filter(identity);
+        const items = getters[Getters.FIND_BY_IDS](ids, schema).filter(identity);
         if (items.length !== ids.length) {
           throw new Error('Invalid item to update');
         }
@@ -132,36 +126,47 @@ export function createModule<T>(
             [idName as string]: id
           }));
         }
-        return dispatch(Actions.ADD_ALL, newItems);
+        return dispatch(Actions.ADD_ALL, {items: newItems, schema});
       }
     },
     getters: {
-      [Getters.GET_RAW]: (state) => id => state[id],
-      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, opts: any = {}) => {
-        const data = getters[Getters.GET_RAW](id);
+      [Getters.GET_RAW]: (state) => (id, schema: typeof Model) => state[schema.entityName][id],
+      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, schema: typeof Model, opts: any = {} ) => {
+        const data = getters[Getters.GET_RAW](id, schema);
         if (!data) {
           return;
         }
-        const load = relations(opts.load, schema._fields)
+        const load = opts.load && relations(opts.load, schema._fields)
         return resolveModel(schema, data, { load, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
-        return function(ids = [], opts = {}) {
-          return ids.map(id => getters[Getters.FIND](id, opts)).filter(identity);
+        return function(ids = [], schema: typeof Model, opts = {}) {
+          return ids.map(id => getters[Getters.FIND](id, schema, opts)).filter(identity);
         };
       },
-      [Getters.ALL]: (state, getters) => (opts = {}) => {
-        return getters[Getters.FIND_BY_IDS](Object.keys(state), opts);
+      [Getters.ALL]: (state, getters) => (schema: typeof Model, opts = {}) => {
+        return getters[Getters.FIND_BY_IDS](Object.keys(state[schema.entityName]),  schema, opts);
       }
     }
   };
 }
 
-const modelCache = {}
+const modelCache: Cache = new Map()
 
 function resolveModel(schema: typeof Model, rawData: object, options: any = {}) {
   const id = getIdValue(rawData, schema);
-  const entity = schema.entityName
-  const load = options?.load
-  return modelCache[sum({id, entity, load})] ??= new schema(rawData, options)
+  const sumObject = {id, load: options?.load}
+  const sumValue = sum(sumObject)
+  if(!modelCache.has(schema)) {
+    modelCache.set(schema, createObject({}))
+  }
+  const cache = modelCache.get(schema);
+  return cache[sumValue] ??= new schema(rawData, options)
 }
+
+declare global {
+  interface Window {
+    modelCache: any
+  }
+}
+window.modelCache = modelCache
