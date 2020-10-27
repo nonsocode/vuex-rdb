@@ -145,14 +145,6 @@ export class Model<T extends any = any> implements IModel {
     }, {});
   }
 
-  static get relationships(): Record<string, Relationship> {
-    return {};
-  }
-
-  static get fields(): Record<string, true> | string[] {
-    return {};
-  }
-
   async $update(data = {}): Promise<string | number> {
     const constructor = getConstructor(this);
     return constructor._store
@@ -206,6 +198,14 @@ export class Model<T extends any = any> implements IModel {
       relatedId,
       schema: constructor
     });
+  }
+
+  static get relationships(): Record<string, Relationship> {
+    return {};
+  }
+
+  static get fields(): Record<string, true> | string[] {
+    return {};
   }
   static find<T>(this: IModelStatic<T>, id: string | number, opts: FindOptions = {}): T {
     return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
