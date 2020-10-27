@@ -217,9 +217,9 @@ export class Model<T extends any = any> implements IModel {
     return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
   }
   static add(item: any): Promise<string | number> {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { item, schema: this });
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items: item, schema: this });
   }
   static addAll(items: any[]): Promise<Array<string | number>> {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD_ALL}`, { items, schema: this });
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
   }
 }

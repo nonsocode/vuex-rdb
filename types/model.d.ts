@@ -14,12 +14,12 @@ export declare class Model<T extends any = any> implements IModel {
     _id: any;
     constructor(data?: T, opts?: any);
     toJSON(parentkey: any, parentNode: any): {};
-    static get relationships(): Record<string, Relationship>;
-    static get fields(): Record<string, true> | string[];
     $update(data?: {}): Promise<string | number>;
     $save(): Promise<number | string>;
     $addRelated(related: any, data: any): Promise<string | number>;
     $removeRelated(related: any, relatedId: any): Promise<string | number>;
+    static get relationships(): Record<string, Relationship>;
+    static get fields(): Record<string, true> | string[];
     static find<T>(this: IModelStatic<T>, id: string | number, opts?: FindOptions): T;
     static findByIds<T>(this: IModelStatic<T>, ids: any[], opts?: FindOptions): T[];
     static all<T>(this: IModelStatic<T>, opts?: FindOptions): T[];

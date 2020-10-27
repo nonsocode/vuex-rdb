@@ -4,6 +4,7 @@ import {Model} from '../model';
 
 export enum Mutations {
   ADD = '_ADD',
+  ADD_ALL = '_ADD_ALL',
   SET_PROP = 'SET_PROP'
 }
 
@@ -11,7 +12,6 @@ export enum Actions {
   ADD = 'add',
   ADD_RELATED = 'addRelated',
   REMOVE_RELATED = 'removeRelated',
-  ADD_ALL = 'addAll',
   UPDATE = 'update'
 }
 

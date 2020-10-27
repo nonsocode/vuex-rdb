@@ -23,14 +23,19 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
       [Mutations.ADD](state, { id, entity, schema }: {id: string, entity: any, schema: typeof Model}) {
         Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity});
       },
+      [Mutations.ADD_ALL](state, { items, schema }: {items: Cache, schema: typeof Model}) {
+        Object.entries(items).forEach(([id, entity]) => {
+          Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity})
+        })
+      },
       [Mutations.SET_PROP](state, { id, key, value, schema }: {id: string, key: string, value: any, schema: typeof Model}) {
         if(state[schema.entityName][id] == null) { throw new Error('Entity does not exist')}
         Vue.set(state[schema.entityName][id], key, value)
       }
     },
     actions: {
-      [Actions.ADD](ctx, {item, schema}) {
-        return normalizeAndStore(store, item, schema);
+      [Actions.ADD](ctx, {items, schema}) {
+        return normalizeAndStore(store, items, schema);
       },
       [Actions.ADD_RELATED]({ dispatch, getters }, { id, related, data, schema }) {
         if (!(related in schema._fields) && schema._fields[related].isRelationship) {
@@ -93,9 +98,6 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
           });
         }
       },
-      [Actions.ADD_ALL]({ dispatch }, {items, schema}) {
-        return Promise.all(items.map(item => dispatch(Actions.ADD, {item, schema})));
-      },
       [Actions.UPDATE]({ getters, dispatch }, { id, data, schema }) {
         if (id === null || id === undefined) {
           throw new Error('Id to perform update must be defined');
@@ -126,7 +128,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
             [idName as string]: id
           }));
         }
-        return dispatch(Actions.ADD_ALL, {items: newItems, schema});
+        return dispatch(Actions.ADD, {items: newItems, schema: [schema]});
       }
     },
     getters: {

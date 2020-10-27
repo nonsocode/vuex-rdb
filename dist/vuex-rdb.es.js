@@ -280,6 +280,7 @@ function getRelationshipSchema(field) {
 var Mutations;
 (function (Mutations) {
     Mutations["ADD"] = "_ADD";
+    Mutations["ADD_ALL"] = "_ADD_ALL";
     Mutations["SET_PROP"] = "SET_PROP";
 })(Mutations || (Mutations = {}));
 var Actions;
@@ -287,7 +288,6 @@ var Actions;
     Actions["ADD"] = "add";
     Actions["ADD_RELATED"] = "addRelated";
     Actions["REMOVE_RELATED"] = "removeRelated";
-    Actions["ADD_ALL"] = "addAll";
     Actions["UPDATE"] = "update";
 })(Actions || (Actions = {}));
 var Getters;
@@ -364,19 +364,10 @@ function getConstructor(model) {
 function normalizeAndStore(store, data, entityDef) {
     var e_1, _a;
     var _b = normalize(data, entityDef), entities = _b.entities, result = _b.result;
-    var _loop_1 = function (schema, items) {
-        Object.entries(items).forEach(function (_a) {
-            var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-            if (!entity) {
-                return;
-            }
-            store.commit(schema._namespace + "/" + Mutations.ADD, { id: id, entity: entity, schema: schema }, { root: true });
-        });
-    };
     try {
         for (var _c = __values(entities.entries()), _d = _c.next(); !_d.done; _d = _c.next()) {
             var _e = __read(_d.value, 2), schema = _e[0], items = _e[1];
-            _loop_1(schema, items);
+            store.commit(schema._namespace + "/" + Mutations.ADD_ALL, { schema: schema, items: items }, { root: true });
         }
     }
     catch (e_1_1) { e_1 = { error: e_1_1 }; }
@@ -597,20 +588,6 @@ var Model = /** @class */ (function () {
             return acc;
         }, {});
     };
-    Object.defineProperty(Model, "relationships", {
-        get: function () {
-            return {};
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Model, "fields", {
-        get: function () {
-            return {};
-        },
-        enumerable: false,
-        configurable: true
-    });
     Model.prototype.$update = function (data) {
         if (data === void 0) { data = {}; }
         return __awaiter(this, void 0, void 0, function () {
@@ -683,6 +660,20 @@ var Model = /** @class */ (function () {
             });
         });
     };
+    Object.defineProperty(Model, "relationships", {
+        get: function () {
+            return {};
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Model, "fields", {
+        get: function () {
+            return {};
+        },
+        enumerable: false,
+        configurable: true
+    });
     Model.find = function (id, opts) {
         if (opts === void 0) { opts = {}; }
         return this._store.getters[this._namespace + "/" + Getters.FIND](id, this, opts);
@@ -696,10 +687,10 @@ var Model = /** @class */ (function () {
         return this._store.getters[this._namespace + "/" + Getters.ALL](this, opts);
     };
     Model.add = function (item) {
-        return this._store.dispatch(this._namespace + "/" + Actions.ADD, { item: item, schema: this });
+        return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: item, schema: this });
     };
     Model.addAll = function (items) {
-        return this._store.dispatch(this._namespace + "/" + Actions.ADD_ALL, { items: items, schema: this });
+        return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: items, schema: [this] });
     };
     Model.id = 'id';
     Model = __decorate([
@@ -719,6 +710,13 @@ function createModule(store) {
                 var id = _a.id, entity = _a.entity, schema = _a.schema;
                 Vue.set(state[schema.entityName], id, __assign(__assign({}, state[schema.entityName][id]), entity));
             },
+            _a[Mutations.ADD_ALL] = function (state, _a) {
+                var items = _a.items, schema = _a.schema;
+                Object.entries(items).forEach(function (_a) {
+                    var _b = __read(_a, 2), id = _b[0], entity = _b[1];
+                    Vue.set(state[schema.entityName], id, __assign(__assign({}, state[schema.entityName][id]), entity));
+                });
+            },
             _a[Mutations.SET_PROP] = function (state, _a) {
                 var id = _a.id, key = _a.key, value = _a.value, schema = _a.schema;
                 if (state[schema.entityName][id] == null) {
@@ -729,8 +727,8 @@ function createModule(store) {
             _a),
         actions: (_b = {},
             _b[Actions.ADD] = function (ctx, _a) {
-                var item = _a.item, schema = _a.schema;
-                return normalizeAndStore(store, item, schema);
+                var items = _a.items, schema = _a.schema;
+                return normalizeAndStore(store, items, schema);
             },
             _b[Actions.ADD_RELATED] = function (_a, _b) {
                 var _c;
@@ -796,11 +794,6 @@ function createModule(store) {
                     });
                 }
             },
-            _b[Actions.ADD_ALL] = function (_a, _b) {
-                var dispatch = _a.dispatch;
-                var items = _b.items, schema = _b.schema;
-                return Promise.all(items.map(function (item) { return dispatch(Actions.ADD, { item: item, schema: schema }); }));
-            },
             _b[Actions.UPDATE] = function (_a, _b) {
                 var getters = _a.getters, dispatch = _a.dispatch;
                 var id = _b.id, data = _b.data, schema = _b.schema;
@@ -832,7 +825,7 @@ function createModule(store) {
                         return (__assign(__assign(__assign({}, (isFunction(schema.id) ? item : null)), data), (_a = {}, _a[idName_1] = id, _a)));
                     });
                 }
-                return dispatch(Actions.ADD_ALL, { items: newItems, schema: schema });
+                return dispatch(Actions.ADD, { items: newItems, schema: [schema] });
             },
             _b),
         getters: (_c = {},

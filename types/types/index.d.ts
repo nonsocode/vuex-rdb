@@ -3,13 +3,13 @@ import { Store } from 'vuex';
 import { Model } from '../model';
 export declare enum Mutations {
     ADD = "_ADD",
+    ADD_ALL = "_ADD_ALL",
     SET_PROP = "SET_PROP"
 }
 export declare enum Actions {
     ADD = "add",
     ADD_RELATED = "addRelated",
     REMOVE_RELATED = "removeRelated",
-    ADD_ALL = "addAll",
     UPDATE = "update"
 }
 export declare enum Getters {

@@ -13,7 +13,7 @@ const store = new Vuex.Store({
   ]
 });
 store.dispatch('database/add', {
-  item: {
+  items: {
     id: 1,
     name: 'nonso',
     prop1: 'this should only be visible in type 1 users',
