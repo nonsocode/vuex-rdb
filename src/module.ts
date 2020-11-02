@@ -13,7 +13,6 @@ export function generateModuleName(namespace, key) {
   chunks.push(key);
   return chunks.join('/');
 }
-
 export function createModule<T>(store: Store<any>): Module<ModelState, any> {
   
   return {
@@ -41,7 +40,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
         if (!(related in schema._fields) && schema._fields[related].isRelationship) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
-        const item: Model = getters[Getters.FIND](id, { load: [related] }, schema);
+        const item: Model<any> = getters[Getters.FIND](id, { load: [related] }, schema);
         if (!item) {
           throw new Error("The item doesn't exist");
         }

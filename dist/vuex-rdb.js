@@ -144,7 +144,7 @@ function isString(string) {
 }
 function createObject(object) {
     var o = Object.create(null);
-    Object.entries(object).forEach(function (_a) {
+    object && Object.entries(object).forEach(function (_a) {
         var _b = __read(_a, 2), key = _b[0], value = _b[1];
         o[key] = value;
     });
@@ -285,8 +285,9 @@ function getRelationshipSchema(field) {
 
 var Mutations;
 (function (Mutations) {
-    Mutations["ADD"] = "_ADD";
-    Mutations["ADD_ALL"] = "_ADD_ALL";
+    Mutations["ADD"] = "ADD";
+    Mutations["ADD_ALL"] = "ADD_ALL";
+    Mutations["PATCH_TEMPS"] = "PATCH_TEMPS";
     Mutations["SET_PROP"] = "SET_PROP";
 })(Mutations || (Mutations = {}));
 var Actions;
@@ -594,6 +595,7 @@ var Model = /** @class */ (function () {
             return acc;
         }, {});
     };
+    Model.prototype.$toObject = function () { return JSON.parse(JSON.stringify(this)); };
     Model.prototype.$update = function (data) {
         if (data === void 0) { data = {}; }
         return __awaiter(this, void 0, void 0, function () {
@@ -628,7 +630,7 @@ var Model = /** @class */ (function () {
                             var item = cacheNames.reduce(function (acc, name) {
                                 return __assign(__assign({}, acc), _this._caches[name]);
                             }, {});
-                            resolve(constructor._store.dispatch(constructor._namespace + "/add", { item: item, schema: constructor }).then(function (res) {
+                            resolve(constructor._store.dispatch(constructor._namespace + "/" + Actions.ADD, { items: item, schema: constructor }).then(function (res) {
                                 _this._id = res;
                                 _this._connected = true;
                                 return res;
@@ -643,7 +645,7 @@ var Model = /** @class */ (function () {
             var constructor;
             return __generator(this, function (_a) {
                 constructor = getConstructor(this);
-                return [2 /*return*/, constructor._store.dispatch(constructor._namespace + "/addRelated", {
+                return [2 /*return*/, constructor._store.dispatch(constructor._namespace + "/" + Actions.ADD_RELATED, {
                         id: this._id,
                         related: related,
                         data: data,
@@ -657,7 +659,7 @@ var Model = /** @class */ (function () {
             var constructor;
             return __generator(this, function (_a) {
                 constructor = getConstructor(this);
-                return [2 /*return*/, constructor._store.dispatch(constructor._namespace + "/removeRelated", {
+                return [2 /*return*/, constructor._store.dispatch(constructor._namespace + "/" + Actions.REMOVE_RELATED, {
                         id: this._id,
                         related: related,
                         relatedId: relatedId,
@@ -704,6 +706,7 @@ var Model = /** @class */ (function () {
     ], Model);
     return Model;
 }());
+var m = new Model({ faji: 5 });
 
 var sum = require('hash-sum');
 function createModule(store) {

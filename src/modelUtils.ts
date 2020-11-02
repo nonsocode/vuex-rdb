@@ -3,7 +3,7 @@ import { normalize } from './normalize';
 import { Store } from 'vuex';
 import { IdValue, Mutations, Relationship } from './types';
 
-export function getConstructor(model: Model): typeof Model {
+export function getConstructor(model: Model<any>): typeof Model {
   return model.constructor as typeof Model;
 }
 

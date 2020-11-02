@@ -16,19 +16,19 @@ const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, Schema: typeof Model): any => {
   return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
 };
-const proxySetter = (target: Model, key: string, value) => {
+const proxySetter = (target: Model<any>, key: string, value) => {
   if (!(key in target)) {
     createAccessor(target, key);
   }
   target[key] = value;
   return true;
 };
-function cacheDefaults(model: Model, overrides = {}) {
+function cacheDefaults(model: Model<any>, overrides = {}) {
   Object.entries(getConstructor(model)._fields).forEach(([key, definition]) => {
     model._caches[getCacheName(definition.isRelationship)][key] = overrides[key] ?? definition.default;
   });
 }
-function createAccessor(target: Model, key) {
+function createAccessor(target: Model<any>, key) {
   const Schema = getConstructor(target);
   const { _namespace: path, _store, _fields, id } = Schema;
   const isRelationship = key in _fields && _fields[key].isRelationship;
@@ -85,7 +85,7 @@ export function getIdValue<T>(model: T, schema: typeof Model): string | number {
 }
 
 @ModelDecorator
-export class Model<T extends any = any> implements IModel {
+export class Model<T extends any> implements IModel {
   public static _namespace: string;
   public static entityName: string;
   public static _store: Store<any>;
@@ -97,7 +97,7 @@ export class Model<T extends any = any> implements IModel {
   _connected = false;
   _id;
 
-  constructor(data?: T, opts: any = {}) {
+  constructor(data?: Partial<T>, opts: any = {}) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
@@ -120,7 +120,7 @@ export class Model<T extends any = any> implements IModel {
     // set: proxySetter
     // });
   }
-  
+
   toJSON(parentkey, parentNode) {
     const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
@@ -145,6 +145,8 @@ export class Model<T extends any = any> implements IModel {
       return acc;
     }, {});
   }
+
+  $toObject(){ return JSON.parse(JSON.stringify(this))}
 
   async $update(data = {}): Promise<string | number> {
     const constructor = getConstructor(this);
@@ -224,3 +226,5 @@ export class Model<T extends any = any> implements IModel {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
   }
 }
+
+const m = new Model({faji: 5})

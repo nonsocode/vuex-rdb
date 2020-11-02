@@ -1,10 +1,10 @@
 import { Model } from './model';
 import { Store } from 'vuex';
-export declare class ModelArray<T extends Model> extends Array<T> {
-    _context: Model;
+export declare class ModelArray<T extends Model<T>> extends Array<T> {
+    _context: Model<any>;
     _key: string;
     _store: Store<any>;
-    constructor(context: Model, key: string, items: T[]);
+    constructor(context: Model<any>, key: string, items: T[]);
     push(...items: any[]): number;
     pop(): T;
     unshift(...items: any[]): number;

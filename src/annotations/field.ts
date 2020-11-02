@@ -9,7 +9,7 @@ export type FieldDefinitionOptions = {
 };
 
 export function Field(options: FieldDefinitionOptions | RelationshipGenerator = {}) {
-  return (target: Model, propname: string): void => {
+  return (target: Model<any>, propname: string): void => {
     const constructor = target.constructor as typeof Model;
     if (constructor._fields == null) {
       constructor._fields = createObject();
