@@ -44,7 +44,7 @@ function createAccessor(target: Model<any>, key) {
           const opts = { load: target._load?.[key] };
           const Related = getRelationshipSchema(relationshipDef);
           if (relationshipDef.isList) {
-            return value && new ModelArray(target, key, Related.findByIds(value, opts));
+            return value && new ModelArray(target, key, Related.findByIds<any>(value, opts));
           }
           return Related.find(value, opts);
         } else {
@@ -146,7 +146,7 @@ export class Model<T extends any> implements IModel {
     }, {});
   }
 
-  $toObject(){ return JSON.parse(JSON.stringify(this))}
+  $toObject(): T { return JSON.parse(JSON.stringify(this))}
 
   async $update(data = {}): Promise<string | number> {
     const constructor = getConstructor(this);

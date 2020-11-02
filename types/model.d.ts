@@ -14,7 +14,7 @@ export declare class Model<T extends any> implements IModel {
     _id: any;
     constructor(data?: Partial<T>, opts?: any);
     toJSON(parentkey: any, parentNode: any): {};
-    $toObject(): any;
+    $toObject(): T;
     $update(data?: {}): Promise<string | number>;
     $save(): Promise<number | string>;
     $addRelated(related: any, data: any): Promise<string | number>;
