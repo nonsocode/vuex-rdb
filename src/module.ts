@@ -160,7 +160,7 @@ function resolveModel(schema: typeof Model, rawData: object, options: any = {}) 
   const sumObject = {id, load: options?.load}
   const sumValue = sum(sumObject)
   if(!modelCache.has(schema)) {
-    modelCache.set(schema, createObject({}))
+    modelCache.set(schema, createObject())
   }
   const cache = modelCache.get(schema);
   return cache[sumValue] ??= new schema(rawData, options)

@@ -41,7 +41,7 @@ export function normalize(
         }
       }
       if (!entities.has(schema)) {
-        entities.set(schema, createObject({}));
+        entities.set(schema, createObject());
       }
       entities.get(schema)[id] = { ...entities.get(schema)[id], ...normalized };
     }

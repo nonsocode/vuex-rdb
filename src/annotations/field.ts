@@ -12,7 +12,7 @@ export function Field(options: FieldDefinitionOptions | RelationshipGenerator = 
   return (target: Model, propname: string): void => {
     const constructor = target.constructor as typeof Model;
     if (constructor._fields == null) {
-      constructor._fields = createObject({});
+      constructor._fields = createObject();
     }
 
     constructor._fields[propname] = new FieldDefinition(

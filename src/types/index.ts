@@ -3,8 +3,9 @@ import {Store} from 'vuex';
 import {Model} from '../model';
 
 export enum Mutations {
-  ADD = '_ADD',
-  ADD_ALL = '_ADD_ALL',
+  ADD = 'ADD',
+  ADD_ALL = 'ADD_ALL',
+  PATCH_TEMPS = 'PATCH_TEMPS',
   SET_PROP = 'SET_PROP'
 }
 
@@ -210,4 +211,9 @@ export declare function generateDatabasePlugin<T>(options: PluginOptions<T>): (s
 export type NodeTree = {
   parentNode?: NodeTree,
   item: any
+}
+export type ModelHooks = {
+  once: {
+    postSave: Function[]
+  }
 }

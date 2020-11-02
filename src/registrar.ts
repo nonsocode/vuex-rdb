@@ -9,7 +9,7 @@ export const nameModelMap: Map<string, typeof Model> = new Map();
 export function registerSchema(schema: typeof Model, store: Store<any>, namespace: string) {
 
   if (!schema._fields) {
-    schema._fields = createObject({});
+    schema._fields = createObject();
   }
   if(!store.state[namespace][schema.entityName]){
     Vue.set(store.state[namespace], schema.entityName, {})

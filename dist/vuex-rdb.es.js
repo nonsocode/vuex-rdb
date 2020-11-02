@@ -198,7 +198,7 @@ var FieldDefinition = /** @class */ (function () {
 
 function registerSchema(schema, store, namespace) {
     if (!schema._fields) {
-        schema._fields = createObject({});
+        schema._fields = createObject();
     }
     if (!store.state[namespace][schema.entityName]) {
         Vue.set(store.state[namespace], schema.entityName, {});
@@ -251,7 +251,7 @@ function relations(relatives, schemaFields) {
                     break;
                 }
                 var fieldDef = fieldDefs === null || fieldDefs === void 0 ? void 0 : fieldDefs[paths[i]];
-                t[paths[i]] = t[paths[i]] || createObject({});
+                t[paths[i]] = t[paths[i]] || createObject();
                 t = t[paths[i]];
                 fieldDefs = fieldDef && getRelationshipSchema(fieldDef)._fields;
             }
@@ -265,7 +265,7 @@ function fillRelationships(t, fieldDefs) {
         if (key in t || !def.isRelationship) {
             return;
         }
-        t[key] = createObject({});
+        t[key] = createObject();
     });
 }
 function getRelationshipSchema(field) {
@@ -347,7 +347,7 @@ function normalize(raw, entityDef, visited, entities, depth) {
                 finally { if (e_1) throw e_1.error; }
             }
             if (!entities.has(schema)) {
-                entities.set(schema, createObject({}));
+                entities.set(schema, createObject());
             }
             entities.get(schema)[id] = __assign(__assign({}, entities.get(schema)[id]), normalized);
         }
@@ -861,7 +861,7 @@ function resolveModel(schema, rawData, options) {
     var sumObject = { id: id, load: options === null || options === void 0 ? void 0 : options.load };
     var sumValue = sum(sumObject);
     if (!modelCache.has(schema)) {
-        modelCache.set(schema, createObject({}));
+        modelCache.set(schema, createObject());
     }
     var cache = modelCache.get(schema);
     return (_a = cache[sumValue]) !== null && _a !== void 0 ? _a : (cache[sumValue] = new schema(rawData, options));
@@ -873,7 +873,7 @@ function Field(options) {
     return function (target, propname) {
         var constructor = target.constructor;
         if (constructor._fields == null) {
-            constructor._fields = createObject({});
+            constructor._fields = createObject();
         }
         constructor._fields[propname] = new FieldDefinition(isFunction(options) ? { entity: options } : options);
     };

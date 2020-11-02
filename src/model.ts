@@ -120,6 +120,7 @@ export class Model<T extends any = any> implements IModel {
     // set: proxySetter
     // });
   }
+  
   toJSON(parentkey, parentNode) {
     const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
@@ -170,7 +171,7 @@ export class Model<T extends any = any> implements IModel {
           return { ...acc, ...this._caches[name] };
         }, {});
         resolve(
-          constructor._store.dispatch(`${constructor._namespace}/add`, { item, schema: constructor }).then(res => {
+          constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor }).then(res => {
             this._id = res;
             this._connected = true;
             return res;
@@ -182,7 +183,7 @@ export class Model<T extends any = any> implements IModel {
 
   async $addRelated(related, data): Promise<string | number> {
     const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._namespace}/addRelated`, {
+    return constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD_RELATED}`, {
       id: this._id,
       related,
       data,
@@ -192,7 +193,7 @@ export class Model<T extends any = any> implements IModel {
 
   async $removeRelated(related, relatedId): Promise<string | number> {
     const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._namespace}/removeRelated`, {
+    return constructor._store.dispatch(`${constructor._namespace}/${Actions.REMOVE_RELATED}`, {
       id: this._id,
       related,
       relatedId,

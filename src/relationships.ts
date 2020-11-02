@@ -27,7 +27,7 @@ export function relations(relatives, schemaFields: Record<string, FieldDefinitio
           break;
         }
         const fieldDef = fieldDefs?.[paths[i]];
-        t[paths[i]] = t[paths[i]] || createObject({});
+        t[paths[i]] = t[paths[i]] || createObject();
         t = t[paths[i]];
         fieldDefs = fieldDef && getRelationshipSchema(fieldDef)._fields;
       }
@@ -41,7 +41,7 @@ function fillRelationships(t: object, fieldDefs: Record<string, FieldDefinition>
     if (key in t || !def.isRelationship) {
       return;
     }
-    t[key] = createObject({});
+    t[key] = createObject();
   });
 }
 
