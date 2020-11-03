@@ -3,6 +3,22 @@ import { getRelationshipSchema } from './relationships';
 import { getConstructor, normalizeAndStore } from './modelUtils';
 import { Getters, Mutations } from './types';
 import { Store } from 'vuex';
+
+
+function validate() {
+  return (target, key, descriptor: PropertyDescriptor) => {
+    const method: Function = descriptor.value;
+    descriptor.value = function(this: ModelArray<any>, ...args) {
+      const {Schema} = this._extractUtils();
+      for (const item of args) {
+        if(getIdValue(item, Schema) == null) {
+          throw new Error(`An item being assigned to this array does not have a valid identifier`)
+        }
+      }
+      method.apply(this, args)
+    }
+  }
+}
 export class ModelArray<T extends Model<T>> extends Array<T> {
   _context: Model<any>;
   _key: string;
@@ -19,6 +35,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     Object.setPrototypeOf(this, ModelArray.prototype);
   }
 
+  @validate()
   push(...items) {
     const { Schema, rawContext } = this._extractUtils(true);
     const referenceArray = rawContext[this._key] || [];
@@ -39,6 +56,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     return removed;
   }
 
+  @validate()
   unshift(...items) {
     const { Schema, rawContext } = this._extractUtils(true);
     const referenceArray = rawContext[this._key] || [];

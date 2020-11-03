@@ -3,7 +3,7 @@ import { Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relatio
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
 import { FieldDefinition } from './FieldDefinition';
-import { getConstructor, normalizeAndStore } from './modelUtils';
+import { getConstructor, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
 import { ModelArray } from './modelArray';
 
@@ -28,10 +28,7 @@ function cacheDefaults(model: Model<any>, overrides = {}) {
     model._caches[getCacheName(definition.isRelationship)][key] = overrides[key] ?? definition.default;
   });
 }
-function validateEntry(data: any, definition: FieldDefinition): boolean {
-  const relDef = getRelationshipSchema(definition);
-  return definition.isList ? data.every(element => getIdValue(element, relDef) != null) : getIdValue(data, relDef) != null;
-}
+
 function createAccessor(target: Model<any>, key) {
   const Schema = getConstructor(target);
   const { _namespace: path, _store, _fields, id } = Schema;
@@ -66,7 +63,7 @@ function createAccessor(target: Model<any>, key) {
             value = Array.isArray(value) ? value : [value].filter(identity);
           }
           if (target._connected) {
-            if (validateEntry(value, relationshipDef)) {
+            if (!validateEntry(value, relationshipDef)) {
               throw new Error(`An item being assigned to the property [${key}] does not have a valid identifier`);
             }
             value = normalizeAndStore(_store, value, relationshipDef.entity);
