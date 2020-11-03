@@ -28,6 +28,10 @@ function cacheDefaults(model: Model<any>, overrides = {}) {
     model._caches[getCacheName(definition.isRelationship)][key] = overrides[key] ?? definition.default;
   });
 }
+function validateEntry(data: any, definition: FieldDefinition): boolean {
+  const relDef = getRelationshipSchema(definition);
+  return definition.isList ? data.every(element => getIdValue(element, relDef) != null) : getIdValue(data, relDef) != null;
+}
 function createAccessor(target: Model<any>, key) {
   const Schema = getConstructor(target);
   const { _namespace: path, _store, _fields, id } = Schema;
@@ -62,6 +66,9 @@ function createAccessor(target: Model<any>, key) {
             value = Array.isArray(value) ? value : [value].filter(identity);
           }
           if (target._connected) {
+            if (validateEntry(value, relationshipDef)) {
+              throw new Error(`An item being assigned to the property [${key}] does not have a valid identifier`);
+            }
             value = normalizeAndStore(_store, value, relationshipDef.entity);
           }
         } else if (target._connected && (isFunction(id) || id == key)) {
@@ -146,7 +153,9 @@ export class Model<T extends any> implements IModel {
     }, {});
   }
 
-  $toObject(): T { return JSON.parse(JSON.stringify(this))}
+  $toObject(): T {
+    return JSON.parse(JSON.stringify(this));
+  }
 
   async $update(data = {}): Promise<string | number> {
     const constructor = getConstructor(this);
@@ -173,11 +182,13 @@ export class Model<T extends any> implements IModel {
           return { ...acc, ...this._caches[name] };
         }, {});
         resolve(
-          constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor }).then(res => {
-            this._id = res;
-            this._connected = true;
-            return res;
-          })
+          constructor._store
+            .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
+            .then(res => {
+              this._id = res;
+              this._connected = true;
+              return res;
+            })
         );
       }
     });
@@ -227,4 +238,3 @@ export class Model<T extends any> implements IModel {
   }
 }
 
-const m = new Model({faji: 5})

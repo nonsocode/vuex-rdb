@@ -479,6 +479,10 @@ function cacheDefaults(model, overrides) {
         model._caches[getCacheName(definition.isRelationship)][key] = (_b = overrides[key]) !== null && _b !== void 0 ? _b : definition.default;
     });
 }
+function validateEntry(data, definition) {
+    var relDef = getRelationshipSchema(definition);
+    return definition.isList ? data.every(function (element) { return getIdValue(element, relDef) != null; }) : getIdValue(data, relDef) != null;
+}
 function createAccessor(target, key) {
     var Schema = getConstructor(target);
     var path = Schema._namespace, _store = Schema._store, _fields = Schema._fields, id = Schema.id;
@@ -515,6 +519,9 @@ function createAccessor(target, key) {
                         value = Array.isArray(value) ? value : [value].filter(identity);
                     }
                     if (target._connected) {
+                        if (validateEntry(value, relationshipDef)) {
+                            throw new Error("An item being assigned to the property [" + key + "] does not have a valid identifier");
+                        }
                         value = normalizeAndStore(_store, value, relationshipDef.entity);
                     }
                 }
@@ -589,7 +596,9 @@ var Model = /** @class */ (function () {
             return acc;
         }, {});
     };
-    Model.prototype.$toObject = function () { return JSON.parse(JSON.stringify(this)); };
+    Model.prototype.$toObject = function () {
+        return JSON.parse(JSON.stringify(this));
+    };
     Model.prototype.$update = function (data) {
         if (data === void 0) { data = {}; }
         return __awaiter(this, void 0, void 0, function () {
@@ -624,7 +633,9 @@ var Model = /** @class */ (function () {
                             var item = cacheNames.reduce(function (acc, name) {
                                 return __assign(__assign({}, acc), _this._caches[name]);
                             }, {});
-                            resolve(constructor._store.dispatch(constructor._namespace + "/" + Actions.ADD, { items: item, schema: constructor }).then(function (res) {
+                            resolve(constructor._store
+                                .dispatch(constructor._namespace + "/" + Actions.ADD, { items: item, schema: constructor })
+                                .then(function (res) {
                                 _this._id = res;
                                 _this._connected = true;
                                 return res;
@@ -700,7 +711,6 @@ var Model = /** @class */ (function () {
     ], Model);
     return Model;
 }());
-var m = new Model({ faji: 5 });
 
 var sum = require('hash-sum');
 function createModule(store) {
