@@ -368,6 +368,10 @@ function normalize(raw, entityDef, visited, entities, depth) {
 function getConstructor(model) {
     return model.constructor;
 }
+function validateEntry(data, definition) {
+    var relDef = getRelationshipSchema(definition);
+    return definition.isList ? data.every(function (item) { return getIdValue(item, relDef) != null; }) : getIdValue(data, relDef) != null;
+}
 function normalizeAndStore(store, data, entityDef) {
     var e_1, _a;
     var _b = normalize(data, entityDef), entities = _b.entities, result = _b.result;
@@ -387,6 +391,35 @@ function normalizeAndStore(store, data, entityDef) {
     return result;
 }
 
+function validate() {
+    return function (target, key, descriptor) {
+        var method = descriptor.value;
+        descriptor.value = function () {
+            var e_1, _a;
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            var Schema = this._extractUtils().Schema;
+            try {
+                for (var args_1 = __values(args), args_1_1 = args_1.next(); !args_1_1.done; args_1_1 = args_1.next()) {
+                    var item = args_1_1.value;
+                    if (getIdValue(item, Schema) == null) {
+                        throw new Error("An item being assigned to this array does not have a valid identifier");
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (args_1_1 && !args_1_1.done && (_a = args_1.return)) _a.call(args_1);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            method.apply(this, args);
+        };
+    };
+}
 var ModelArray = /** @class */ (function (_super) {
     __extends(ModelArray, _super);
     function ModelArray(context, key, items) {
@@ -465,6 +498,12 @@ var ModelArray = /** @class */ (function (_super) {
             Schema: Schema
         };
     };
+    __decorate([
+        validate()
+    ], ModelArray.prototype, "push", null);
+    __decorate([
+        validate()
+    ], ModelArray.prototype, "unshift", null);
     return ModelArray;
 }(Array));
 window.ModelArray = ModelArray;
@@ -484,10 +523,6 @@ function cacheDefaults(model, overrides) {
         var _c = __read(_a, 2), key = _c[0], definition = _c[1];
         model._caches[getCacheName(definition.isRelationship)][key] = (_b = overrides[key]) !== null && _b !== void 0 ? _b : definition.default;
     });
-}
-function validateEntry(data, definition) {
-    var relDef = getRelationshipSchema(definition);
-    return definition.isList ? data.every(function (element) { return getIdValue(element, relDef) != null; }) : getIdValue(data, relDef) != null;
 }
 function createAccessor(target, key) {
     var Schema = getConstructor(target);
@@ -525,7 +560,7 @@ function createAccessor(target, key) {
                         value = Array.isArray(value) ? value : [value].filter(identity);
                     }
                     if (target._connected) {
-                        if (validateEntry(value, relationshipDef)) {
+                        if (!validateEntry(value, relationshipDef)) {
                             throw new Error("An item being assigned to the property [" + key + "] does not have a valid identifier");
                         }
                         value = normalizeAndStore(_store, value, relationshipDef.entity);
