@@ -26,7 +26,7 @@ const esConfig = {
     esModule: true,
   },
 
-  plugins: [typescript(), resolve()]
+  plugins: [typescript({target: 'es6'}), resolve()]
 };
 
 const browserConfig = {

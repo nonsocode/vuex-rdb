@@ -715,6 +715,9 @@ var Model = /** @class */ (function () {
         });
     };
     Object.defineProperty(Model, "relationships", {
+        /**
+         * @deprecated
+         */
         get: function () {
             return {};
         },
@@ -924,7 +927,7 @@ window.modelCache = modelCache;
 
 function Field(options) {
     if (options === void 0) { options = {}; }
-    return function (target, propname) {
+    return function (target, propname, other) {
         var constructor = target.constructor;
         if (constructor._fields == null) {
             constructor._fields = createObject();

@@ -7,7 +7,7 @@ const defaultPluginOptions = {
   schemas: [],
   namespace: 'database'
 };
-export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
+function generateDatabasePlugin<T>(options: PluginOptions<T>) {
   const {schemas, namespace} = { ...defaultPluginOptions, ...options };
   return store => {
     store.registerModule(namespace, createModule(store));
@@ -17,4 +17,4 @@ export function generateDatabasePlugin<T>(options: PluginOptions<T>) {
     
   };
 }
-export { Model, Field };
+export { Model, Field, generateDatabasePlugin };

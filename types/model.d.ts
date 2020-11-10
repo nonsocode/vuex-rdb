@@ -15,10 +15,13 @@ export declare class Model<T extends any> implements IModel {
     constructor(data?: Partial<T>, opts?: any);
     toJSON(parentkey: any, parentNode: any): {};
     $toObject(): T;
-    $update(data?: {}): Promise<string | number>;
+    $update(data?: Partial<T>): Promise<string | number>;
     $save(): Promise<number | string>;
     $addRelated(related: any, data: any): Promise<string | number>;
     $removeRelated(related: any, relatedId: any): Promise<string | number>;
+    /**
+     * @deprecated
+     */
     static get relationships(): Record<string, Relationship>;
     static get fields(): Record<string, true> | string[];
     static find<T>(this: IModelStatic<T>, id: string | number, opts?: FindOptions): T;

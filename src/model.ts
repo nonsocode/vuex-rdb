@@ -6,6 +6,7 @@ import { FieldDefinition } from './FieldDefinition';
 import { getConstructor, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
 import { ModelArray } from './modelArray';
+import { Field } from './annotations/field';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -154,7 +155,7 @@ export class Model<T extends any> implements IModel {
     return JSON.parse(JSON.stringify(this));
   }
 
-  async $update(data = {}): Promise<string | number> {
+  async $update(data: Partial<T> = {}): Promise<string | number> {
     const constructor = getConstructor(this);
     return constructor._store
       .dispatch(`${constructor._namespace}/update`, {
@@ -211,6 +212,9 @@ export class Model<T extends any> implements IModel {
     });
   }
 
+  /**
+   * @deprecated
+   */
   static get relationships(): Record<string, Relationship> {
     return {};
   }
