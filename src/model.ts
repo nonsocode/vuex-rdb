@@ -90,7 +90,7 @@ export function getIdValue<T>(model: T, schema: typeof Model): string | number {
 }
 
 @ModelDecorator
-export class Model<T extends any> implements IModel {
+export class Model<T extends any = any> implements IModel {
   public static _namespace: string;
   public static entityName: string;
   public static _store: Store<any>;

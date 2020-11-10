@@ -19,12 +19,15 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
     namespaced: true,
     state: () => ({}),
     mutations: {
-      [Mutations.ADD](state, { id, entity, schema }: {id: string, entity: any, schema: typeof Model}) {
-        Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity});
-      },
       [Mutations.ADD_ALL](state, { items, schema }: {items: Cache, schema: typeof Model}) {
         Object.entries(items).forEach(([id, entity]) => {
-          Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity})
+          const storeItem = state[schema.entityName][id];
+          if(!storeItem) {
+            return Vue.set(state[schema.entityName], id, entity)
+          }
+          Object.entries(entity).forEach(([key, value]) => {
+            Vue.set(storeItem,key, value);
+          })
         })
       },
       [Mutations.SET_PROP](state, { id, key, value, schema }: {id: string, key: string, value: any, schema: typeof Model}) {

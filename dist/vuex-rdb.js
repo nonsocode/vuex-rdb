@@ -285,7 +285,6 @@ function getRelationshipSchema(field) {
 
 var Mutations;
 (function (Mutations) {
-    Mutations["ADD"] = "ADD";
     Mutations["ADD_ALL"] = "ADD_ALL";
     Mutations["PATCH_TEMPS"] = "PATCH_TEMPS";
     Mutations["SET_PROP"] = "SET_PROP";
@@ -797,15 +796,18 @@ function createModule(store) {
         namespaced: true,
         state: function () { return ({}); },
         mutations: (_a = {},
-            _a[Mutations.ADD] = function (state, _a) {
-                var id = _a.id, entity = _a.entity, schema = _a.schema;
-                Vue__default['default'].set(state[schema.entityName], id, __assign(__assign({}, state[schema.entityName][id]), entity));
-            },
             _a[Mutations.ADD_ALL] = function (state, _a) {
                 var items = _a.items, schema = _a.schema;
                 Object.entries(items).forEach(function (_a) {
                     var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                    Vue__default['default'].set(state[schema.entityName], id, __assign(__assign({}, state[schema.entityName][id]), entity));
+                    var storeItem = state[schema.entityName][id];
+                    if (!storeItem) {
+                        return Vue__default['default'].set(state[schema.entityName], id, entity);
+                    }
+                    Object.entries(entity).forEach(function (_a) {
+                        var _b = __read(_a, 2), key = _b[0], value = _b[1];
+                        Vue__default['default'].set(storeItem, key, value);
+                    });
                 });
             },
             _a[Mutations.SET_PROP] = function (state, _a) {

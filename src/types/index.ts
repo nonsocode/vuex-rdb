@@ -3,7 +3,6 @@ import {Store} from 'vuex';
 import {Model} from '../model';
 
 export enum Mutations {
-  ADD = 'ADD',
   ADD_ALL = 'ADD_ALL',
   PATCH_TEMPS = 'PATCH_TEMPS',
   SET_PROP = 'SET_PROP'
