@@ -2,7 +2,7 @@ import { FindOptions, IModel, IModelStatic, Relationship } from './types';
 import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
 export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
-export declare class Model<T extends any> implements IModel {
+export declare class Model<T extends any = any> implements IModel {
     static _namespace: string;
     static entityName: string;
     static _store: Store<any>;
