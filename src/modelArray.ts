@@ -4,20 +4,34 @@ import { getConstructor, normalizeAndStore } from './modelUtils';
 import { Getters, Mutations } from './types';
 import { Store } from 'vuex';
 
-
+function validateItems(items: any[], schema: typeof Model) {
+  for (const item of items) {
+    if (getIdValue(item, schema) == null) {
+      throw new Error(`An item being assigned to this array does not have a valid identifier`);
+    }
+  }
+}
 function validate() {
   return (target, key, descriptor: PropertyDescriptor) => {
     const method: Function = descriptor.value;
     descriptor.value = function(this: ModelArray<any>, ...args) {
-      const {Schema} = this._extractUtils();
-      for (const item of args) {
-        if(getIdValue(item, Schema) == null) {
-          throw new Error(`An item being assigned to this array does not have a valid identifier`)
-        }
-      }
-      method.apply(this, args)
-    }
-  }
+      const { Schema } = this._extractUtils();
+      validateItems(args, Schema);
+      method.apply(this, args);
+    };
+  };
+}
+
+function validateSplice() {
+  return (target, key, descriptor: PropertyDescriptor) => {
+    const method: Function = descriptor.value;
+    descriptor.value = function(this: ModelArray<any>, ...args) {
+      const { Schema } = this._extractUtils();
+      let [, , ...items] = args;
+      items.length && validateItems(items, Schema);
+      method.apply(this, args);
+    };
+  };
 }
 export class ModelArray<T extends Model<T>> extends Array<T> {
   _context: Model<any>;
@@ -77,7 +91,16 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     return removed;
   }
 
-  //todo
+  @validateSplice()
+  splice(...args: any[]): T[] {
+    const [start, count, ...rest] = args;
+    const { Schema } = this._extractUtils();
+    let result;
+    rest.forEach(item => normalizeAndStore(this._store, item, Schema));
+    result = args.length === 0 ? [] : super.splice(start, count, ...rest);
+    this._mutateContext(this.map(item => getIdValue(item, Schema)));
+    return result;
+  }
 
   _mutateContext(value) {
     const { ContextSchema } = this._extractUtils();

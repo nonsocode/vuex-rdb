@@ -9,6 +9,7 @@ export declare class ModelArray<T extends Model<T>> extends Array<T> {
     pop(): T;
     unshift(...items: any[]): number;
     shift(): T;
+    splice(...args: any[]): T[];
     _mutateContext(value: any): void;
     _extractUtils(withRawData?: boolean): {
         ContextSchema: typeof Model;

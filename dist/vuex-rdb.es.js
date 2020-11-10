@@ -248,16 +248,30 @@ function normalizeAndStore(store, data, entityDef) {
     return result;
 }
 
+function validateItems(items, schema) {
+    for (const item of items) {
+        if (getIdValue(item, schema) == null) {
+            throw new Error(`An item being assigned to this array does not have a valid identifier`);
+        }
+    }
+}
 function validate() {
     return (target, key, descriptor) => {
         const method = descriptor.value;
         descriptor.value = function (...args) {
             const { Schema } = this._extractUtils();
-            for (const item of args) {
-                if (getIdValue(item, Schema) == null) {
-                    throw new Error(`An item being assigned to this array does not have a valid identifier`);
-                }
-            }
+            validateItems(args, Schema);
+            method.apply(this, args);
+        };
+    };
+}
+function validateSplice() {
+    return (target, key, descriptor) => {
+        const method = descriptor.value;
+        descriptor.value = function (...args) {
+            const { Schema } = this._extractUtils();
+            let [, , ...items] = args;
+            items.length && validateItems(items, Schema);
             method.apply(this, args);
         };
     };
@@ -305,7 +319,15 @@ class ModelArray extends Array {
         this._mutateContext(this.map(item => getIdValue(item, Schema)));
         return removed;
     }
-    //todo
+    splice(...args) {
+        const [start, count, ...rest] = args;
+        const { Schema } = this._extractUtils();
+        let result;
+        rest.forEach(item => normalizeAndStore(this._store, item, Schema));
+        result = args.length === 0 ? [] : super.splice(start, count, ...rest);
+        this._mutateContext(this.map(item => getIdValue(item, Schema)));
+        return result;
+    }
     _mutateContext(value) {
         const { ContextSchema } = this._extractUtils();
         this._store.commit(`${ContextSchema._namespace}/${Mutations.SET_PROP}`, {
@@ -334,6 +356,9 @@ __decorate([
 __decorate([
     validate()
 ], ModelArray.prototype, "unshift", null);
+__decorate([
+    validateSplice()
+], ModelArray.prototype, "splice", null);
 window.ModelArray = ModelArray;
 
 const cacheNames = ['data', 'relationship'];

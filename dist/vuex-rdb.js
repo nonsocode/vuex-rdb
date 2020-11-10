@@ -391,31 +391,49 @@ function normalizeAndStore(store, data, entityDef) {
     return result;
 }
 
+function validateItems(items, schema) {
+    var e_1, _a;
+    try {
+        for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
+            var item = items_1_1.value;
+            if (getIdValue(item, schema) == null) {
+                throw new Error("An item being assigned to this array does not have a valid identifier");
+            }
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+}
 function validate() {
     return function (target, key, descriptor) {
         var method = descriptor.value;
         descriptor.value = function () {
-            var e_1, _a;
             var args = [];
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i] = arguments[_i];
             }
             var Schema = this._extractUtils().Schema;
-            try {
-                for (var args_1 = __values(args), args_1_1 = args_1.next(); !args_1_1.done; args_1_1 = args_1.next()) {
-                    var item = args_1_1.value;
-                    if (getIdValue(item, Schema) == null) {
-                        throw new Error("An item being assigned to this array does not have a valid identifier");
-                    }
-                }
+            validateItems(args, Schema);
+            method.apply(this, args);
+        };
+    };
+}
+function validateSplice() {
+    return function (target, key, descriptor) {
+        var method = descriptor.value;
+        descriptor.value = function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
             }
-            catch (e_1_1) { e_1 = { error: e_1_1 }; }
-            finally {
-                try {
-                    if (args_1_1 && !args_1_1.done && (_a = args_1.return)) _a.call(args_1);
-                }
-                finally { if (e_1) throw e_1.error; }
-            }
+            var Schema = this._extractUtils().Schema;
+            var _a = __read(args), items = _a.slice(2);
+            items.length && validateItems(items, Schema);
             method.apply(this, args);
         };
     };
@@ -475,7 +493,20 @@ var ModelArray = /** @class */ (function (_super) {
         this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
         return removed;
     };
-    //todo
+    ModelArray.prototype.splice = function () {
+        var _this = this;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var _a = __read(args), start = _a[0], count = _a[1], rest = _a.slice(2);
+        var Schema = this._extractUtils().Schema;
+        var result;
+        rest.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema); });
+        result = args.length === 0 ? [] : _super.prototype.splice.apply(this, __spread([start, count], rest));
+        this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
+        return result;
+    };
     ModelArray.prototype._mutateContext = function (value) {
         var ContextSchema = this._extractUtils().ContextSchema;
         this._store.commit(ContextSchema._namespace + "/" + Mutations.SET_PROP, {
@@ -504,6 +535,9 @@ var ModelArray = /** @class */ (function (_super) {
     __decorate([
         validate()
     ], ModelArray.prototype, "unshift", null);
+    __decorate([
+        validateSplice()
+    ], ModelArray.prototype, "splice", null);
     return ModelArray;
 }(Array));
 window.ModelArray = ModelArray;
