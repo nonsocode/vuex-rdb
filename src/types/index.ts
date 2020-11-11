@@ -206,7 +206,7 @@ export interface FindOptions {
 export type EntityName = string;
 export type StorePath = string;
 
-export declare function generateDatabasePlugin<T>(options: PluginOptions<T>): (store: Store<any>) => any;
+export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 export type NodeTree = {
   parentNode?: NodeTree,
   item: any

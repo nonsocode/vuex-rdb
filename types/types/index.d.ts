@@ -161,7 +161,7 @@ export declare type IModelStatic<T> = {
 };
 export declare type Relationship = typeof Model | [typeof Model];
 export declare type RelationshipGenerator = (() => Relationship);
-export interface PluginOptions<T> {
+export interface PluginOptions {
     /**
      * The namespace of the database in the Vuex store
      * @default db
@@ -191,7 +191,7 @@ export interface FindOptions {
 }
 export declare type EntityName = string;
 export declare type StorePath = string;
-export declare function generateDatabasePlugin<T>(options: PluginOptions<T>): (store: Store<any>) => any;
+export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 export declare type NodeTree = {
     parentNode?: NodeTree;
     item: any;
