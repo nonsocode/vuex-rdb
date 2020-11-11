@@ -7,7 +7,7 @@ const defaultPluginOptions = {
   schemas: [],
   namespace: 'database'
 };
-function generateDatabasePlugin<T>(options: PluginOptions<T>) {
+function generateDatabasePlugin(options: PluginOptions) {
   const {schemas, namespace} = { ...defaultPluginOptions, ...options };
   return store => {
     store.registerModule(namespace, createModule(store));

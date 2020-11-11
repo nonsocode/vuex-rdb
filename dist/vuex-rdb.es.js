@@ -1,5 +1,5 @@
 import Vue from 'vue';
-
+const man = 'maniac'
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 

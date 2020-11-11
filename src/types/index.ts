@@ -175,7 +175,7 @@ export type IModelStatic<T> = {
 
 export type Relationship = typeof Model | [typeof Model];
 export type RelationshipGenerator = (() => Relationship);
-export interface PluginOptions<T> {
+export interface PluginOptions {
   /**
    * The namespace of the database in the Vuex store
    * @default db

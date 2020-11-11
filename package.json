@@ -1,6 +1,6 @@
 {
   "name": "vuex-rdb",
-  "version": "0.14.6",
+  "version": "0.15.0",
   "description": "An Active record database for vuex",
   "main": "dist/vuex-rdb.js",
   "typings": "types/index.d.ts",
@@ -15,8 +15,7 @@
     "types"
   ],
   "scripts": {
-    "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
-    "serve": "parcel --out-dir serve dev/index.html"
+    "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js"
   },
   "peerDependencies": {
     "vue": "^2.6.0",
