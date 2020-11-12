@@ -91,15 +91,60 @@ export function getIdValue<T>(model: T, schema: typeof Model): string | number {
 
 @ModelDecorator
 export class Model<T extends any = any> implements IModel {
+
+  /**
+   * The namespace in the vuex store
+   * @internal
+   */
   public static _namespace: string;
+
+  /**
+   * The name of the entity. This is similar to a table name.
+   * *Note* This value doesn't have to be unique. Multiple entities can share the same table.
+   */
   public static entityName: string;
+
+  /**
+   * The Vuex store
+   * @internal
+   */
   public static _store: Store<any>;
+
+  /**
+   * @internal
+   */
   public static _fields: Record<string, FieldDefinition>;
+
+  /**
+   * The identifier for the model. It also accepts an id resolver function that
+   * receives a model-like param as input and returns the id;
+   * @default 'id'
+   */
   static id: string | ((...args: any[]) => string | number) = 'id';
 
+  /**
+   * Used when rendering as JSON. Useful when an enitity has a cylcic relationship. 
+   * It specifies exactly which relationships would be rendered out in the JSON representation
+   * @internal
+   */
   _load;
+
+  /**
+   * When a new entity is created and not connected to the Store, it's properties
+   * are kept here till `$save` method is called
+   * @internal
+   */
   _caches;
+
+  /**
+   * Indicates wether this model is connected to the store
+   */
   _connected = false;
+
+  /**
+   * The resolved id of this model
+   * @internal
+   */
   _id;
 
   constructor(data?: Partial<T>, opts: any = {}) {
@@ -126,6 +171,10 @@ export class Model<T extends any = any> implements IModel {
     // });
   }
 
+  /**
+   * Convert to JSON
+   * @internal
+   */
   toJSON(parentkey, parentNode) {
     const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
@@ -151,10 +200,17 @@ export class Model<T extends any = any> implements IModel {
     }, {});
   }
 
+  /**
+   * Converts the model to a plain javascript object.
+   */
   $toObject(): Partial<T> {
     return JSON.parse(JSON.stringify(this));
   }
 
+  /**
+   * Update the properties of the model with the given data. You don't need to pass the full model.
+   * You can pass only the props you want to update, You can also pass related models or model-like data
+   */
   async $update(data: Partial<T> = {}): Promise<string | number> {
     const constructor = getConstructor(this);
     return constructor._store
@@ -169,8 +225,15 @@ export class Model<T extends any = any> implements IModel {
       });
   }
 
-  // @createLogger('save')
-  async $save(): Promise<number | string> {
+/**
+   * Useful when a model is created using `new Model()`.
+   * You can assign properties to the model like you would any other javascript
+   * object but the new values won't be saved to the vuex store until this method is called;
+   *
+   * If none model-like data has been assigned to the relationships on `this` model, calling save would
+   * transform them to actual models
+   */
+    async $save(): Promise<number | string> {
     return new Promise(resolve => {
       const constructor = getConstructor(this);
       if (this._connected) {
@@ -191,7 +254,13 @@ export class Model<T extends any = any> implements IModel {
       }
     });
   }
-
+/**
+   * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
+   * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
+   * `this` model
+   */
+  $addRelated(related: string, data: Object): Promise<string | number>;
+  $addRelated(related: string, items: any[]): Promise<string | number>;
   async $addRelated(related, data): Promise<string | number> {
     const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD_RELATED}`, {
@@ -202,6 +271,16 @@ export class Model<T extends any = any> implements IModel {
     });
   }
 
+  /**
+   * Remove the specified entity as a relationship of `this` model
+   *
+   * if the `related` is a non list relationship, it's deleted from `this` model.
+   *
+   * if it's a list relationship, you can specify an identifier or a list of identifiers of the related
+   * entities to remove as a second parameter or leave blank to remove all items
+   */
+  $removeRelated(related: string, id?: string | number): Promise<string | number>;
+  $removeRelated(related: string, ids?: (string | number)[]): Promise<string | number>;
   async $removeRelated(related, relatedId): Promise<string | number> {
     const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._namespace}/${Actions.REMOVE_RELATED}`, {
@@ -213,27 +292,80 @@ export class Model<T extends any = any> implements IModel {
   }
 
   /**
+   * This is an alternative to the `Field(() => RelatedModel)` decorator
+   * 
+   * A record of all the possible relationships of this Schema. Currently, two types are supported
+   *
+   * - list
+   * - item
+   *
+   * lists are just Model classes in an Array while an Item is the Model Class itself
+   *
+   * So if we have a `UserModel` that has many `Posts`, we'd define it like so
+   *
+   * ```javascript
+   * class UserModel extends Model {
+   *   static get() {
+   *     return {
+   *       posts: [PostModel], // this signifies a list relationship
+   *       school: SchoolModel // This represents an item type relationship
+   *     }
+   *   }
+   * }
+   * ```
    * @deprecated
    */
   static get relationships(): Record<string, Relationship> {
     return {};
   }
 
+  /**
+   * This is an alternative to the `Field()` decorator. 
+   * 
+   * Specify the different fields of the class
+   * in an array or an object that contains the field names as it's keys
+   * @deprecated
+   */
   static get fields(): Record<string, true> | string[] {
     return {};
   }
+
+  /**
+   * Find a model by the specified identifier
+   */
   static find<T>(this: IModelStatic<T>, id: string | number, opts: FindOptions = {}): T {
     return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
   }
+
+  /**
+   * Find all items that match the specified ids
+   *
+   */
   static findByIds<T>(this: IModelStatic<T>, ids: any[], opts: FindOptions = {}): T[] {
     return this._store.getters[`${this._namespace}/${Getters.FIND_BY_IDS}`](ids, this, opts);
   }
+
+  /**
+   * Get all items of this type from the Database
+   */
   static all<T>(this: IModelStatic<T>, opts: FindOptions = {}): T[] {
     return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
   }
+
+  /**
+   * Add the passed item to the database. It should match this model's schema.
+   *
+   * It returns a promise of the inserted entity's id
+   */
   static add(item: any): Promise<string | number> {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items: item, schema: this });
   }
+
+  /**
+   * Add the passed items to the database. It should match this model's schema.
+   *
+   * It returns a promise of an array of ids for the inserted entities.
+   */
   static addAll(items: any[]): Promise<Array<string | number>> {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
   }
