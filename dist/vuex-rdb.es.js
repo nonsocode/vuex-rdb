@@ -565,6 +565,7 @@ var getComparator = function (item) { return function (where) {
         var resolved = get(where.key, item);
         var isArray = Array.isArray(resolved);
         var whereValue = isArray ? resolved.length : where.value;
+        resolved = isArray ? resolved.length : resolved;
         switch (where.operand) {
             case '!=':
                 return resolved != whereValue;

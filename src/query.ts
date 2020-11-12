@@ -34,9 +34,11 @@ const getComparator = <T>(item) => (where: Where<T>) => {
     if (typeof result == 'boolean') return result;
     return query.get();
   } else if (isString(where.key) && !isFunction(where.value)) {
-    const resolved = get(where.key, item);
+    let resolved = get(where.key, item);
     const isArray = Array.isArray(resolved);
     const whereValue = isArray ? resolved.length : where.value;
+    resolved = isArray ? resolved.length : resolved;
+
     switch (where.operand) {
       case '!=':
         return resolved != whereValue;
