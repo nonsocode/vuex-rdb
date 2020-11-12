@@ -18,9 +18,9 @@ declare abstract class Query<T> {
     where(key: WhereKey<T>): void;
     where(key: string, value: WhereValue | WhereFunction<T>): void;
     where(key: string, operand: WhereOperand, value: WhereValue): void;
-    orWhere(key: WhereKey<T>): void;
-    orWhere(key: string, value: WhereValue | WhereFunction<T>): void;
-    orWhere(key: string, operand: WhereOperand, value: WhereValue): void;
+    orWhere(key: WhereKey<T>): this;
+    orWhere(key: string, value: WhereValue | WhereFunction<T>): this;
+    orWhere(key: string, operand: WhereOperand, value: WhereValue): this;
     private addWhere;
     abstract get(): unknown;
     protected matchItem(item: Model<unknown>): boolean;

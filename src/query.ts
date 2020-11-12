@@ -68,9 +68,9 @@ abstract class Query<T> {
     return this;
   }
 
-  orWhere(key: WhereKey<T>): void;
-  orWhere(key: string, value: WhereValue | WhereFunction<T>): void;
-  orWhere(key: string, operand: WhereOperand, value: WhereValue): void;
+  orWhere(key: WhereKey<T>): this;
+  orWhere(key: string, value: WhereValue | WhereFunction<T>): this;
+  orWhere(key: string, operand: WhereOperand, value: WhereValue): this;
   orWhere(...args) {
     this.addWhere('or', ...args);
     return this;
