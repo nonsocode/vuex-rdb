@@ -49,13 +49,13 @@ const getComparator = item => where => {
         return resolved <= where.value;
       case '=':
       default:
-        return resolved != where.value;
+        return resolved == where.value;
     }
   }
 }
 abstract class Query<T> {
-  protected ands: Where<T>[];
-  protected ors: Where<T>[];
+  protected and: Where<T>[] = [];
+  protected or: Where<T>[] = [];
 
   constructor() {}
 
@@ -64,6 +64,7 @@ abstract class Query<T> {
   where(key: string, operand: WhereOperand, value: WhereValue): void;
   where(...args) {
     this.addWhere('and', ...args);
+    return this;
   }
 
   orWhere(key: WhereKey<T>): void;
@@ -71,6 +72,7 @@ abstract class Query<T> {
   orWhere(key: string, operand: WhereOperand, value: WhereValue): void;
   orWhere(...args) {
     this.addWhere('or', ...args);
+    return this;
   }
 
   private addWhere(type: WhereType, ...args) {
@@ -107,8 +109,8 @@ abstract class Query<T> {
   matchItem(item: Model<unknown>): boolean {
     const result: boolean[] =  []
     const comparator = getComparator(item);
-    result.push(!!(this.ands.length && this.ands.every(comparator)));
-    result.push(!!(this.ors.length && this.ors.some(comparator)));
+    result.push(!!(this.and.length && this.and.every(comparator)));
+    result.push(!!(this.or.length && this.or.some(comparator)));
     return result.some(identity);
   }
 }

@@ -582,12 +582,14 @@ var getComparator = function (item) { return function (where) {
                 return resolved <= where.value;
             case '=':
             default:
-                return resolved != where.value;
+                return resolved == where.value;
         }
     }
 }; };
 var Query = /** @class */ (function () {
     function Query() {
+        this.and = [];
+        this.or = [];
     }
     Query.prototype.where = function () {
         var args = [];
@@ -595,6 +597,7 @@ var Query = /** @class */ (function () {
             args[_i] = arguments[_i];
         }
         this.addWhere.apply(this, __spread(['and'], args));
+        return this;
     };
     Query.prototype.orWhere = function () {
         var args = [];
@@ -602,6 +605,7 @@ var Query = /** @class */ (function () {
             args[_i] = arguments[_i];
         }
         this.addWhere.apply(this, __spread(['or'], args));
+        return this;
     };
     Query.prototype.addWhere = function (type) {
         var args = [];
@@ -638,8 +642,8 @@ var Query = /** @class */ (function () {
     Query.prototype.matchItem = function (item) {
         var result = [];
         var comparator = getComparator(item);
-        result.push(!!(this.ands.length && this.ands.every(comparator)));
-        result.push(!!(this.ors.length && this.ors.some(comparator)));
+        result.push(!!(this.and.length && this.and.every(comparator)));
+        result.push(!!(this.or.length && this.or.some(comparator)));
         return result.some(identity);
     };
     return Query;

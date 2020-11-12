@@ -13,8 +13,8 @@ interface WhereFunction<T> {
     (item: any, query: Query<T>): boolean | void;
 }
 declare abstract class Query<T> {
-    protected ands: Where<T>[];
-    protected ors: Where<T>[];
+    protected and: Where<T>[];
+    protected or: Where<T>[];
     constructor();
     where(key: WhereKey<T>): void;
     where(key: string, value: WhereValue | WhereFunction<T>): void;
