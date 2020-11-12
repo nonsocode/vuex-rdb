@@ -60,9 +60,9 @@ abstract class Query<T> {
 
   constructor() {}
 
-  where(key: WhereKey<T>): void;
-  where(key: string, value: WhereValue | WhereFunction<T>): void;
-  where(key: string, operand: WhereOperand, value: WhereValue): void;
+  where(key: WhereKey<T>): this;
+  where(key: string, value: WhereValue | WhereFunction<T>): this;
+  where(key: string, operand: WhereOperand, value: WhereValue): this;
   where(...args) {
     this.addWhere('and', ...args);
     return this;

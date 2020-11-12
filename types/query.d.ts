@@ -15,9 +15,9 @@ declare abstract class Query<T> {
     protected and: Where<T>[];
     protected or: Where<T>[];
     constructor();
-    where(key: WhereKey<T>): void;
-    where(key: string, value: WhereValue | WhereFunction<T>): void;
-    where(key: string, operand: WhereOperand, value: WhereValue): void;
+    where(key: WhereKey<T>): this;
+    where(key: string, value: WhereValue | WhereFunction<T>): this;
+    where(key: string, operand: WhereOperand, value: WhereValue): this;
     orWhere(key: WhereKey<T>): this;
     orWhere(key: string, value: WhereValue | WhereFunction<T>): this;
     orWhere(key: string, operand: WhereOperand, value: WhereValue): this;
