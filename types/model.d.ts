@@ -1,6 +1,7 @@
 import { FindOptions, IModelConstructor, Relationship, Schema } from './types';
 import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
+import { ModelQuery } from './query';
 export declare function getIdValue<T>(model: T, schema: Schema): string | number;
 export declare class Model<T extends any = any> {
     /**
@@ -148,5 +149,5 @@ export declare class Model<T extends any = any> {
      * It returns a promise of an array of ids for the inserted entities.
      */
     static addAll(items: any[]): Promise<Array<string | number>>;
-    static query(): any;
+    static query<T extends Schema>(this: T): ModelQuery<T>;
 }

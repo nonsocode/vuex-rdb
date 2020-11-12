@@ -25,9 +25,9 @@ declare abstract class Query<T> {
     abstract get(): unknown;
     protected matchItem(item: Model<unknown>): boolean;
 }
-export declare class ModelQuery<T extends Schema<T>> extends Query<any> {
+export declare class ModelQuery<T extends Schema> extends Query<any> {
     private schema;
-    constructor(schema: Schema<T>);
-    get(): Model<T>[];
+    constructor(schema: T);
+    get(): InstanceType<T>[];
 }
 export {};

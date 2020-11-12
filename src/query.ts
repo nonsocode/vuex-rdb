@@ -125,13 +125,13 @@ class ContextualQuery extends Query<any> {
     return this.matchItem(this.context.value);
   }
 }
-export class ModelQuery<T extends Schema<T>> extends Query<any> {
-  constructor(private schema: Schema<T>) {
+export class ModelQuery<T extends Schema> extends Query<any> {
+  constructor(private schema: T) {
     super();
   }
 
-  get(): Model<T>[] {
-    const items = this.schema.all();
+  get(): InstanceType<T>[] {
+    const items = this.schema.all() as InstanceType<T>[];
     return items.filter(item => this.matchItem(item));
   }
 

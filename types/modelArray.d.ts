@@ -1,5 +1,4 @@
 import { Model } from './model';
-import { Schema } from './types';
 import { Store } from 'vuex';
 export declare class ModelArray<T extends Model<T>> extends Array<T> {
     _context: Model<any>;
@@ -13,9 +12,9 @@ export declare class ModelArray<T extends Model<T>> extends Array<T> {
     splice(...args: any[]): T[];
     _mutateContext(value: any): void;
     _extractUtils(withRawData?: boolean): {
-        contextSchema: Schema<any>;
+        contextSchema: typeof Model;
         rawContext: any;
-        schema: Schema<any>;
+        schema: typeof Model;
     };
 }
 declare global {
