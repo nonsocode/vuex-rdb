@@ -3,13 +3,16 @@ import { Model } from './model';
 import { createObject } from './utils';
 import {Store} from 'vuex'
 import Vue from 'vue'
+import { IModel, IModelStatic } from './types';
 
 export const nameModelMap: Map<string, typeof Model> = new Map();
 
-export function registerSchema(schema: typeof Model, store: Store<any>, namespace: string) {
+export function registerSchema(schema: IModelStatic<any>, store: Store<any>, namespace: string) {
 
   if (!schema._fields) {
-    schema._fields = createObject();
+    Object.defineProperty(schema, '_fields', {
+      value: createObject({})
+    })
   }
   if(!store.state[namespace][schema.entityName]){
     Vue.set(store.state[namespace], schema.entityName, {})

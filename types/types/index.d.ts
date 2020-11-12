@@ -81,7 +81,7 @@ export declare type IModelStatic<T> = {
     /**
      * The name of the entity
      */
-    readonly name: string;
+    entityName: string;
     /**
      * This is an alternative to the `Field(() => RelatedModel)` decorator
      *
@@ -98,11 +98,13 @@ export declare type IModelStatic<T> = {
      * class UserModel extends Model {
      *   static get() {
      *     return {
-     *       posts: [PostModel]
+     *       posts: [PostModel], // this signifies a list relationship
+     *       school: SchoolModel // This represents an item type relationship
      *     }
      *   }
      * }
      * ```
+     * @deprecated
      */
     relationships?: Record<string, Relationship>;
     /**
@@ -110,6 +112,7 @@ export declare type IModelStatic<T> = {
      *
      * Specify the different fields of the class
      * in an array or an object that contains the field names as it's keys
+     * @deprecated
      */
     fields?: Record<string, true> | string[];
     /**
@@ -170,7 +173,7 @@ export interface PluginOptions {
     /**
      * The list of Model types to be registered in the Database
      */
-    schemas: typeof Model[];
+    schemas: IModelStatic<Model>[];
     strict?: boolean;
 }
 declare type AppendRecord = {

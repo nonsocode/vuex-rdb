@@ -198,7 +198,9 @@ var FieldDefinition = /** @class */ (function () {
 
 function registerSchema(schema, store, namespace) {
     if (!schema._fields) {
-        schema._fields = createObject();
+        Object.defineProperty(schema, '_fields', {
+            value: createObject({})
+        });
     }
     if (!store.state[namespace][schema.entityName]) {
         Vue.set(store.state[namespace], schema.entityName, {});
