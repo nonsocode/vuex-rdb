@@ -1,18 +1,15 @@
 import { hasSeen, identity, isFunction } from './utils';
-import { Actions, FindOptions, Getters, IModel, IModelStatic, Mutations, Relationship } from './types';
+import { Actions, FindOptions, Getters, IModelConstructor, Mutations, Relationship } from './types';
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
 import { FieldDefinition } from './FieldDefinition';
 import { getConstructor, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
 import { ModelArray } from './modelArray';
-import { Field } from './annotations/field';
 
 const cacheNames = ['data', 'relationship'];
 
-function ModelDecorator<T extends IModelStatic<any>>(constructor: T) {
-  return constructor;
-}
+
 const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, Schema: typeof Model): any => {
   return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
@@ -89,8 +86,7 @@ export function getIdValue<T>(model: T, schema: typeof Model): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
 
-@ModelDecorator
-export class Model<T extends any = any> implements IModel {
+export class Model<T extends any = any>  {
 
   /**
    * The namespace in the vuex store
@@ -333,7 +329,7 @@ export class Model<T extends any = any> implements IModel {
   /**
    * Find a model by the specified identifier
    */
-  static find<T>(this: IModelStatic<T>, id: string | number, opts: FindOptions = {}): T {
+  static find<T>(this: IModelConstructor<T>, id: string | number, opts: FindOptions = {}): T {
     return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
   }
 
@@ -341,14 +337,14 @@ export class Model<T extends any = any> implements IModel {
    * Find all items that match the specified ids
    *
    */
-  static findByIds<T>(this: IModelStatic<T>, ids: any[], opts: FindOptions = {}): T[] {
+  static findByIds<T>(this: IModelConstructor<T>, ids: any[], opts: FindOptions = {}): T[] {
     return this._store.getters[`${this._namespace}/${Getters.FIND_BY_IDS}`](ids, this, opts);
   }
 
   /**
    * Get all items of this type from the Database
    */
-  static all<T>(this: IModelStatic<T>, opts: FindOptions = {}): T[] {
+  static all<T>(this: IModelConstructor<T>, opts: FindOptions = {}): T[] {
     return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
   }
 

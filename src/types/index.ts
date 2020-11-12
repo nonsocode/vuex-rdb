@@ -1,6 +1,6 @@
 import { FieldDefinition } from '../FieldDefinition';
-import {Store} from 'vuex';
-import {Model} from '../model';
+import { Store } from 'vuex';
+import { Model } from '../model';
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
@@ -25,67 +25,22 @@ export type TypeOrFunction<T> = T | TypeFunction<T>;
 export interface TypeFunction<T> extends Function {
   (this: null, data: any): T;
 }
-export type ModelState = Record<string|number, any>
-export type Cache =  Map<typeof Model, Record<IdValue, object>>
-export type IdValue = string | number
+export type ModelState = Record<string | number, any>;
+export type Cache = Map<typeof Model, Record<IdValue, object>>;
+export type IdValue = string | number;
 export type Normalized = {
-  result: IdValue | IdValue[],
-  entities: Cache
-}
+  result: IdValue | IdValue[];
+  entities: Cache;
+};
 
-export interface IModel {
-  
-  $update(data: any): Promise<any>;
-
-  
-  $addRelated(related: string, data: Object): Promise<string | number>;
-  $addRelated(related: string, items: any[]): Promise<string | number>;
-
-  $removeRelated(related: string, id?: string | number): Promise<string | number>;
-  $removeRelated(related: string, ids?: (string | number)[]): Promise<string | number>;
-
-  
-  $save(): Promise<string | number>;
-
-  [key: string]: any;
-}
-
-export type IModelStatic<T> = {
-  new (data, options?: any): T;
-
-  
-  id?: string | ((...args: any[]) => string | number);
-
-  
-  entityName: string;
-  
-  relationships?: Record<string, Relationship>;
-
-  
-  fields?: Record<string, true> | string[] 
-
-  
-  readonly _namespace?: string;
-  
-  readonly _store?: Store<any>;
-  /**
-   * @internal
-   */
-  readonly _fields?: Record<string, FieldDefinition>;
-  
-  find?<T>(this: IModelStatic<T>, id: string | number, opts: FindOptions): T;
-  
-  findByIds?<T>(this: IModelStatic<T>, ids: any[], opts: FindOptions): T[];
-  
-  all?<T>(this: IModelStatic<T>, opts: FindOptions): T[];
-  
-  add?(item: any): Promise<string | number>;
-  
-  addAll?(items: any[]): Promise<Array<string | number>>;
+export type IModelConstructor<T> = {
+  new (data: any, options?: any): T;
+  _store: Store<any>;
+  _namespace: string;
 };
 
 export type Relationship = typeof Model | [typeof Model];
-export type RelationshipGenerator = (() => Relationship);
+export type RelationshipGenerator = () => Relationship;
 export interface PluginOptions {
   /**
    * The namespace of the database in the Vuex store
@@ -96,7 +51,7 @@ export interface PluginOptions {
    * The list of Model types to be registered in the Database
    */
   schemas: typeof Model[];
-  
+
   strict?: boolean;
 }
 
@@ -119,11 +74,11 @@ export type StorePath = string;
 
 export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 export type NodeTree = {
-  parentNode?: NodeTree,
-  item: any
-}
+  parentNode?: NodeTree;
+  item: any;
+};
 export type ModelHooks = {
   once: {
-    postSave: Function[]
-  }
-}
+    postSave: Function[];
+  };
+};

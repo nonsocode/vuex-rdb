@@ -538,9 +538,6 @@ var ModelArray = /** @class */ (function (_super) {
 window.ModelArray = ModelArray;
 
 var cacheNames = ['data', 'relationship'];
-function ModelDecorator(constructor) {
-    return constructor;
-}
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
 var parseIfLiteral = function (id, Schema) {
     return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
@@ -616,6 +613,9 @@ var Model = /** @class */ (function () {
     function Model(data, opts) {
         var _this = this;
         if (opts === void 0) { opts = {}; }
+        /**
+         * Indicates wether this model is connected to the store
+         */
         this._connected = false;
         var id = data ? getIdValue(data, getConstructor(this)) : null;
         Object.defineProperties(this, {
@@ -637,6 +637,10 @@ var Model = /** @class */ (function () {
         // set: proxySetter
         // });
     }
+    /**
+     * Convert to JSON
+     * @internal
+     */
     Model.prototype.toJSON = function (parentkey, parentNode) {
         var _this = this;
         var constructor = getConstructor(this);
@@ -666,9 +670,16 @@ var Model = /** @class */ (function () {
             return acc;
         }, {});
     };
+    /**
+     * Converts the model to a plain javascript object.
+     */
     Model.prototype.$toObject = function () {
         return JSON.parse(JSON.stringify(this));
     };
+    /**
+     * Update the properties of the model with the given data. You don't need to pass the full model.
+     * You can pass only the props you want to update, You can also pass related models or model-like data
+     */
     Model.prototype.$update = function (data) {
         if (data === void 0) { data = {}; }
         return __awaiter(this, void 0, void 0, function () {
@@ -689,7 +700,14 @@ var Model = /** @class */ (function () {
             });
         });
     };
-    // @createLogger('save')
+    /**
+       * Useful when a model is created using `new Model()`.
+       * You can assign properties to the model like you would any other javascript
+       * object but the new values won't be saved to the vuex store until this method is called;
+       *
+       * If none model-like data has been assigned to the relationships on `this` model, calling save would
+       * transform them to actual models
+       */
     Model.prototype.$save = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
@@ -745,6 +763,27 @@ var Model = /** @class */ (function () {
     };
     Object.defineProperty(Model, "relationships", {
         /**
+         * This is an alternative to the `Field(() => RelatedModel)` decorator
+         *
+         * A record of all the possible relationships of this Schema. Currently, two types are supported
+         *
+         * - list
+         * - item
+         *
+         * lists are just Model classes in an Array while an Item is the Model Class itself
+         *
+         * So if we have a `UserModel` that has many `Posts`, we'd define it like so
+         *
+         * ```javascript
+         * class UserModel extends Model {
+         *   static get() {
+         *     return {
+         *       posts: [PostModel], // this signifies a list relationship
+         *       school: SchoolModel // This represents an item type relationship
+         *     }
+         *   }
+         * }
+         * ```
          * @deprecated
          */
         get: function () {
@@ -754,34 +793,63 @@ var Model = /** @class */ (function () {
         configurable: true
     });
     Object.defineProperty(Model, "fields", {
+        /**
+         * This is an alternative to the `Field()` decorator.
+         *
+         * Specify the different fields of the class
+         * in an array or an object that contains the field names as it's keys
+         * @deprecated
+         */
         get: function () {
             return {};
         },
         enumerable: false,
         configurable: true
     });
+    /**
+     * Find a model by the specified identifier
+     */
     Model.find = function (id, opts) {
         if (opts === void 0) { opts = {}; }
         return this._store.getters[this._namespace + "/" + Getters.FIND](id, this, opts);
     };
+    /**
+     * Find all items that match the specified ids
+     *
+     */
     Model.findByIds = function (ids, opts) {
         if (opts === void 0) { opts = {}; }
         return this._store.getters[this._namespace + "/" + Getters.FIND_BY_IDS](ids, this, opts);
     };
+    /**
+     * Get all items of this type from the Database
+     */
     Model.all = function (opts) {
         if (opts === void 0) { opts = {}; }
         return this._store.getters[this._namespace + "/" + Getters.ALL](this, opts);
     };
+    /**
+     * Add the passed item to the database. It should match this model's schema.
+     *
+     * It returns a promise of the inserted entity's id
+     */
     Model.add = function (item) {
         return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: item, schema: this });
     };
+    /**
+     * Add the passed items to the database. It should match this model's schema.
+     *
+     * It returns a promise of an array of ids for the inserted entities.
+     */
     Model.addAll = function (items) {
         return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: items, schema: [this] });
     };
+    /**
+     * The identifier for the model. It also accepts an id resolver function that
+     * receives a model-like param as input and returns the id;
+     * @default 'id'
+     */
     Model.id = 'id';
-    Model = __decorate([
-        ModelDecorator
-    ], Model);
     return Model;
 }());
 
