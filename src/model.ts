@@ -151,7 +151,7 @@ export class Model<T extends any = any> implements IModel {
     }, {});
   }
 
-  $toObject(): T {
+  $toObject(): Partial<T> {
     return JSON.parse(JSON.stringify(this));
   }
 

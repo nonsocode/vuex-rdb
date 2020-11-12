@@ -187,7 +187,7 @@ export interface PluginOptions {
   /**
    * The list of Model types to be registered in the Database
    */
-  schemas: IModelStatic<Model>[];
+  schemas: typeof Model[];
   
   strict?: boolean;
 }
