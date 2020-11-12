@@ -92,24 +92,24 @@ export class Model<T extends any = any>  {
    * The namespace in the vuex store
    * @internal
    */
-  public static _namespace: string;
+  static _namespace: string;
 
   /**
    * The name of the entity. This is similar to a table name.
    * *Note* This value doesn't have to be unique. Multiple entities can share the same table.
    */
-  public static entityName: string;
+  static entityName: string;
 
   /**
    * The Vuex store
    * @internal
    */
-  public static _store: Store<any>;
+  static _store: Store<any>;
 
   /**
    * @internal
    */
-  public static _fields: Record<string, FieldDefinition>;
+  static _fields: Record<string, FieldDefinition>;
 
   /**
    * The identifier for the model. It also accepts an id resolver function that
