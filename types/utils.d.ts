@@ -6,4 +6,5 @@ export declare function isString(string: any): string is string;
 export declare function createObject<T>(object?: T): T;
 export declare function ucFirst(str: string): string;
 export declare function isPrimitive(val: any): boolean;
+export declare const get: (path: string, obj: any, defaultVal?: any) => any;
 export declare function hasSeen(item: any, nodeTree?: NodeTree): boolean;

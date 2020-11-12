@@ -32,7 +32,7 @@ export type Normalized = {
   entities: Cache;
 };
 
-export type Schema = typeof Model
+export type Schema<T extends any = any> = typeof Model & {new(data?: Partial<T>, opts?: any): Model<T>}
 
 export type IModelConstructor<T> = {
   new (data: any, options?: any): T;

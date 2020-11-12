@@ -28,7 +28,9 @@ export declare type Normalized = {
     result: IdValue | IdValue[];
     entities: Cache;
 };
-export declare type Schema = typeof Model;
+export declare type Schema<T extends any = any> = typeof Model & {
+    new (data?: Partial<T>, opts?: any): Model<T>;
+};
 export declare type IModelConstructor<T> = {
     new (data: any, options?: any): T;
     _store: Store<any>;

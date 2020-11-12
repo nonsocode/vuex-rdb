@@ -6,6 +6,7 @@ import { FieldDefinition } from './FieldDefinition';
 import { getConstructor, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
 import { ModelArray } from './modelArray';
+import { ModelQuery } from './query';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -143,7 +144,7 @@ export class Model<T extends any = any>  {
    */
   _id;
 
-  constructor(data?: Partial<T>, opts: any = {}) {
+  constructor(data?: Partial<T>, opts?: any) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
@@ -364,6 +365,10 @@ export class Model<T extends any = any>  {
    */
   static addAll(items: any[]): Promise<Array<string | number>> {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
+  }
+
+  static query() {
+    return new ModelQuery(this);
   }
 }
 

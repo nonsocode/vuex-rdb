@@ -36,6 +36,13 @@ export function isPrimitive(val) {
   return [ 'string', 'number', 'bigint', 'boolean'].includes(typeof val)
 }
 
+export const get = (path: string, obj: any, defaultVal: any = undefined) => {
+  const returnable = path.split('.').reduce((acc, i) => {
+    return acc === null ? undefined : acc && acc[i];
+  }, obj || {});
+  return returnable === undefined ? defaultVal : returnable;
+};
+
 
 export function hasSeen(item, nodeTree?: NodeTree) {
   if(!nodeTree) return false;

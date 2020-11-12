@@ -148,4 +148,5 @@ export declare class Model<T extends any = any> {
      * It returns a promise of an array of ids for the inserted entities.
      */
     static addAll(items: any[]): Promise<Array<string | number>>;
+    static query(): any;
 }

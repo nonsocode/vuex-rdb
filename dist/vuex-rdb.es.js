@@ -144,6 +144,13 @@ function createObject(object) {
     });
     return o;
 }
+var get = function (path, obj, defaultVal) {
+    if (defaultVal === void 0) { defaultVal = undefined; }
+    var returnable = path.split('.').reduce(function (acc, i) {
+        return acc === null ? undefined : acc && acc[i];
+    }, obj || {});
+    return returnable === undefined ? defaultVal : returnable;
+};
 function hasSeen(item, nodeTree) {
     if (!nodeTree)
         return false;
@@ -537,6 +544,127 @@ var ModelArray = /** @class */ (function (_super) {
 }(Array));
 window.ModelArray = ModelArray;
 
+var getComparator = function (item) { return function (where) {
+    if (isFunction(where.key)) {
+        var query = new ContextualQuery({ value: item });
+        var result = where.key.call(null, item, query);
+        if (typeof result == 'boolean') {
+            return result;
+        }
+        return query.get();
+    }
+    else if (isString(where.key) && isFunction(where.value)) {
+        var value = get(where.key, item);
+        var query = new ContextualQuery({ value: value });
+        var result = where.value.call(null, value, query);
+        if (typeof result == 'boolean')
+            return result;
+        return query.get();
+    }
+    else if (isString(where.key) && !isFunction(where.value)) {
+        var resolved = get(where.key, item);
+        switch (where.operand) {
+            case '!=':
+                return resolved != where.value;
+            case '>':
+                return resolved > where.value;
+            case '>=':
+                return resolved >= where.value;
+            case '<':
+                return resolved < where.value;
+            case '<=':
+                return resolved <= where.value;
+            case '=':
+            default:
+                return resolved != where.value;
+        }
+    }
+}; };
+var Query = /** @class */ (function () {
+    function Query() {
+    }
+    Query.prototype.where = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        this.addWhere.apply(this, __spread(['and'], args));
+    };
+    Query.prototype.orWhere = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        this.addWhere.apply(this, __spread(['or'], args));
+    };
+    Query.prototype.addWhere = function (type) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        var whereArray = this[type];
+        switch (args.length) {
+            case 1:
+                if (!isFunction(args[0])) {
+                    throw new Error('Argument should be a function');
+                }
+                whereArray.push({
+                    key: args[0]
+                });
+                break;
+            case 2:
+                whereArray.push({
+                    key: args[0],
+                    value: args[1]
+                });
+                break;
+            case 3:
+                whereArray.push({
+                    key: args[0],
+                    operand: args[1],
+                    value: args[2]
+                });
+                break;
+            default:
+                throw new Error('Illegal arguments supplied');
+        }
+    };
+    Query.prototype.matchItem = function (item) {
+        var result = [];
+        var comparator = getComparator(item);
+        result.push(!!(this.ands.length && this.ands.every(comparator)));
+        result.push(!!(this.ors.length && this.ors.some(comparator)));
+        return result.some(identity);
+    };
+    return Query;
+}());
+var ContextualQuery = /** @class */ (function (_super) {
+    __extends(ContextualQuery, _super);
+    function ContextualQuery(context) {
+        var _this = _super.call(this) || this;
+        _this.context = context;
+        return _this;
+    }
+    ContextualQuery.prototype.get = function () {
+        return this.matchItem(this.context.value);
+    };
+    return ContextualQuery;
+}(Query));
+var ModelQuery = /** @class */ (function (_super) {
+    __extends(ModelQuery, _super);
+    function ModelQuery(schema) {
+        var _this = _super.call(this) || this;
+        _this.schema = schema;
+        return _this;
+    }
+    ModelQuery.prototype.get = function () {
+        var _this = this;
+        var items = this.schema.all();
+        return items.filter(function (item) { return _this.matchItem(item); });
+    };
+    return ModelQuery;
+}(Query));
+
 var cacheNames = ['data', 'relationship'];
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
 var parseIfLiteral = function (id, schema) {
@@ -612,7 +740,6 @@ function getIdValue(model, schema) {
 var Model = /** @class */ (function () {
     function Model(data, opts) {
         var _this = this;
-        if (opts === void 0) { opts = {}; }
         /**
          * Indicates wether this model is connected to the store
          */
@@ -843,6 +970,9 @@ var Model = /** @class */ (function () {
      */
     Model.addAll = function (items) {
         return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: items, schema: [this] });
+    };
+    Model.query = function () {
+        return new ModelQuery(this);
     };
     /**
      * The identifier for the model. It also accepts an id resolver function that
