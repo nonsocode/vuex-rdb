@@ -1,12 +1,12 @@
 import { getIdValue, Model } from './model';
 import { normalize } from './normalize';
 import { Store } from 'vuex';
-import { IdValue, Mutations, Relationship } from './types';
+import { IdValue, Mutations, Relationship, Schema } from './types';
 import { FieldDefinition } from './FieldDefinition';
 import { getRelationshipSchema } from './relationships';
 
-export function getConstructor(model: Model<any>): typeof Model {
-  return model.constructor as typeof Model;
+export function getConstructor(model: Model<any>): Schema {
+  return model.constructor as Schema;
 }
 
 export function validateEntry(data: any, definition: FieldDefinition): boolean {

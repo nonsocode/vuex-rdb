@@ -1,7 +1,7 @@
-import { FindOptions, IModelConstructor, Relationship } from './types';
+import { FindOptions, IModelConstructor, Relationship, Schema } from './types';
 import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
-export declare function getIdValue<T>(model: T, schema: typeof Model): string | number;
+export declare function getIdValue<T>(model: T, schema: Schema): string | number;
 export declare class Model<T extends any = any> {
     /**
      * The namespace in the vuex store

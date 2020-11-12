@@ -1,7 +1,7 @@
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { createObject, identity, isFunction, mergeUnique } from './utils';
 import {getIdValue, Model} from './model';
-import { ModelState, Mutations, Actions, Getters, Cache} from './types';
+import { ModelState, Mutations, Actions, Getters, Cache, Schema} from './types';
 import {Module, Store} from 'vuex';
 const sum = require('hash-sum');
 
@@ -19,7 +19,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
     namespaced: true,
     state: () => ({}),
     mutations: {
-      [Mutations.ADD_ALL](state, { items, schema }: {items: Cache, schema: typeof Model}) {
+      [Mutations.ADD_ALL](state, { items, schema }: {items: Cache, schema: Schema}) {
         Object.entries(items).forEach(([id, entity]) => {
           const storeItem = state[schema.entityName][id];
           if(!storeItem) {
@@ -30,7 +30,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
           })
         })
       },
-      [Mutations.SET_PROP](state, { id, key, value, schema }: {id: string, key: string, value: any, schema: typeof Model}) {
+      [Mutations.SET_PROP](state, { id, key, value, schema }: {id: string, key: string, value: any, schema: Schema}) {
         if(state[schema.entityName][id] == null) { throw new Error('Entity does not exist')}
         Vue.set(state[schema.entityName][id], key, value)
       }
@@ -134,8 +134,8 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
       }
     },
     getters: {
-      [Getters.GET_RAW]: (state) => (id, schema: typeof Model) => state[schema.entityName][id],
-      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, schema: typeof Model, opts: any = {} ) => {
+      [Getters.GET_RAW]: (state) => (id, schema: Schema) => state[schema.entityName][id],
+      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, schema: Schema, opts: any = {} ) => {
         const data = getters[Getters.GET_RAW](id, schema);
         if (!data) {
           return;
@@ -144,11 +144,11 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
         return resolveModel(schema, data, { load, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
-        return function(ids = [], schema: typeof Model, opts = {}) {
+        return function(ids = [], schema: Schema, opts = {}) {
           return ids.map(id => getters[Getters.FIND](id, schema, opts)).filter(identity);
         };
       },
-      [Getters.ALL]: (state, getters) => (schema: typeof Model, opts = {}) => {
+      [Getters.ALL]: (state, getters) => (schema: Schema, opts = {}) => {
         return getters[Getters.FIND_BY_IDS](Object.keys(state[schema.entityName]),  schema, opts);
       }
     }
@@ -157,7 +157,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
 
 const modelCache: Cache = new Map()
 
-function resolveModel(schema: typeof Model, rawData: object, options: any = {}) {
+function resolveModel(schema: Schema, rawData: object, options: any = {}) {
   const id = getIdValue(rawData, schema);
   const sumObject = {id, load: options?.load}
   const sumValue = sum(sumObject)

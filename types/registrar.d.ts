@@ -1,4 +1,4 @@
-import { Model } from './model';
 import { Store } from 'vuex';
-export declare const nameModelMap: Map<string, typeof Model>;
-export declare function registerSchema(schema: typeof Model, store: Store<any>, namespace: string): void;
+import { Schema } from './types';
+export declare const nameModelMap: Map<string, Schema>;
+export declare function registerSchema(schema: Schema, store: Store<any>, namespace: string): void;

@@ -12,9 +12,9 @@ export declare class ModelArray<T extends Model<T>> extends Array<T> {
     splice(...args: any[]): T[];
     _mutateContext(value: any): void;
     _extractUtils(withRawData?: boolean): {
-        ContextSchema: typeof Model;
+        contextSchema: typeof Model;
         rawContext: any;
-        Schema: typeof Model;
+        schema: typeof Model;
     };
 }
 declare global {

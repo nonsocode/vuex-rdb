@@ -1,12 +1,12 @@
 import { FieldDefinition } from './FieldDefinition';
-import { Model } from './model';
 import { createObject } from './utils';
 import {Store} from 'vuex'
 import Vue from 'vue'
+import { Schema } from './types';
 
-export const nameModelMap: Map<string, typeof Model> = new Map();
+export const nameModelMap: Map<string, Schema> = new Map();
 
-export function registerSchema(schema: typeof Model, store: Store<any>, namespace: string) {
+export function registerSchema(schema: Schema, store: Store<any>, namespace: string) {
 
   if (!schema._fields) {
     Object.defineProperty(schema, '_fields', {

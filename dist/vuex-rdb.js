@@ -418,8 +418,8 @@ function validate() {
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i] = arguments[_i];
             }
-            var Schema = this._extractUtils().Schema;
-            validateItems(args, Schema);
+            var schema = this._extractUtils().schema;
+            validateItems(args, schema);
             method.apply(this, args);
         };
     };
@@ -432,9 +432,9 @@ function validateSplice() {
             for (var _i = 0; _i < arguments.length; _i++) {
                 args[_i] = arguments[_i];
             }
-            var Schema = this._extractUtils().Schema;
+            var schema = this._extractUtils().schema;
             var _a = __read(args), items = _a.slice(2);
-            items.length && validateItems(items, Schema);
+            items.length && validateItems(items, schema);
             method.apply(this, args);
         };
     };
@@ -459,18 +459,18 @@ var ModelArray = /** @class */ (function (_super) {
         for (var _i = 0; _i < arguments.length; _i++) {
             items[_i] = arguments[_i];
         }
-        var _b = this._extractUtils(true), Schema = _b.Schema, rawContext = _b.rawContext;
+        var _b = this._extractUtils(true), schema = _b.schema, rawContext = _b.rawContext;
         var referenceArray = rawContext[this._key] || [];
-        items.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema); });
-        var ids = items.map(function (item) { return getIdValue(item, Schema); });
+        items.forEach(function (item) { return normalizeAndStore(_this._store, item, schema); });
+        var ids = items.map(function (item) { return getIdValue(item, schema); });
         this._mutateContext(__spread(referenceArray, ids));
-        _super.prototype.push.apply(this, __spread(Schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
+        _super.prototype.push.apply(this, __spread(schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
         return this.length;
     };
     ModelArray.prototype.pop = function () {
-        var Schema = this._extractUtils().Schema;
+        var schema = this._extractUtils().schema;
         var removed = _super.prototype.pop.call(this);
-        this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
+        this._mutateContext(this.map(function (item) { return getIdValue(item, schema); }));
         return removed;
     };
     ModelArray.prototype.unshift = function () {
@@ -480,18 +480,18 @@ var ModelArray = /** @class */ (function (_super) {
         for (var _i = 0; _i < arguments.length; _i++) {
             items[_i] = arguments[_i];
         }
-        var _b = this._extractUtils(true), Schema = _b.Schema, rawContext = _b.rawContext;
+        var _b = this._extractUtils(true), schema = _b.schema, rawContext = _b.rawContext;
         var referenceArray = rawContext[this._key] || [];
-        items.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema); });
-        var ids = items.map(function (item) { return getIdValue(item, Schema); });
+        items.forEach(function (item) { return normalizeAndStore(_this._store, item, schema); });
+        var ids = items.map(function (item) { return getIdValue(item, schema); });
         this._mutateContext(__spread(ids, referenceArray));
-        _super.prototype.unshift.apply(this, __spread(Schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
+        _super.prototype.unshift.apply(this, __spread(schema.findByIds(ids, { load: (_a = this._context._load) === null || _a === void 0 ? void 0 : _a[this._key] })));
         return this.length;
     };
     ModelArray.prototype.shift = function () {
-        var Schema = this._extractUtils().Schema;
+        var schema = this._extractUtils().schema;
         var removed = _super.prototype.shift.call(this);
-        this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
+        this._mutateContext(this.map(function (item) { return getIdValue(item, schema); }));
         return removed;
     };
     ModelArray.prototype.splice = function () {
@@ -501,33 +501,33 @@ var ModelArray = /** @class */ (function (_super) {
             args[_i] = arguments[_i];
         }
         var _a = __read(args), start = _a[0], count = _a[1], rest = _a.slice(2);
-        var Schema = this._extractUtils().Schema;
+        var schema = this._extractUtils().schema;
         var result;
-        rest.forEach(function (item) { return normalizeAndStore(_this._store, item, Schema); });
+        rest.forEach(function (item) { return normalizeAndStore(_this._store, item, schema); });
         result = args.length === 0 ? [] : _super.prototype.splice.apply(this, __spread([start, count], rest));
-        this._mutateContext(this.map(function (item) { return getIdValue(item, Schema); }));
+        this._mutateContext(this.map(function (item) { return getIdValue(item, schema); }));
         return result;
     };
     ModelArray.prototype._mutateContext = function (value) {
-        var ContextSchema = this._extractUtils().ContextSchema;
-        this._store.commit(ContextSchema._namespace + "/" + Mutations.SET_PROP, {
+        var schema = this._extractUtils().contextSchema;
+        this._store.commit(schema._namespace + "/" + Mutations.SET_PROP, {
             id: this._context._id,
             key: this._key,
             value: value,
-            schema: ContextSchema
+            schema: schema
         });
     };
     ModelArray.prototype._extractUtils = function (withRawData) {
         if (withRawData === void 0) { withRawData = false; }
-        var ContextSchema = getConstructor(this._context);
-        var Schema = getRelationshipSchema(ContextSchema._fields[this._key]);
+        var contextSchema = getConstructor(this._context);
+        var schema = getRelationshipSchema(contextSchema._fields[this._key]);
         var rawContext = withRawData
-            ? this._store.getters[ContextSchema._namespace + "/" + Getters.GET_RAW](getIdValue(this._context, ContextSchema), ContextSchema)
+            ? this._store.getters[contextSchema._namespace + "/" + Getters.GET_RAW](getIdValue(this._context, contextSchema), contextSchema)
             : null;
         return {
-            ContextSchema: ContextSchema,
+            contextSchema: contextSchema,
             rawContext: rawContext,
-            Schema: Schema
+            schema: schema
         };
     };
     __decorate([
@@ -545,8 +545,8 @@ window.ModelArray = ModelArray;
 
 var cacheNames = ['data', 'relationship'];
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
-var parseIfLiteral = function (id, Schema) {
-    return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
+var parseIfLiteral = function (id, schema) {
+    return ['string', 'number'].includes(typeof id) ? schema.find(id) : id;
 };
 function cacheDefaults(model, overrides) {
     if (overrides === void 0) { overrides = {}; }
@@ -557,8 +557,8 @@ function cacheDefaults(model, overrides) {
     });
 }
 function createAccessor(target, key) {
-    var Schema = getConstructor(target);
-    var path = Schema._namespace, _store = Schema._store, _fields = Schema._fields, id = Schema.id;
+    var schema = getConstructor(target);
+    var path = schema._namespace, _store = schema._store, _fields = schema._fields, id = schema.id;
     var isRelationship = key in _fields && _fields[key].isRelationship;
     var relationshipDef = isRelationship ? _fields[key] : null;
     Object.defineProperty(target, key, {
@@ -566,7 +566,7 @@ function createAccessor(target, key) {
         get: function () {
             var _a;
             if (target._connected) {
-                var raw = _store.getters[path + "/" + Getters.GET_RAW](this._id, Schema);
+                var raw = _store.getters[path + "/" + Getters.GET_RAW](this._id, schema);
                 var value = raw[key];
                 if (isRelationship) {
                     var opts = { load: (_a = target._load) === null || _a === void 0 ? void 0 : _a[key] };
@@ -599,15 +599,15 @@ function createAccessor(target, key) {
                     }
                 }
                 else if (target._connected && (isFunction(id) || id == key)) {
-                    var oldId = getIdValue(target, Schema);
-                    var newId = getIdValue(__assign(__assign({}, target), (_a = {}, _a[key] = value, _a)), Schema);
+                    var oldId = getIdValue(target, schema);
+                    var newId = getIdValue(__assign(__assign({}, target), (_a = {}, _a[key] = value, _a)), schema);
                     if (oldId != newId) {
                         throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
                     }
                 }
             }
             target._connected
-                ? _store.commit(path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value, schema: Schema })
+                ? _store.commit(path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value, schema: schema })
                 : Vue__default['default'].set(this._caches[getCacheName(isRelationship)], key, value);
         }
     });

@@ -1,5 +1,5 @@
 import { hasSeen, identity, isFunction } from './utils';
-import { Actions, FindOptions, Getters, IModelConstructor, Mutations, Relationship } from './types';
+import { Actions, FindOptions, Getters, IModelConstructor, Mutations, Relationship, Schema } from './types';
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
 import { FieldDefinition } from './FieldDefinition';
@@ -11,8 +11,8 @@ const cacheNames = ['data', 'relationship'];
 
 
 const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
-const parseIfLiteral = (id: any, Schema: typeof Model): any => {
-  return ['string', 'number'].includes(typeof id) ? Schema.find(id) : id;
+const parseIfLiteral = (id: any, schema: Schema): any => {
+  return ['string', 'number'].includes(typeof id) ? schema.find(id) : id;
 };
 const proxySetter = (target: Model<any>, key: string, value) => {
   if (!(key in target)) {
@@ -28,8 +28,8 @@ function cacheDefaults(model: Model<any>, overrides = {}) {
 }
 
 function createAccessor(target: Model<any>, key) {
-  const Schema = getConstructor(target);
-  const { _namespace: path, _store, _fields, id } = Schema;
+  const schema = getConstructor(target);
+  const { _namespace: path, _store, _fields, id } = schema;
   const isRelationship = key in _fields && _fields[key].isRelationship;
   const relationshipDef = isRelationship ? _fields[key] : null;
 
@@ -37,7 +37,7 @@ function createAccessor(target: Model<any>, key) {
     enumerable: true,
     get() {
       if (target._connected) {
-        const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, Schema);
+        const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, schema);
         const value = raw[key];
         if (isRelationship) {
           const opts = { load: target._load?.[key] };
@@ -67,8 +67,8 @@ function createAccessor(target: Model<any>, key) {
             value = normalizeAndStore(_store, value, relationshipDef.entity);
           }
         } else if (target._connected && (isFunction(id) || id == key)) {
-          const oldId = getIdValue(target, Schema);
-          const newId = getIdValue({ ...target, [key]: value }, Schema);
+          const oldId = getIdValue(target, schema);
+          const newId = getIdValue({ ...target, [key]: value }, schema);
           if (oldId != newId) {
             throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
           }
@@ -76,13 +76,13 @@ function createAccessor(target: Model<any>, key) {
       }
 
       target._connected
-        ? _store.commit(`${path}/${Mutations.SET_PROP}`, { id: this._id, key, value, schema: Schema })
+        ? _store.commit(`${path}/${Mutations.SET_PROP}`, { id: this._id, key, value, schema })
         : Vue.set(this._caches[getCacheName(isRelationship)], key, value);
     }
   });
 }
 
-export function getIdValue<T>(model: T, schema: typeof Model): string | number {
+export function getIdValue<T>(model: T, schema: Schema): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
 

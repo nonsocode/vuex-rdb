@@ -22,18 +22,19 @@ export interface TypeFunction<T> extends Function {
     (this: null, data: any): T;
 }
 export declare type ModelState = Record<string | number, any>;
-export declare type Cache = Map<typeof Model, Record<IdValue, object>>;
+export declare type Cache = Map<Schema, Record<IdValue, object>>;
 export declare type IdValue = string | number;
 export declare type Normalized = {
     result: IdValue | IdValue[];
     entities: Cache;
 };
+export declare type Schema = typeof Model;
 export declare type IModelConstructor<T> = {
     new (data: any, options?: any): T;
     _store: Store<any>;
     _namespace: string;
 };
-export declare type Relationship = typeof Model | [typeof Model];
+export declare type Relationship = Schema | [Schema];
 export declare type RelationshipGenerator = () => Relationship;
 export interface PluginOptions {
     /**
@@ -44,7 +45,7 @@ export interface PluginOptions {
     /**
      * The list of Model types to be registered in the Database
      */
-    schemas: typeof Model[];
+    schemas: Schema[];
     strict?: boolean;
 }
 declare type AppendRecord = {

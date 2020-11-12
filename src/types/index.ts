@@ -1,4 +1,3 @@
-import { FieldDefinition } from '../FieldDefinition';
 import { Store } from 'vuex';
 import { Model } from '../model';
 
@@ -26,12 +25,14 @@ export interface TypeFunction<T> extends Function {
   (this: null, data: any): T;
 }
 export type ModelState = Record<string | number, any>;
-export type Cache = Map<typeof Model, Record<IdValue, object>>;
+export type Cache = Map<Schema, Record<IdValue, object>>;
 export type IdValue = string | number;
 export type Normalized = {
   result: IdValue | IdValue[];
   entities: Cache;
 };
+
+export type Schema = typeof Model
 
 export type IModelConstructor<T> = {
   new (data: any, options?: any): T;
@@ -39,7 +40,7 @@ export type IModelConstructor<T> = {
   _namespace: string;
 };
 
-export type Relationship = typeof Model | [typeof Model];
+export type Relationship = Schema | [Schema];
 export type RelationshipGenerator = () => Relationship;
 export interface PluginOptions {
   /**
@@ -50,7 +51,7 @@ export interface PluginOptions {
   /**
    * The list of Model types to be registered in the Database
    */
-  schemas: typeof Model[];
+  schemas: Schema[];
 
   strict?: boolean;
 }

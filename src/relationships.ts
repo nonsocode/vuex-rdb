@@ -1,6 +1,5 @@
 import { createObject, isString } from './utils';
-import { Relationship } from './types';
-import { Model } from './model';
+import { Relationship, Schema } from './types';
 import { FieldDefinition } from './FieldDefinition';
 export const isList = <T extends Relationship>(definition: any): definition is Array<T> => Array.isArray(definition);
 export const isItem = (definition: Relationship): Boolean => !isList(definition);
@@ -45,7 +44,7 @@ function fillRelationships(t: object, fieldDefs: Record<string, FieldDefinition>
   });
 }
 
-export function getRelationshipSchema(field: FieldDefinition | Relationship): typeof Model {
+export function getRelationshipSchema(field: FieldDefinition | Relationship): Schema {
   if (field instanceof FieldDefinition) {
     if (!field.isRelationship) return null;
     field = field.entity;
