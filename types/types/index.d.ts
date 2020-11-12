@@ -1,4 +1,4 @@
-import { FieldDefinition } from 'src/FieldDefinition';
+import { FieldDefinition } from '../FieldDefinition';
 import { Store } from 'vuex';
 import { Model } from '../model';
 export declare enum Mutations {

@@ -1,6 +1,6 @@
-import { Model } from 'src';
-import { Relationship, RelationshipGenerator } from 'src/types';
-import { createObject, isFunction } from 'src/utils';
+import { Model } from '../model';
+import { Relationship, RelationshipGenerator } from '../types';
+import { createObject, isFunction } from '../utils';
 import { FieldDefinition } from '../FieldDefinition';
 
 export type FieldDefinitionOptions = {

@@ -1,5 +1,5 @@
-import { Model } from 'src';
-import { RelationshipGenerator } from 'src/types';
+import { Model } from '../model';
+import { RelationshipGenerator } from '../types';
 export declare type FieldDefinitionOptions = {
     entity?: RelationshipGenerator;
     default?(): any;
