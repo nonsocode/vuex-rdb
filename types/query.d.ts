@@ -9,8 +9,7 @@ interface Where<T> {
     value?: WhereFunction<T> | WhereValue;
 }
 interface WhereFunction<T> {
-    (item: any): boolean | void;
-    (item: any, query: Query<T>): boolean | void;
+    (query: Query<T>, item?: any): boolean | void;
 }
 declare abstract class Query<T> {
     protected and: Where<T>[];
@@ -24,7 +23,7 @@ declare abstract class Query<T> {
     orWhere(key: string, operand: WhereOperand, value: WhereValue): void;
     private addWhere;
     abstract get(): unknown;
-    matchItem(item: Model<unknown>): boolean;
+    protected matchItem(item: Model<unknown>): boolean;
 }
 export declare class ModelQuery<T extends Schema<T>> extends Query<any> {
     private schema;

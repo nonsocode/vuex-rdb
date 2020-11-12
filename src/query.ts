@@ -17,13 +17,12 @@ interface Context {
   value: any;
 }
 interface WhereFunction<T> {
-  (item): boolean | void;
-  (item, query: Query<T>): boolean | void;
+  (query: Query<T>, item?:any): boolean | void;
 }
-const getComparator = item => where => {
-  if (isFunction(where.key)) {
+const getComparator = <T>(item) => (where: Where<T>) => {
+  if (isFunction<boolean | void>(where.key)) {
     const query = new ContextualQuery({ value: item });
-    let result = where.key.call(null, item, query);
+    let result = where.key.call(null, query, item);
     if (typeof result == 'boolean') {
       return result;
     }
@@ -31,25 +30,27 @@ const getComparator = item => where => {
   } else if (isString(where.key) && isFunction(where.value)) {
     const value = get(where.key, item);
     const query = new ContextualQuery({ value });
-    const result = where.value.call(null, value, query);
+    const result = where.value.call(null, query, value);
     if (typeof result == 'boolean') return result;
     return query.get();
   } else if (isString(where.key) && !isFunction(where.value)) {
     const resolved = get(where.key, item);
+    const isArray = Array.isArray(resolved);
+    const whereValue = isArray ? resolved.length : where.value;
     switch (where.operand) {
       case '!=':
-        return resolved != where.value;
+        return resolved != whereValue;
       case '>':
-        return resolved > where.value;
+        return resolved > whereValue;
       case '>=':
-        return resolved >= where.value;
+        return resolved >= whereValue;
       case '<':
-        return resolved < where.value;
+        return resolved < whereValue;
       case '<=':
-        return resolved <= where.value;
+        return resolved <= whereValue;
       case '=':
       default:
-        return resolved == where.value;
+        return resolved == whereValue;
     }
   }
 }
@@ -106,7 +107,7 @@ abstract class Query<T> {
 
   abstract get(): unknown;
 
-  matchItem(item: Model<unknown>): boolean {
+  protected matchItem(item: Model<unknown>): boolean {
     const result: boolean[] =  []
     const comparator = getComparator(item);
     result.push(!!(this.and.length && this.and.every(comparator)));

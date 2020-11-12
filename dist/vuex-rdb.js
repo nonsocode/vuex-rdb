@@ -553,7 +553,7 @@ window.ModelArray = ModelArray;
 var getComparator = function (item) { return function (where) {
     if (isFunction(where.key)) {
         var query = new ContextualQuery({ value: item });
-        var result = where.key.call(null, item, query);
+        var result = where.key.call(null, query, item);
         if (typeof result == 'boolean') {
             return result;
         }
@@ -562,27 +562,29 @@ var getComparator = function (item) { return function (where) {
     else if (isString(where.key) && isFunction(where.value)) {
         var value = get(where.key, item);
         var query = new ContextualQuery({ value: value });
-        var result = where.value.call(null, value, query);
+        var result = where.value.call(null, query, value);
         if (typeof result == 'boolean')
             return result;
         return query.get();
     }
     else if (isString(where.key) && !isFunction(where.value)) {
         var resolved = get(where.key, item);
+        var isArray = Array.isArray(resolved);
+        var whereValue = isArray ? resolved.length : where.value;
         switch (where.operand) {
             case '!=':
-                return resolved != where.value;
+                return resolved != whereValue;
             case '>':
-                return resolved > where.value;
+                return resolved > whereValue;
             case '>=':
-                return resolved >= where.value;
+                return resolved >= whereValue;
             case '<':
-                return resolved < where.value;
+                return resolved < whereValue;
             case '<=':
-                return resolved <= where.value;
+                return resolved <= whereValue;
             case '=':
             default:
-                return resolved == where.value;
+                return resolved == whereValue;
         }
     }
 }; };
