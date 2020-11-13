@@ -570,22 +570,21 @@ var getComparator = function (item) { return function (where) {
     else if (isString(where.key) && !isFunction(where.value)) {
         var resolved = get(where.key, item);
         var isArray = Array.isArray(resolved);
-        var whereValue = isArray ? resolved.length : where.value;
         resolved = isArray ? resolved.length : resolved;
         switch (where.operand) {
             case '!=':
-                return resolved != whereValue;
+                return resolved != where.value;
             case '>':
-                return resolved > whereValue;
+                return resolved > where.value;
             case '>=':
-                return resolved >= whereValue;
+                return resolved >= where.value;
             case '<':
-                return resolved < whereValue;
+                return resolved < where.value;
             case '<=':
-                return resolved <= whereValue;
+                return resolved <= where.value;
             case '=':
             default:
-                return resolved == whereValue;
+                return resolved == where.value;
         }
     }
 }; };

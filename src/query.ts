@@ -36,23 +36,22 @@ const getComparator = <T>(item) => (where: Where<T>) => {
   } else if (isString(where.key) && !isFunction(where.value)) {
     let resolved = get(where.key, item);
     const isArray = Array.isArray(resolved);
-    const whereValue = isArray ? resolved.length : where.value;
     resolved = isArray ? resolved.length : resolved;
 
     switch (where.operand) {
       case '!=':
-        return resolved != whereValue;
+        return resolved != where.value;
       case '>':
-        return resolved > whereValue;
+        return resolved > where.value;
       case '>=':
-        return resolved >= whereValue;
+        return resolved >= where.value;
       case '<':
-        return resolved < whereValue;
+        return resolved < where.value;
       case '<=':
-        return resolved <= whereValue;
+        return resolved <= where.value;
       case '=':
       default:
-        return resolved == whereValue;
+        return resolved == where.value;
     }
   }
 }
