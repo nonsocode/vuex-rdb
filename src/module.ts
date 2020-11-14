@@ -1,4 +1,4 @@
-import { getRelationshipSchema, isList, relations } from './relationships';
+import { getRelationshipSchema, isList } from './relationships';
 import { createObject, identity, isFunction, mergeUnique } from './utils';
 import {getIdValue, Model} from './model';
 import {ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions} from './types';
