@@ -1,7 +1,7 @@
 import { Store } from 'vuex';
 import { Model } from '../model';
-import { WhereFunction } from "../query";
-import { Load, LoadQuery } from "../query/load";
+import { Load, LoadQuery } from '../query/load';
+import { Query } from '../query/query';
 export declare enum Mutations {
     ADD_ALL = "ADD_ALL",
     PATCH_TEMPS = "PATCH_TEMPS",
@@ -66,6 +66,18 @@ export declare type NodeTree = {
     parentNode?: NodeTree;
     item: any;
 };
+export declare type WhereValue = string | number | boolean | object | any[];
+export declare type WhereKey<T> = string | WhereFunction<T>;
+export declare type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean;
+export declare type WhereType = 'and' | 'or';
+export interface Where<T> {
+    key?: WhereKey<T>;
+    operand?: WhereOperand;
+    value?: WhereFunction<T> | WhereValue;
+}
+export interface WhereFunction<T> {
+    (query: Query<T>, item?: any): boolean | void;
+}
 export interface LoadWhereFunction extends WhereFunction<Load> {
     (query: LoadQuery): boolean | void;
 }

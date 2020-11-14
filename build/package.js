@@ -24,6 +24,7 @@ const esConfig = {
     file: 'dist/vuex-rdb.es.js',
     format: 'es',
     esModule: true,
+    sourcemap: true,
   },
 
   plugins: [typescript(), resolve()]

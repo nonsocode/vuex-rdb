@@ -1,5 +1,4 @@
-import {LoadWhereFunction, Relationship, RelationshipModel} from '../types';
-import { WhereFunction} from './index';
+import {LoadWhereFunction, Relationship, RelationshipModel, WhereFunction} from '../types';
 import {createObject, isFunction, isString} from '../utils';
 import {getLoads} from './query-utils';
 import {ContextualQuery} from "./contextual-query";
@@ -57,7 +56,7 @@ export class Load<T extends Relationship = Relationship> {
           const query = new LoadQuery(load);
           val.call(null, query);
           load.addCondition(query)
-        } else load.addCondition(new ContextualQuery({value: true}).where('value', true));
+        } else load.addCondition(new ContextualQuery().where(true));
       });
     });
     return this;

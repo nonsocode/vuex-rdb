@@ -139,6 +139,9 @@ function mergeUnique(items, key) {
 function isFunction(fn) {
     return fn instanceof Function;
 }
+function isBoolean(arg) {
+    return arg === true || arg === false;
+}
 function isString(string) {
     return typeof string === 'string';
 }
@@ -537,12 +540,19 @@ var Query = /** @class */ (function () {
         }
         switch (args.length) {
             case 1:
-                if (!isFunction(args[0])) {
-                    throw new Error('Argument should be a function');
+                if (!isFunction(args[0]) && !isBoolean(args[0])) {
+                    throw new Error('Argument should be a function or boolean');
                 }
-                this[type].push({
-                    key: args[0]
-                });
+                if (isBoolean(args[0])) {
+                    this[type].push({
+                        operand: args[0]
+                    });
+                }
+                else {
+                    this[type].push({
+                        key: args[0]
+                    });
+                }
                 break;
             case 2:
                 this[type].push({
@@ -616,6 +626,10 @@ var getComparator = function (item) { return function (where) {
                 return resolved < where.value;
             case '<=':
                 return resolved <= where.value;
+            case true:
+                return true;
+            case false:
+                return false;
             case '=':
             default:
                 return resolved == where.value;
@@ -723,7 +737,7 @@ var Load = /** @class */ (function () {
                     load.addCondition(query);
                 }
                 else
-                    load.addCondition(new ContextualQuery({ value: true }).where('value', true));
+                    load.addCondition(new ContextualQuery().where(true));
             });
         });
         return this;

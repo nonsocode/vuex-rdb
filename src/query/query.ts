@@ -1,19 +1,5 @@
-import { isFunction} from "../utils";
-
-export type WhereValue = string | number | boolean | object | any[];
-export type WhereKey<T> = string | WhereFunction<T>;
-export type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=';
-export type WhereType = 'and' | 'or';
-
-export interface Where<T> {
-  key: WhereKey<T>;
-  operand?: WhereOperand;
-  value?: WhereFunction<T> | WhereValue;
-}
-
-export interface WhereFunction<T> {
-  (query: Query<T>, item?: any): boolean | void;
-}
+import {isBoolean, isFunction} from "../utils";
+import {Where, WhereFunction, WhereKey, WhereOperand, WhereType, WhereValue} from "../types";
 
 export abstract class Query<T> {
   protected and: Where<T>[] = [];
@@ -22,17 +8,19 @@ export abstract class Query<T> {
   protected constructor() {
   }
 
-  where(key: WhereKey<T>): this;
-  where(key: string, value: WhereValue | WhereFunction<T>): this;
   where(key: string, operand: WhereOperand, value: WhereValue): this;
+  where(key: string, value: WhereValue | WhereFunction<T>): this;
+  where(key: WhereFunction<T>): this;
+  where(key: boolean): this;
   where(...args) {
     this.addWhere('and', ...args);
     return this;
   }
 
-  orWhere(key: WhereKey<T>): this;
-  orWhere(key: string, value: WhereValue | WhereFunction<T>): this;
   orWhere(key: string, operand: WhereOperand, value: WhereValue): this;
+  orWhere(key: string, value: WhereValue | WhereFunction<T>): this;
+  orWhere(key: WhereFunction<T>): this;
+  orWhere(key: boolean): this;
   orWhere(...args) {
     this.addWhere('or', ...args);
     return this;
@@ -41,12 +29,18 @@ export abstract class Query<T> {
   private addWhere(type: WhereType, ...args) {
     switch (args.length) {
       case 1:
-        if (!isFunction<WhereFunction<T>>(args[0])) {
-          throw new Error('Argument should be a function');
+        if (!isFunction<WhereFunction<T>>(args[0]) && !isBoolean(args[0])) {
+          throw new Error('Argument should be a function or boolean');
         }
-        this[type].push({
-          key: args[0]
-        });
+        if (isBoolean(args[0])) {
+          this[type].push({
+            operand: args[0]
+          })
+        } else {
+          this[type].push({
+            key: args[0]
+          });
+        }
         break;
       case 2:
         this[type].push({

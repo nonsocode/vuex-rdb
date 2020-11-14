@@ -16,6 +16,10 @@ export function isFunction<T extends Function>(fn: any): fn is T{
   return fn instanceof Function;
 }
 
+export function isBoolean(arg: any): arg is boolean {
+  return arg === true || arg === false;
+}
+
 
 export function isString(string: any): string is string {
   return typeof string === 'string';

@@ -1,4 +1,4 @@
-import { Query } from './index';
+import { Query } from './query';
 import {getComparator} from "./query-utils";
 import {identity} from "../utils";
 

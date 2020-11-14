@@ -1,15 +1,4 @@
-export declare type WhereValue = string | number | boolean | object | any[];
-export declare type WhereKey<T> = string | WhereFunction<T>;
-export declare type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=';
-export declare type WhereType = 'and' | 'or';
-export interface Where<T> {
-    key: WhereKey<T>;
-    operand?: WhereOperand;
-    value?: WhereFunction<T> | WhereValue;
-}
-export interface WhereFunction<T> {
-    (query: Query<T>, item?: any): boolean | void;
-}
+import { Where, WhereFunction, WhereKey, WhereOperand, WhereValue } from "../types";
 export declare abstract class Query<T> {
     protected and: Where<T>[];
     protected or: Where<T>[];

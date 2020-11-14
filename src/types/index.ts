@@ -1,7 +1,7 @@
 import { Store } from 'vuex';
 import { Model } from '../model';
-import {WhereFunction} from "../query";
-import {Load, LoadQuery} from "../query/load";
+import { Load, LoadQuery } from '../query/load';
+import { Query } from '../query/query';
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
@@ -38,8 +38,11 @@ export type Schema = typeof Model;
 
 export type Relationship = Schema | [Schema];
 export type RelationshipGenerator = () => Relationship;
-export type RelationshipModel<T extends Relationship> = T extends typeof Model? InstanceType<T> :
-T extends [typeof Model] ? InstanceType<T[0]>[] : never;
+export type RelationshipModel<T extends Relationship> = T extends typeof Model
+  ? InstanceType<T>
+  : T extends [typeof Model]
+  ? InstanceType<T[0]>[]
+  : never;
 export interface PluginOptions {
   /**
    * The namespace of the database in the Vuex store
@@ -76,7 +79,21 @@ export type NodeTree = {
   item: any;
 };
 
+export type WhereValue = string | number | boolean | object | any[];
+export type WhereKey<T> = string | WhereFunction<T>;
+export type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean;
+export type WhereType = 'and' | 'or';
+
+export interface Where<T> {
+  key?: WhereKey<T>;
+  operand?: WhereOperand;
+  value?: WhereFunction<T> | WhereValue;
+}
+
+export interface WhereFunction<T> {
+  (query: Query<T>, item?: any): boolean | void;
+}
 
 export interface LoadWhereFunction extends WhereFunction<Load> {
-  (query: LoadQuery): boolean| void
+  (query: LoadQuery): boolean | void;
 }

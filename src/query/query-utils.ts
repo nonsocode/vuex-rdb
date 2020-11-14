@@ -1,9 +1,8 @@
-import {get, isFunction, isString} from "../utils";
-import {ContextualQuery} from "./contextual-query";
-import {Where} from "./index";
-import {Relationship} from "../types";
-import {getRelationshipSchema} from "../relationships";
-import {Load} from "./load";
+import { get, isFunction, isString } from '../utils';
+import { ContextualQuery } from './contextual-query';
+import { Relationship, Where } from '../types';
+import { getRelationshipSchema } from '../relationships';
+import { Load } from './load';
 
 export const getComparator = <T>(item) => (where: Where<T>) => {
   if (isFunction(where.key)) {
@@ -35,6 +34,10 @@ export const getComparator = <T>(item) => (where: Where<T>) => {
         return resolved < where.value;
       case '<=':
         return resolved <= where.value;
+      case true:
+        return true;
+      case false:
+        return false;
       case '=':
       default:
         return resolved == where.value;
@@ -50,7 +53,7 @@ const addToLoads = (key: string, relationship: Relationship, originalLoad: Load,
     originalLoad.addLoad(key, newLoad);
     newLoads.push(newLoad);
   }
-}
+};
 
 export function getLoads(loads: Load[], key: string) {
   const newLoads: Load[] = [];
