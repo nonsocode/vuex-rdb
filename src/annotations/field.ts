@@ -16,7 +16,7 @@ export function Field(options: FieldDefinitionOptions | RelationshipGenerator = 
     }
 
     constructor._fields[propname] = new FieldDefinition(
-      isFunction<Relationship>(options) ? { entity: options } : options
+      isFunction(options) ? { entity: options } : options
     );
   };
 }

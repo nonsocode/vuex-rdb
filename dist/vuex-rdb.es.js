@@ -148,7 +148,7 @@ var get = function (path, obj, defaultVal) {
     if (defaultVal === void 0) { defaultVal = undefined; }
     var returnable = path.split('.').reduce(function (acc, i) {
         return acc === null ? undefined : acc && acc[i];
-    }, obj || {});
+    }, obj || createObject());
     return returnable === undefined ? defaultVal : returnable;
 };
 function hasSeen(item, nodeTree) {
@@ -236,47 +236,6 @@ function registerSchema(schema, store, namespace) {
 }
 
 var isList = function (definition) { return Array.isArray(definition); };
-function relations(relatives, schemaFields) {
-    if ([null, undefined].includes(relatives)) {
-        return {};
-    }
-    else if (!Array.isArray(relatives) && !isString(relatives)) {
-        return relatives;
-    }
-    if (isString(relatives)) {
-        relatives = [relatives];
-    }
-    if (Array.isArray(relatives)) {
-        var result_1 = {};
-        relatives.forEach(function (relative) {
-            var fieldDefs = schemaFields;
-            var t = result_1;
-            var paths = relative.split('.');
-            for (var i = 0; i < paths.length; i++) {
-                if (paths[i] === '*') {
-                    if (fieldDefs) {
-                        fillRelationships(t, fieldDefs);
-                    }
-                    break;
-                }
-                var fieldDef = fieldDefs === null || fieldDefs === void 0 ? void 0 : fieldDefs[paths[i]];
-                t[paths[i]] = t[paths[i]] || createObject();
-                t = t[paths[i]];
-                fieldDefs = fieldDef && getRelationshipSchema(fieldDef)._fields;
-            }
-        });
-        return result_1;
-    }
-}
-function fillRelationships(t, fieldDefs) {
-    Object.entries(fieldDefs).forEach(function (_a) {
-        var _b = __read(_a, 2), key = _b[0], def = _b[1];
-        if (key in t || !def.isRelationship) {
-            return;
-        }
-        t[key] = createObject();
-    });
-}
 function getRelationshipSchema(field) {
     if (field instanceof FieldDefinition) {
         if (!field.isRelationship)
@@ -544,44 +503,6 @@ var ModelArray = /** @class */ (function (_super) {
 }(Array));
 window.ModelArray = ModelArray;
 
-var getComparator = function (item) { return function (where) {
-    if (isFunction(where.key)) {
-        var query = new ContextualQuery({ value: item });
-        var result = where.key.call(null, query, item);
-        if (typeof result == 'boolean') {
-            return result;
-        }
-        return query.get();
-    }
-    else if (isString(where.key) && isFunction(where.value)) {
-        var value = get(where.key, item);
-        var query = new ContextualQuery({ value: value });
-        var result = where.value.call(null, query, value);
-        if (typeof result == 'boolean')
-            return result;
-        return query.get();
-    }
-    else if (isString(where.key) && !isFunction(where.value)) {
-        var resolved = get(where.key, item);
-        var isArray = Array.isArray(resolved);
-        resolved = isArray ? resolved.length : resolved;
-        switch (where.operand) {
-            case '!=':
-                return resolved != where.value;
-            case '>':
-                return resolved > where.value;
-            case '>=':
-                return resolved >= where.value;
-            case '<':
-                return resolved < where.value;
-            case '<=':
-                return resolved <= where.value;
-            case '=':
-            default:
-                return resolved == where.value;
-        }
-    }
-}; };
 var Query = /** @class */ (function () {
     function Query() {
         this.and = [];
@@ -608,24 +529,23 @@ var Query = /** @class */ (function () {
         for (var _i = 1; _i < arguments.length; _i++) {
             args[_i - 1] = arguments[_i];
         }
-        var whereArray = this[type];
         switch (args.length) {
             case 1:
                 if (!isFunction(args[0])) {
                     throw new Error('Argument should be a function');
                 }
-                whereArray.push({
+                this[type].push({
                     key: args[0]
                 });
                 break;
             case 2:
-                whereArray.push({
+                this[type].push({
                     key: args[0],
                     value: args[1]
                 });
                 break;
             case 3:
-                whereArray.push({
+                this[type].push({
                     key: args[0],
                     operand: args[1],
                     value: args[2]
@@ -635,15 +555,9 @@ var Query = /** @class */ (function () {
                 throw new Error('Illegal arguments supplied');
         }
     };
-    Query.prototype.matchItem = function (item) {
-        var result = [];
-        var comparator = getComparator(item);
-        result.push(!!(this.and.length && this.and.every(comparator)));
-        result.push(!!(this.or.length && this.or.some(comparator)));
-        return result.some(identity);
-    };
     return Query;
 }());
+
 var ContextualQuery = /** @class */ (function (_super) {
     __extends(ContextualQuery, _super);
     function ContextualQuery(context) {
@@ -651,25 +565,279 @@ var ContextualQuery = /** @class */ (function (_super) {
         _this.context = context;
         return _this;
     }
+    ContextualQuery.prototype.matchItem = function (item) {
+        var result = [];
+        var comparator = getComparator(item);
+        result.push(!!(this.and.length && this.and.every(comparator)));
+        result.push(!!(this.or.length && this.or.some(comparator)));
+        return result.some(identity);
+    };
     ContextualQuery.prototype.get = function () {
-        return this.matchItem(this.context.value);
+        return this.matchItem(this.context);
     };
     return ContextualQuery;
 }(Query));
+
+var getComparator = function (item) { return function (where) {
+    if (isFunction(where.key)) {
+        var query = new ContextualQuery(item);
+        var result = where.key.call(null, query, item);
+        if (typeof result == 'boolean') {
+            return result;
+        }
+        return query.get();
+    }
+    else if (isString(where.key) && isFunction(where.value)) {
+        var value = get(where.key, item);
+        var query = new ContextualQuery(value);
+        var result = where.value.call(null, query, value);
+        if (typeof result == 'boolean')
+            return result;
+        return query.get();
+    }
+    else if (isString(where.key) && !isFunction(where.value)) {
+        var resolved = get(where.key, item);
+        var isArray = Array.isArray(resolved);
+        resolved = isArray ? resolved.length : resolved;
+        switch (where.operand) {
+            case '!=':
+                return resolved != where.value;
+            case '>':
+                return resolved > where.value;
+            case '>=':
+                return resolved >= where.value;
+            case '<':
+                return resolved < where.value;
+            case '<=':
+                return resolved <= where.value;
+            case '=':
+            default:
+                return resolved == where.value;
+        }
+    }
+}; };
+var addToLoads = function (key, relationship, originalLoad, newLoads) {
+    if (originalLoad.has(key)) {
+        newLoads.push(originalLoad.getLoad(key));
+    }
+    else {
+        var newLoad = new Load(relationship);
+        originalLoad.addLoad(key, newLoad);
+        newLoads.push(newLoad);
+    }
+};
+function getLoads(loads, key) {
+    var e_1, _a;
+    var newLoads = [];
+    var _loop_1 = function (load) {
+        var schema = getRelationshipSchema(load.getRelationship());
+        if (key === '*') {
+            Object.entries(schema._fields)
+                .filter(function (_a) {
+                var _b = __read(_a, 2), fieldDef = _b[1];
+                return fieldDef.isRelationship;
+            })
+                .forEach(function (_a) {
+                var _b = __read(_a, 2), key = _b[0], value = _b[1];
+                addToLoads(key, value.entity, load, newLoads);
+            });
+        }
+        else if (!schema._fields[key] || !schema._fields[key].isRelationship) {
+            console.warn("[" + key + "] is not a relationship");
+        }
+        else {
+            addToLoads(key, schema._fields[key].entity, load, newLoads);
+        }
+    };
+    try {
+        for (var loads_1 = __values(loads), loads_1_1 = loads_1.next(); !loads_1_1.done; loads_1_1 = loads_1.next()) {
+            var load = loads_1_1.value;
+            _loop_1(load);
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (loads_1_1 && !loads_1_1.done && (_a = loads_1.return)) _a.call(loads_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    return newLoads;
+}
+
+var Load = /** @class */ (function () {
+    function Load(relationship) {
+        this.relationship = relationship;
+        this.loads = new Map();
+        this.conditions = new Set();
+    }
+    Load.prototype.addLoad = function (name, load) {
+        this.loads.set(name, load);
+    };
+    Load.prototype.getLoad = function (name) {
+        return this.loads.get(name);
+    };
+    Load.prototype.has = function (name) {
+        return this.loads.has(name);
+    };
+    Load.prototype.addCondition = function (where) {
+        this.conditions.add(where);
+    };
+    Load.prototype.apply = function (data) {
+        if (this.conditions.size == 0 || data == null)
+            return data;
+        var conditions = __spread(this.conditions);
+        if (Array.isArray(this.relationship)) {
+            return data.filter(function (item) {
+                return conditions.some(function (condition) { return condition.matchItem(item); });
+            });
+        }
+        else if (conditions.some(function (condition) { return condition.matchItem(data); })) {
+            return data;
+        }
+    };
+    Load.prototype.getRelationship = function () {
+        return this.relationship;
+    };
+    Load.prototype.parse = function () {
+        var _this = this;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var rawLoads = this.parseRawLoadArgs.apply(this, __spread(args));
+        Object.entries(rawLoads).forEach(function (_a) {
+            var _b = __read(_a, 2), key = _b[0], val = _b[1];
+            var segments = key.split('.'); // [user, posts, *, issues, comments]
+            var loads = segments.reduce(function (loads, segment) { return getLoads(loads, segment); }, [_this]);
+            loads.forEach(function (load) {
+                if (isFunction(val)) {
+                    var query = new LoadQuery(load);
+                    val.call(null, query);
+                    load.addCondition(query);
+                }
+                else
+                    load.addCondition(new ContextualQuery({ value: true }).where('value', true));
+            });
+        });
+        return this;
+    };
+    Load.prototype.parseRawLoadArgs = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var rawLoads = createObject();
+        var _a = __read(args, 2), firstArg = _a[0], secondArg = _a[1];
+        switch (args.length) {
+            case 1:
+                if (Array.isArray(firstArg)) {
+                    firstArg.forEach(function (item) { return (rawLoads[item] = true); });
+                }
+                else if (isString) {
+                    rawLoads[firstArg] = true;
+                }
+                else {
+                    rawLoads = createObject(firstArg);
+                }
+                break;
+            case 2:
+                rawLoads[firstArg] = secondArg;
+                break;
+            default:
+                throw new Error('Invalid arguments supplied');
+        }
+        return rawLoads;
+    };
+    return Load;
+}());
+var LoadQuery = /** @class */ (function (_super) {
+    __extends(LoadQuery, _super);
+    function LoadQuery(load) {
+        var _this = _super.call(this) || this;
+        _this.load = load;
+        return _this;
+    }
+    LoadQuery.prototype.with = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        switch (args.length) {
+            case 1:
+                this.load.parse(args[0]);
+                break;
+            case 2:
+                this.load.parse(args[0], args[1]);
+                break;
+            default:
+                throw new Error('Invalid arguments supplied');
+        }
+        return this;
+    };
+    LoadQuery.prototype.get = function () {
+        throw new Error('Method not implemented.');
+    };
+    return LoadQuery;
+}(ContextualQuery));
+
 var ModelQuery = /** @class */ (function (_super) {
     __extends(ModelQuery, _super);
     function ModelQuery(schema) {
         var _this = _super.call(this) || this;
         _this.schema = schema;
+        _this.withArgs = [];
         return _this;
     }
+    ModelQuery.prototype.with = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        this.withArgs.push(args);
+        return this;
+    };
+    ModelQuery.prototype.initLoad = function () {
+        if (!this.load) {
+            this.load = new Load(this.schema);
+        }
+    };
+    ModelQuery.prototype.initLoadArgs = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        switch (args.length) {
+            case 1:
+                this.load.parse(args[0]);
+                break;
+            case 2:
+                this.load.parse(args[0], args[1]);
+                break;
+            default:
+                throw new Error('Invalid arguments supplied');
+        }
+        return this;
+    };
     ModelQuery.prototype.get = function () {
         var _this = this;
         var items = this.schema.all();
-        return items.filter(function (item) { return _this.matchItem(item); });
+        items = items.filter(function (item) { return _this.matchItem(item); });
+        if (items.length) {
+            if (this.withArgs.length) {
+                this.initLoad();
+                this.withArgs.forEach(function (arg) {
+                    _this.initLoadArgs.apply(_this, __spread(arg));
+                });
+            }
+            items = items.map(function (item) {
+                return _this.schema.find(getIdValue(item, _this.schema), { load: _this.load });
+            });
+        }
+        return items;
     };
     return ModelQuery;
-}(Query));
+}(ContextualQuery));
 
 var cacheNames = ['data', 'relationship'];
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
@@ -689,20 +857,33 @@ function createAccessor(target, key) {
     var path = schema._namespace, _store = schema._store, _fields = schema._fields, id = schema.id;
     var isRelationship = key in _fields && _fields[key].isRelationship;
     var relationshipDef = isRelationship ? _fields[key] : null;
+    var load = target._load;
     Object.defineProperty(target, key, {
-        enumerable: true,
+        enumerable: load && isRelationship ? load.has(key) : true,
         get: function () {
-            var _a;
             if (target._connected) {
+                if (load && isRelationship && !load.has(key))
+                    return;
                 var raw = _store.getters[path + "/" + Getters.GET_RAW](this._id, schema);
                 var value = raw[key];
                 if (isRelationship) {
-                    var opts = { load: (_a = target._load) === null || _a === void 0 ? void 0 : _a[key] };
+                    var opts = { load: load === null || load === void 0 ? void 0 : load.getLoad(key) };
                     var Related = getRelationshipSchema(relationshipDef);
                     if (relationshipDef.isList) {
-                        return value && new ModelArray(target, key, Related.findByIds(value, opts));
+                        if (value) {
+                            value = Related.findByIds(value, opts);
+                            if (!opts.load) {
+                                return value;
+                            }
+                            else {
+                                value = opts.load.apply(value);
+                                return value && new ModelArray(target, key, value);
+                            }
+                        }
+                        return;
                     }
-                    return Related.find(value, opts);
+                    value = Related.find(value, opts);
+                    return opts.load ? opts.load.apply(value) : value;
                 }
                 else {
                     return raw[key];
@@ -1129,7 +1310,10 @@ function createModule(store) {
                 if (!data) {
                     return;
                 }
-                var load = opts.load && relations(opts.load, schema._fields);
+                var load;
+                if (opts.load) {
+                    load = !(opts.load instanceof Load) ? new Load(schema).parse(opts.load) : opts.load;
+                }
                 return resolveModel(schema, data, { load: load, connected: true });
             }; },
             _c[Getters.FIND_BY_IDS] = function (state, getters) {
@@ -1151,13 +1335,15 @@ function resolveModel(schema, rawData, options) {
     var _a;
     if (options === void 0) { options = {}; }
     var id = getIdValue(rawData, schema);
-    var sumObject = { id: id, load: options === null || options === void 0 ? void 0 : options.load };
-    var sumValue = sum(sumObject);
-    if (!modelCache.has(schema)) {
-        modelCache.set(schema, createObject());
+    if (!options.load) {
+        if (!modelCache.has(schema)) {
+            modelCache.set(schema, createObject());
+        }
+        var cache = modelCache.get(schema);
+        return (_a = cache[id]) !== null && _a !== void 0 ? _a : (cache[id] = new schema(rawData, options));
     }
-    var cache = modelCache.get(schema);
-    return (_a = cache[sumValue]) !== null && _a !== void 0 ? _a : (cache[sumValue] = new schema(rawData, options));
+    else
+        return new schema(rawData, options);
 }
 window.modelCache = modelCache;
 

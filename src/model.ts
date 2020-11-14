@@ -1,12 +1,13 @@
 import { hasSeen, identity, isFunction } from './utils';
-import { Actions, FindOptions, Getters, IModelConstructor, Mutations, Relationship, Schema } from './types';
+import { Actions, FindOptions, Getters, Mutations, Relationship, Schema } from './types';
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
 import { FieldDefinition } from './FieldDefinition';
 import { getConstructor, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
 import { ModelArray } from './modelArray';
-import { ModelQuery } from './query';
+import {ModelQuery} from "./query/model-query";
+import {Load} from "./query/load";
 
 const cacheNames = ['data', 'relationship'];
 
@@ -33,20 +34,31 @@ function createAccessor(target: Model<any>, key) {
   const { _namespace: path, _store, _fields, id } = schema;
   const isRelationship = key in _fields && _fields[key].isRelationship;
   const relationshipDef = isRelationship ? _fields[key] : null;
+  const load = target._load;
 
   Object.defineProperty(target, key, {
-    enumerable: true,
+    enumerable: load && isRelationship ? load.has(key) : true,
     get() {
       if (target._connected) {
+        if(load && isRelationship && !load.has(key)) return;
         const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, schema);
-        const value = raw[key];
+        let value = raw[key];
         if (isRelationship) {
-          const opts = { load: target._load?.[key] };
+          const opts = { load: load?.getLoad(key)};
           const Related = getRelationshipSchema(relationshipDef);
           if (relationshipDef.isList) {
-            return value && new ModelArray(target, key, Related.findByIds<any>(value, opts));
+            if(value) {
+              value = Related.findByIds(value, opts)
+              if(!opts.load){ return value}
+              else {
+                value =  opts.load.apply(value)
+                return value && new ModelArray(target, key, value);
+              }
+            }
+            return;
           }
-          return Related.find(value, opts);
+          value = Related.find(value, opts);
+          return opts.load ? opts.load.apply(value) : value;
         } else {
           return raw[key];
         }
@@ -120,11 +132,11 @@ export class Model<T extends any = any>  {
   static id: string | ((...args: any[]) => string | number) = 'id';
 
   /**
-   * Used when rendering as JSON. Useful when an enitity has a cylcic relationship. 
+   * Used when rendering as JSON. Useful when an enitity has a cylcic relationship.
    * It specifies exactly which relationships would be rendered out in the JSON representation
    * @internal
    */
-  _load;
+  _load: Load;
 
   /**
    * When a new entity is created and not connected to the Store, it's properties
@@ -144,7 +156,7 @@ export class Model<T extends any = any>  {
    */
   _id;
 
-  constructor(data?: Partial<T>, opts?: any) {
+  constructor(data?: Partial<T>, opts?: { load?: Load, connected?: boolean }) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
@@ -290,7 +302,7 @@ export class Model<T extends any = any>  {
 
   /**
    * This is an alternative to the `Field(() => RelatedModel)` decorator
-   * 
+   *
    * A record of all the possible relationships of this Schema. Currently, two types are supported
    *
    * - list
@@ -317,8 +329,8 @@ export class Model<T extends any = any>  {
   }
 
   /**
-   * This is an alternative to the `Field()` decorator. 
-   * 
+   * This is an alternative to the `Field()` decorator.
+   *
    * Specify the different fields of the class
    * in an array or an object that contains the field names as it's keys
    * @deprecated
@@ -330,7 +342,7 @@ export class Model<T extends any = any>  {
   /**
    * Find a model by the specified identifier
    */
-  static find<T>(this: IModelConstructor<T>, id: string | number, opts: FindOptions = {}): T {
+  static find<T extends Schema>(this: T, id: string | number, opts: FindOptions = {}): InstanceType<T> {
     return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
   }
 
@@ -338,14 +350,14 @@ export class Model<T extends any = any>  {
    * Find all items that match the specified ids
    *
    */
-  static findByIds<T>(this: IModelConstructor<T>, ids: any[], opts: FindOptions = {}): T[] {
+  static findByIds<T extends Schema>(this: T, ids: any[], opts: FindOptions = {}): InstanceType<T>[] {
     return this._store.getters[`${this._namespace}/${Getters.FIND_BY_IDS}`](ids, this, opts);
   }
 
   /**
    * Get all items of this type from the Database
    */
-  static all<T>(this: IModelConstructor<T>, opts: FindOptions = {}): T[] {
+  static all<T extends Schema>(this: T, opts: FindOptions = {}): InstanceType<T>[] {
     return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
   }
 

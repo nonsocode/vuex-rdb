@@ -1,5 +1,7 @@
 import { Store } from 'vuex';
 import { Model } from '../model';
+import {WhereFunction} from "../query";
+import {Load, LoadQuery} from "../query/load";
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
@@ -34,14 +36,10 @@ export type Normalized = {
 
 export type Schema = typeof Model;
 
-export type IModelConstructor<T> = {
-  new (data: any, options?: any): T;
-  _store: Store<any>;
-  _namespace: string;
-};
-
 export type Relationship = Schema | [Schema];
 export type RelationshipGenerator = () => Relationship;
+export type RelationshipModel<T extends Relationship> = T extends typeof Model? InstanceType<T> :
+T extends [typeof Model] ? InstanceType<T[0]>[] : never;
 export interface PluginOptions {
   /**
    * The namespace of the database in the Vuex store
@@ -56,7 +54,6 @@ export interface PluginOptions {
   strict?: boolean;
 }
 
-type AppendRecord = { [key: string]: AppendRecord };
 export interface FindOptions {
   /**
    * A tree of relationships. Lets say this is the Return model and you want to get
@@ -68,7 +65,7 @@ export interface FindOptions {
    *
    * if you want all the toplevel relatives of the current entity use `'*'` or `['*']`
    */
-  load?: string[] | string | AppendRecord;
+  load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
 export type EntityName = string;
 export type StorePath = string;
@@ -78,8 +75,8 @@ export type NodeTree = {
   parentNode?: NodeTree;
   item: any;
 };
-export type ModelHooks = {
-  once: {
-    postSave: Function[];
-  };
-};
+
+
+export interface LoadWhereFunction extends WhereFunction<Load> {
+  (query: LoadQuery): boolean| void
+}

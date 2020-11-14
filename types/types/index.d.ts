@@ -1,5 +1,7 @@
 import { Store } from 'vuex';
 import { Model } from '../model';
+import { WhereFunction } from "../query";
+import { Load, LoadQuery } from "../query/load";
 export declare enum Mutations {
     ADD_ALL = "ADD_ALL",
     PATCH_TEMPS = "PATCH_TEMPS",
@@ -29,13 +31,9 @@ export declare type Normalized = {
     entities: Cache;
 };
 export declare type Schema = typeof Model;
-export declare type IModelConstructor<T> = {
-    new (data: any, options?: any): T;
-    _store: Store<any>;
-    _namespace: string;
-};
 export declare type Relationship = Schema | [Schema];
 export declare type RelationshipGenerator = () => Relationship;
+export declare type RelationshipModel<T extends Relationship> = T extends typeof Model ? InstanceType<T> : T extends [typeof Model] ? InstanceType<T[0]>[] : never;
 export interface PluginOptions {
     /**
      * The namespace of the database in the Vuex store
@@ -48,9 +46,6 @@ export interface PluginOptions {
     schemas: Schema[];
     strict?: boolean;
 }
-declare type AppendRecord = {
-    [key: string]: AppendRecord;
-};
 export interface FindOptions {
     /**
      * A tree of relationships. Lets say this is the Return model and you want to get
@@ -62,7 +57,7 @@ export interface FindOptions {
      *
      * if you want all the toplevel relatives of the current entity use `'*'` or `['*']`
      */
-    load?: string[] | string | AppendRecord;
+    load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
 export declare type EntityName = string;
 export declare type StorePath = string;
@@ -71,9 +66,6 @@ export declare type NodeTree = {
     parentNode?: NodeTree;
     item: any;
 };
-export declare type ModelHooks = {
-    once: {
-        postSave: Function[];
-    };
-};
-export {};
+export interface LoadWhereFunction extends WhereFunction<Load> {
+    (query: LoadQuery): boolean | void;
+}

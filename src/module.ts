@@ -1,12 +1,13 @@
 import { getRelationshipSchema, isList, relations } from './relationships';
 import { createObject, identity, isFunction, mergeUnique } from './utils';
 import {getIdValue, Model} from './model';
-import { ModelState, Mutations, Actions, Getters, Cache, Schema} from './types';
+import {ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions} from './types';
 import {Module, Store} from 'vuex';
 const sum = require('hash-sum');
 
 import Vue from 'vue';
 import { normalizeAndStore } from './modelUtils';
+import {Load} from "./query/load";
 export function generateModuleName(namespace, key) {
   namespace = namespace || '';
   const chunks = namespace.split('/');
@@ -14,7 +15,7 @@ export function generateModuleName(namespace, key) {
   return chunks.join('/');
 }
 export function createModule<T>(store: Store<any>): Module<ModelState, any> {
-  
+
   return {
     namespaced: true,
     state: () => ({}),
@@ -135,12 +136,15 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
     },
     getters: {
       [Getters.GET_RAW]: (state) => (id, schema: Schema) => state[schema.entityName][id],
-      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, schema: Schema, opts: any = {} ) => {
+      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, schema: Schema, opts: FindOptions = {} ) => {
         const data = getters[Getters.GET_RAW](id, schema);
         if (!data) {
           return;
         }
-        const load = opts.load && relations(opts.load, schema._fields)
+        let load;
+        if(opts.load) {
+            load = !(opts.load instanceof Load) ? new Load(schema).parse(opts.load) : opts.load;
+        }
         return resolveModel(schema, data, { load, connected: true });
       },
       [Getters.FIND_BY_IDS]: (state, getters) => {
@@ -157,15 +161,15 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
 
 const modelCache: Cache = new Map()
 
-function resolveModel(schema: Schema, rawData: object, options: any = {}) {
+function resolveModel(schema: Schema, rawData: object, options: { load?: Load, connected?: boolean} = {}) {
   const id = getIdValue(rawData, schema);
-  const sumObject = {id, load: options?.load}
-  const sumValue = sum(sumObject)
-  if(!modelCache.has(schema)) {
-    modelCache.set(schema, createObject())
-  }
-  const cache = modelCache.get(schema);
-  return cache[sumValue] ??= new schema(rawData, options)
+  if(!options.load) {
+    if(!modelCache.has(schema)) {
+      modelCache.set(schema, createObject())
+    }
+    const cache = modelCache.get(schema);
+    return cache[id] ??= new schema(rawData, options)
+  } else return new schema(rawData, options)
 }
 
 declare global {

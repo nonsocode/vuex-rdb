@@ -1,7 +1,8 @@
-import { FindOptions, IModelConstructor, Relationship, Schema } from './types';
+import { FindOptions, Relationship, Schema } from './types';
 import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
-import { ModelQuery } from './query';
+import { ModelQuery } from "./query/model-query";
+import { Load } from "./query/load";
 export declare function getIdValue<T>(model: T, schema: Schema): string | number;
 export declare class Model<T extends any = any> {
     /**
@@ -34,7 +35,7 @@ export declare class Model<T extends any = any> {
      * It specifies exactly which relationships would be rendered out in the JSON representation
      * @internal
      */
-    _load: any;
+    _load: Load;
     /**
      * When a new entity is created and not connected to the Store, it's properties
      * are kept here till `$save` method is called
@@ -50,7 +51,10 @@ export declare class Model<T extends any = any> {
      * @internal
      */
     _id: any;
-    constructor(data?: Partial<T>, opts?: any);
+    constructor(data?: Partial<T>, opts?: {
+        load?: Load;
+        connected?: boolean;
+    });
     /**
      * Convert to JSON
      * @internal
@@ -127,16 +131,16 @@ export declare class Model<T extends any = any> {
     /**
      * Find a model by the specified identifier
      */
-    static find<T>(this: IModelConstructor<T>, id: string | number, opts?: FindOptions): T;
+    static find<T extends Schema>(this: T, id: string | number, opts?: FindOptions): InstanceType<T>;
     /**
      * Find all items that match the specified ids
      *
      */
-    static findByIds<T>(this: IModelConstructor<T>, ids: any[], opts?: FindOptions): T[];
+    static findByIds<T extends Schema>(this: T, ids: any[], opts?: FindOptions): InstanceType<T>[];
     /**
      * Get all items of this type from the Database
      */
-    static all<T>(this: IModelConstructor<T>, opts?: FindOptions): T[];
+    static all<T extends Schema>(this: T, opts?: FindOptions): InstanceType<T>[];
     /**
      * Add the passed item to the database. It should match this model's schema.
      *

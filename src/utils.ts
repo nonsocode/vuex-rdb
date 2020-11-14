@@ -1,9 +1,9 @@
-import {NodeTree, TypeOrFunction} from './types';
+import {NodeTree, TypeFunction, TypeOrFunction} from './types';
 
 export const identity = k => k;
 
-export function mergeUnique<K extends TypeOrFunction<string | number>>(items: Array<any>, key: K) {
-  const keyFunction = isFunction< string | number>(key) ? key : item => item[key];
+export function mergeUnique(items: Array<any>, key: TypeOrFunction<string | number>) {
+  const keyFunction: TypeOrFunction<string | number> = isFunction(key) ? key : item => item[key];
   const map = new Map();
   items.forEach(item => {
     const key = keyFunction.call(null, item);
@@ -12,9 +12,10 @@ export function mergeUnique<K extends TypeOrFunction<string | number>>(items: Ar
   return [...map.values()];
 }
 
-export function isFunction<P>(fn: any): fn is (...args: any[]) => P {
+export function isFunction<T extends Function>(fn: any): fn is T{
   return fn instanceof Function;
 }
+
 
 export function isString(string: any): string is string {
   return typeof string === 'string';
@@ -39,7 +40,7 @@ export function isPrimitive(val) {
 export const get = (path: string, obj: any, defaultVal: any = undefined) => {
   const returnable = path.split('.').reduce((acc, i) => {
     return acc === null ? undefined : acc && acc[i];
-  }, obj || {});
+  }, obj || createObject());
   return returnable === undefined ? defaultVal : returnable;
 };
 
