@@ -1,4 +1,4 @@
-import { get, isFunction, isString } from '../utils';
+import { get, isBoolean, isFunction, isString } from '../utils';
 import { ContextualQuery } from './contextual-query';
 import { Relationship, Where } from '../types';
 import { getRelationshipSchema } from '../relationships';
@@ -18,6 +18,8 @@ export const getComparator = <T>(item) => (where: Where<T>) => {
     const result = where.value.call(null, query, value);
     if (typeof result == 'boolean') return result;
     return query.get();
+  } else if (isBoolean(where.operand)) {
+    return where.operand;
   } else if (isString(where.key) && !isFunction(where.value)) {
     let resolved = get(where.key, item);
     const isArray = Array.isArray(resolved);
@@ -34,10 +36,6 @@ export const getComparator = <T>(item) => (where: Where<T>) => {
         return resolved < where.value;
       case '<=':
         return resolved <= where.value;
-      case true:
-        return true;
-      case false:
-        return false;
       case '=':
       default:
         return resolved == where.value;

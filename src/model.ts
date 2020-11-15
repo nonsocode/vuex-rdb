@@ -3,14 +3,13 @@ import { Actions, FindOptions, Getters, Mutations, Relationship, Schema } from '
 import { Store } from 'vuex';
 import { getRelationshipSchema } from './relationships';
 import { FieldDefinition } from './FieldDefinition';
-import { getConstructor, normalizeAndStore, validateEntry } from './modelUtils';
+import { getConstructor, modelToObject, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
 import { ModelArray } from './modelArray';
-import {ModelQuery} from "./query/model-query";
-import {Load} from "./query/load";
+import { ModelQuery } from './query/model-query';
+import { Load } from './query/load';
 
 const cacheNames = ['data', 'relationship'];
-
 
 const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, schema: Schema): any => {
@@ -40,18 +39,19 @@ function createAccessor(target: Model<any>, key) {
     enumerable: load && isRelationship ? load.has(key) : true,
     get() {
       if (target._connected) {
-        if(load && isRelationship && !load.has(key)) return;
+        if (load && isRelationship && !load.has(key)) return;
         const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, schema);
         let value = raw[key];
         if (isRelationship) {
-          const opts = { load: load?.getLoad(key)};
+          const opts = { load: load?.getLoad(key) };
           const Related = getRelationshipSchema(relationshipDef);
           if (relationshipDef.isList) {
-            if(value) {
-              value = Related.findByIds(value, opts)
-              if(!opts.load){ return value}
-              else {
-                value =  opts.load.apply(value)
+            if (value) {
+              value = Related.findByIds(value, opts);
+              if (!opts.load) {
+                return value;
+              } else {
+                value = opts.load.apply(value);
                 return value && new ModelArray(target, key, value);
               }
             }
@@ -99,8 +99,7 @@ export function getIdValue<T>(model: T, schema: Schema): string | number {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
 
-export class Model<T extends any = any>  {
-
+export class Model<T extends any = any> {
   /**
    * The namespace in the vuex store
    * @internal
@@ -156,7 +155,7 @@ export class Model<T extends any = any>  {
    */
   _id;
 
-  constructor(data?: Partial<T>, opts?: { load?: Load, connected?: boolean }) {
+  constructor(data?: Partial<T>, opts?: { load?: Load; connected?: boolean }) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
@@ -189,17 +188,15 @@ export class Model<T extends any = any>  {
     return Object.entries(this).reduce((acc, [key, val]) => {
       if (key in constructor._fields) {
         if (constructor._fields[key].isRelationship) {
-          if (!this._load || (this._load && key in this._load)) {
-            const node = { item: this, parentNode };
-            if (val == null) {
-              acc[key] = val;
-            } else if (Array.isArray(val)) {
-              acc[key] = val.map(item =>
-                item.toJSON ? (hasSeen(item, node) ? '>>> Recursive item <<<' : item.toJSON(key, node)) : item
-              );
-            } else {
-              acc[key] = val.toJSON ? (hasSeen(val, node) ? '>>> Recursive item <<<' : val.toJSON(key, node)) : val;
-            }
+          const node = { item: this, parentNode };
+          if (val == null) {
+            acc[key] = val;
+          } else if (Array.isArray(val)) {
+            acc[key] = val.map(item =>
+              item.toJSON ? (hasSeen(item, node) ? '>>> Recursive item <<<' : item.toJSON(key, node)) : item
+            );
+          } else {
+            acc[key] = val.toJSON ? (hasSeen(val, node) ? '>>> Recursive item <<<' : val.toJSON(key, node)) : val;
           }
         } else {
           acc[key] = val;
@@ -212,8 +209,8 @@ export class Model<T extends any = any>  {
   /**
    * Converts the model to a plain javascript object.
    */
-  $toObject(): Partial<T> {
-    return JSON.parse(JSON.stringify(this));
+  $toObject(parentNode?: any): Partial<T> {
+    return modelToObject(this, getConstructor(this));
   }
 
   /**
@@ -234,7 +231,7 @@ export class Model<T extends any = any>  {
       });
   }
 
-/**
+  /**
    * Useful when a model is created using `new Model()`.
    * You can assign properties to the model like you would any other javascript
    * object but the new values won't be saved to the vuex store until this method is called;
@@ -242,7 +239,7 @@ export class Model<T extends any = any>  {
    * If none model-like data has been assigned to the relationships on `this` model, calling save would
    * transform them to actual models
    */
-    async $save(): Promise<number | string> {
+  async $save(): Promise<number | string> {
     return new Promise(resolve => {
       const constructor = getConstructor(this);
       if (this._connected) {
@@ -263,7 +260,7 @@ export class Model<T extends any = any>  {
       }
     });
   }
-/**
+  /**
    * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
    * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
    * `this` model
@@ -379,8 +376,7 @@ export class Model<T extends any = any>  {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
   }
 
-  static query<T extends Schema>(this: T): ModelQuery<T>{
+  static query<T extends Schema>(this: T): ModelQuery<T> {
     return new ModelQuery(this);
   }
 }
-

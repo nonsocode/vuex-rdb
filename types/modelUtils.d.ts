@@ -5,3 +5,4 @@ import { FieldDefinition } from './FieldDefinition';
 export declare function getConstructor(model: Model<any>): Schema;
 export declare function validateEntry(data: any, definition: FieldDefinition): boolean;
 export declare function normalizeAndStore(store: Store<any>, data: any, entityDef: Relationship): IdValue | IdValue[];
+export declare function modelToObject(model: Model, schema: Schema, seen?: Map<Model, object>): {};

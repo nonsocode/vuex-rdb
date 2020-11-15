@@ -1,8 +1,8 @@
 import { FindOptions, Relationship, Schema } from './types';
 import { Store } from 'vuex';
 import { FieldDefinition } from './FieldDefinition';
-import { ModelQuery } from "./query/model-query";
-import { Load } from "./query/load";
+import { ModelQuery } from './query/model-query';
+import { Load } from './query/load';
 export declare function getIdValue<T>(model: T, schema: Schema): string | number;
 export declare class Model<T extends any = any> {
     /**
@@ -63,26 +63,26 @@ export declare class Model<T extends any = any> {
     /**
      * Converts the model to a plain javascript object.
      */
-    $toObject(): Partial<T>;
+    $toObject(parentNode?: any): Partial<T>;
     /**
      * Update the properties of the model with the given data. You don't need to pass the full model.
      * You can pass only the props you want to update, You can also pass related models or model-like data
      */
     $update(data?: Partial<T>): Promise<string | number>;
     /**
-       * Useful when a model is created using `new Model()`.
-       * You can assign properties to the model like you would any other javascript
-       * object but the new values won't be saved to the vuex store until this method is called;
-       *
-       * If none model-like data has been assigned to the relationships on `this` model, calling save would
-       * transform them to actual models
-       */
+     * Useful when a model is created using `new Model()`.
+     * You can assign properties to the model like you would any other javascript
+     * object but the new values won't be saved to the vuex store until this method is called;
+     *
+     * If none model-like data has been assigned to the relationships on `this` model, calling save would
+     * transform them to actual models
+     */
     $save(): Promise<number | string>;
     /**
-       * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
-       * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
-       * `this` model
-       */
+     * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
+     * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
+     * `this` model
+     */
     $addRelated(related: string, data: Object): Promise<string | number>;
     $addRelated(related: string, items: any[]): Promise<string | number>;
     /**

@@ -360,6 +360,34 @@ function normalizeAndStore(store, data, entityDef) {
     }
     return result;
 }
+function modelToObject(model, schema, seen) {
+    if (seen === void 0) { seen = new Map(); }
+    var object = {};
+    seen.set(model, object);
+    Object.entries(model).reduce(function (acc, _a) {
+        var _b = __read(_a, 2), key = _b[0], value = _b[1];
+        if (key in schema._fields) {
+            var fieldDef = schema._fields[key];
+            if (fieldDef.isRelationship) {
+                var relatedShema_1 = getRelationshipSchema(fieldDef.entity);
+                if (value == null) {
+                    acc[key] = null;
+                }
+                else if (Array.isArray(value) && fieldDef.isList) {
+                    acc[key] = value.map(function (item) { return (seen.has(item) ? seen.get(item) : modelToObject(item, relatedShema_1, seen)); });
+                }
+                else {
+                    acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedShema_1, seen);
+                }
+            }
+            else {
+                acc[key] = value;
+            }
+        }
+        return acc;
+    }, object);
+    return object;
+}
 
 function validateItems(items, schema) {
     var e_1, _a;
@@ -611,6 +639,9 @@ var getComparator = function (item) { return function (where) {
             return result;
         return query.get();
     }
+    else if (isBoolean(where.operand)) {
+        return where.operand;
+    }
     else if (isString(where.key) && !isFunction(where.value)) {
         var resolved = get(where.key, item);
         var isArray = Array.isArray(resolved);
@@ -626,10 +657,6 @@ var getComparator = function (item) { return function (where) {
                 return resolved < where.value;
             case '<=':
                 return resolved <= where.value;
-            case true:
-                return true;
-            case false:
-                return false;
             case '=':
             default:
                 return resolved == where.value;
@@ -982,19 +1009,17 @@ var Model = /** @class */ (function () {
             var _b = __read(_a, 2), key = _b[0], val = _b[1];
             if (key in constructor._fields) {
                 if (constructor._fields[key].isRelationship) {
-                    if (!_this._load || (_this._load && key in _this._load)) {
-                        var node_1 = { item: _this, parentNode: parentNode };
-                        if (val == null) {
-                            acc[key] = val;
-                        }
-                        else if (Array.isArray(val)) {
-                            acc[key] = val.map(function (item) {
-                                return item.toJSON ? (hasSeen(item, node_1) ? '>>> Recursive item <<<' : item.toJSON(key, node_1)) : item;
-                            });
-                        }
-                        else {
-                            acc[key] = val.toJSON ? (hasSeen(val, node_1) ? '>>> Recursive item <<<' : val.toJSON(key, node_1)) : val;
-                        }
+                    var node_1 = { item: _this, parentNode: parentNode };
+                    if (val == null) {
+                        acc[key] = val;
+                    }
+                    else if (Array.isArray(val)) {
+                        acc[key] = val.map(function (item) {
+                            return item.toJSON ? (hasSeen(item, node_1) ? '>>> Recursive item <<<' : item.toJSON(key, node_1)) : item;
+                        });
+                    }
+                    else {
+                        acc[key] = val.toJSON ? (hasSeen(val, node_1) ? '>>> Recursive item <<<' : val.toJSON(key, node_1)) : val;
                     }
                 }
                 else {
@@ -1007,8 +1032,8 @@ var Model = /** @class */ (function () {
     /**
      * Converts the model to a plain javascript object.
      */
-    Model.prototype.$toObject = function () {
-        return JSON.parse(JSON.stringify(this));
+    Model.prototype.$toObject = function (parentNode) {
+        return modelToObject(this, getConstructor(this));
     };
     /**
      * Update the properties of the model with the given data. You don't need to pass the full model.
@@ -1035,13 +1060,13 @@ var Model = /** @class */ (function () {
         });
     };
     /**
-       * Useful when a model is created using `new Model()`.
-       * You can assign properties to the model like you would any other javascript
-       * object but the new values won't be saved to the vuex store until this method is called;
-       *
-       * If none model-like data has been assigned to the relationships on `this` model, calling save would
-       * transform them to actual models
-       */
+     * Useful when a model is created using `new Model()`.
+     * You can assign properties to the model like you would any other javascript
+     * object but the new values won't be saved to the vuex store until this method is called;
+     *
+     * If none model-like data has been assigned to the relationships on `this` model, calling save would
+     * transform them to actual models
+     */
     Model.prototype.$save = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
