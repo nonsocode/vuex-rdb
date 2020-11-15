@@ -1192,26 +1192,27 @@ var Model = /** @class */ (function () {
 }());
 
 var sum = require('hash-sum');
-function createModule(store) {
+function createModule(store, schemas) {
     var _a, _b, _c;
     return {
         namespaced: true,
-        state: function () { return ({}); },
+        state: function () {
+            return __spread(new Set(schemas.map(function (schema) { return schema.entityName; }))).reduce(function (state, name) {
+                state[name] = {};
+                return state;
+            }, {});
+        },
         mutations: (_a = {},
             _a[Mutations.ADD_ALL] = function (state, _a) {
                 var items = _a.items, schema = _a.schema;
-                Object.entries(items).forEach(function (_a) {
+                var storeName = schema.entityName;
+                state[storeName] = __assign(__assign({}, state[storeName]), Object.fromEntries(Object.entries(items).map(function (_a) {
                     var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                    var storeItem = state[schema.entityName][id];
-                    if (!storeItem) {
-                        return Vue.set(state[schema.entityName], id, entity);
-                    }
-                    // Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity})
-                    Object.entries(entity).forEach(function (_a) {
-                        var _b = __read(_a, 2), key = _b[0], value = _b[1];
-                        Vue.set(storeItem, key, value);
-                    });
-                });
+                    return [
+                        id,
+                        __assign(__assign({}, state[storeName][id]), entity),
+                    ];
+                })));
             },
             _a[Mutations.SET_PROP] = function (state, _a) {
                 var id = _a.id, key = _a.key, value = _a.value, schema = _a.schema;
@@ -1387,7 +1388,7 @@ var defaultPluginOptions = {
 function generateDatabasePlugin(options) {
     var _a = __assign(__assign({}, defaultPluginOptions), options), schemas = _a.schemas, namespace = _a.namespace;
     return function (store) {
-        store.registerModule(namespace, createModule(store));
+        store.registerModule(namespace, createModule(store, schemas));
         schemas.forEach(function (schema) {
             registerSchema(schema, store, namespace);
         });

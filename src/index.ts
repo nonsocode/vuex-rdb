@@ -10,7 +10,7 @@ const defaultPluginOptions = {
 function generateDatabasePlugin(options: PluginOptions) {
   const { schemas, namespace } = { ...defaultPluginOptions, ...options };
   return (store) => {
-    store.registerModule(namespace, createModule(store));
+    store.registerModule(namespace, createModule(store, schemas));
     schemas.forEach((schema) => {
       registerSchema(schema, store, namespace);
     });

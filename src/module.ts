@@ -14,22 +14,32 @@ export function generateModuleName(namespace, key) {
   chunks.push(key);
   return chunks.join('/');
 }
-export function createModule<T>(store: Store<any>): Module<ModelState, any> {
+export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<ModelState, any> {
   return {
     namespaced: true,
-    state: () => ({}),
+    state: () => {
+      return [...new Set(schemas.map((schema) => schema.entityName))].reduce((state, name) => {
+        state[name] = {};
+        return state;
+      }, {});
+    },
     mutations: {
       [Mutations.ADD_ALL](state, { items, schema }: { items: Cache; schema: Schema }) {
-        Object.entries(items).forEach(([id, entity]) => {
-          const storeItem = state[schema.entityName][id];
-          if (!storeItem) {
-            return Vue.set(state[schema.entityName], id, entity);
-          }
-          // Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity})
-          Object.entries(entity).forEach(([key, value]) => {
-            Vue.set(storeItem, key, value);
-          });
-        });
+        const storeName = schema.entityName;
+        state[storeName] = {
+          ...state[storeName],
+          ...Object.fromEntries(
+            Object.entries(items).map(([id, entity]) => {
+              return [
+                id,
+                {
+                  ...state[storeName][id],
+                  ...entity,
+                },
+              ];
+            })
+          ),
+        };
       },
       [Mutations.SET_PROP](state, { id, key, value, schema }: { id: string; key: string; value: any; schema: Schema }) {
         if (state[schema.entityName][id] == null) {
