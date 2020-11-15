@@ -1,12 +1,11 @@
-import {isBoolean, isFunction} from "../utils";
-import {Where, WhereFunction, WhereKey, WhereOperand, WhereType, WhereValue} from "../types";
+import { isBoolean, isFunction } from '../utils';
+import { Where, WhereFunction, WhereKey, WhereOperand, WhereType, WhereValue } from '../types';
 
 export abstract class Query<T> {
   protected and: Where<T>[] = [];
   protected or: Where<T>[] = [];
 
-  protected constructor() {
-  }
+  protected constructor() {}
 
   where(key: string, operand: WhereOperand, value: WhereValue): this;
   where(key: string, value: WhereValue | WhereFunction<T>): this;
@@ -34,25 +33,25 @@ export abstract class Query<T> {
         }
         if (isBoolean(args[0])) {
           this[type].push({
-            operand: args[0]
-          })
+            operand: args[0],
+          });
         } else {
           this[type].push({
-            key: args[0]
+            key: args[0],
           });
         }
         break;
       case 2:
         this[type].push({
           key: args[0] as string,
-          value: args[1] as WhereValue
+          value: args[1] as WhereValue,
         });
         break;
       case 3:
         this[type].push({
           key: args[0],
           operand: args[1],
-          value: args[2]
+          value: args[2],
         });
         break;
       default:
@@ -61,6 +60,4 @@ export abstract class Query<T> {
   }
 
   abstract get(): any;
-
-
 }

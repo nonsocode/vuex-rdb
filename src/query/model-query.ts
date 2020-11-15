@@ -26,7 +26,7 @@ export class ModelQuery<T extends Schema> extends LoadQuery {
 
   get(): InstanceType<T>[] {
     let items = this.schema.all() as InstanceType<T>[];
-    items = items.filter(item => this.matchItem(item));
+    items = items.filter((item) => this.matchItem(item));
     if (items.length) {
       if (this.withArgs.length) {
         this.initLoad();
@@ -34,7 +34,7 @@ export class ModelQuery<T extends Schema> extends LoadQuery {
           super.with(first, second);
         });
       }
-      items = items.map(item => {
+      items = items.map((item) => {
         return this.schema.find(getIdValue(item, this.schema), { load: this.load });
       });
     }

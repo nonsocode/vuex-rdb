@@ -1,27 +1,27 @@
 import { Store } from 'vuex';
 import { Model } from '../model';
 import { Load } from '../query/load';
-import { LoadQuery } from "../query/load-query";
+import { LoadQuery } from '../query/load-query';
 import { Query } from '../query/query';
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
   PATCH_TEMPS = 'PATCH_TEMPS',
-  SET_PROP = 'SET_PROP'
+  SET_PROP = 'SET_PROP',
 }
 
 export enum Actions {
   ADD = 'add',
   ADD_RELATED = 'addRelated',
   REMOVE_RELATED = 'removeRelated',
-  UPDATE = 'update'
+  UPDATE = 'update',
 }
 
 export enum Getters {
   FIND = 'find',
   GET_RAW = 'getRaw',
   FIND_BY_IDS = 'findByIds',
-  ALL = 'all'
+  ALL = 'all',
 }
 export type TypeOrFunction<T> = T | TypeFunction<T>;
 export interface TypeFunction<T> extends Function {

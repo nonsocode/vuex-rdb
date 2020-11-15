@@ -8,7 +8,7 @@ export class LoadQuery extends ContextualQuery<Load> {
   }
 
   with(relationshipName: string, queryFunction?: LoadWhereFunction): this;
-  with(record:  string | string[] | Record<string, LoadWhereFunction | boolean>): this;
+  with(record: string | string[] | Record<string, LoadWhereFunction | boolean>): this;
   with(...args) {
     switch (args.length) {
       case 1:

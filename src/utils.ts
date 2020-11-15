@@ -1,18 +1,18 @@
-import {NodeTree, TypeFunction, TypeOrFunction} from './types';
+import { NodeTree, TypeFunction, TypeOrFunction } from './types';
 
-export const identity = k => k;
+export const identity = (k) => k;
 
 export function mergeUnique(items: Array<any>, key: TypeOrFunction<string | number>) {
-  const keyFunction: TypeOrFunction<string | number> = isFunction(key) ? key : item => item[key];
+  const keyFunction: TypeOrFunction<string | number> = isFunction(key) ? key : (item) => item[key];
   const map = new Map();
-  items.forEach(item => {
+  items.forEach((item) => {
     const key = keyFunction.call(null, item);
     map.set(key, map.has(key) ? { ...map.get(key), ...item } : item);
   });
   return [...map.values()];
 }
 
-export function isFunction<T extends Function>(fn: any): fn is T{
+export function isFunction<T extends Function>(fn: any): fn is T {
   return fn instanceof Function;
 }
 
@@ -20,16 +20,16 @@ export function isBoolean(arg: any): arg is boolean {
   return arg === true || arg === false;
 }
 
-
 export function isString(string: any): string is string {
   return typeof string === 'string';
 }
 
-export function createObject <T>(object?: T): T {
+export function createObject<T>(object?: T): T {
   const o = Object.create(null);
-  object && Object.entries(object).forEach(([key, value]) => {
-    o[key] = value;
-  })
+  object &&
+    Object.entries(object).forEach(([key, value]) => {
+      o[key] = value;
+    });
   return o;
 }
 
@@ -38,7 +38,7 @@ export function ucFirst(str: string) {
 }
 
 export function isPrimitive(val) {
-  return [ 'string', 'number', 'bigint', 'boolean'].includes(typeof val)
+  return ['string', 'number', 'bigint', 'boolean'].includes(typeof val);
 }
 
 export const get = (path: string, obj: any, defaultVal: any = undefined) => {
@@ -48,12 +48,11 @@ export const get = (path: string, obj: any, defaultVal: any = undefined) => {
   return returnable === undefined ? defaultVal : returnable;
 };
 
-
 export function hasSeen(item, nodeTree?: NodeTree) {
-  if(!nodeTree) return false;
+  if (!nodeTree) return false;
   while (nodeTree) {
-    if(nodeTree.item == item) return true;
-    nodeTree = nodeTree.parentNode
+    if (nodeTree.item == item) return true;
+    nodeTree = nodeTree.parentNode;
   }
   return false;
 }

@@ -1,5 +1,5 @@
 import { LoadWhereFunction, Relationship, RelationshipModel } from '../types';
-import { ContextualQuery } from "./contextual-query";
+import { ContextualQuery } from './contextual-query';
 export declare class Load<T extends Relationship = Relationship> {
     protected relationship: T;
     loads: Map<string, Load>;

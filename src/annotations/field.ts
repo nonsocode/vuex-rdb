@@ -15,8 +15,6 @@ export function Field(options: FieldDefinitionOptions | RelationshipFactory = {}
       constructor._fields = createObject();
     }
 
-    constructor._fields[propname] = new FieldDefinition(
-      isFunction(options) ? { entity: options } : options
-    );
+    constructor._fields[propname] = new FieldDefinition(isFunction(options) ? { entity: options } : options);
   };
 }

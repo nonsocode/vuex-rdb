@@ -1,4 +1,4 @@
-import { Where, WhereFunction, WhereOperand, WhereValue } from "../types";
+import { Where, WhereFunction, WhereOperand, WhereValue } from '../types';
 export declare abstract class Query<T> {
     protected and: Where<T>[];
     protected or: Where<T>[];

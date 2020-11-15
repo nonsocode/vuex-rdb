@@ -147,10 +147,11 @@ function isString(string) {
 }
 function createObject(object) {
     var o = Object.create(null);
-    object && Object.entries(object).forEach(function (_a) {
-        var _b = __read(_a, 2), key = _b[0], value = _b[1];
-        o[key] = value;
-    });
+    object &&
+        Object.entries(object).forEach(function (_a) {
+            var _b = __read(_a, 2), key = _b[0], value = _b[1];
+            o[key] = value;
+        });
     return o;
 }
 var get = function (path, obj, defaultVal) {
@@ -204,7 +205,7 @@ var FieldDefinition = /** @class */ (function () {
             if (this._list != null) {
                 return this._list;
             }
-            return this._list = Array.isArray(this.entity);
+            return (this._list = Array.isArray(this.entity));
         },
         enumerable: false,
         configurable: true
@@ -215,7 +216,7 @@ var FieldDefinition = /** @class */ (function () {
 function registerSchema(schema, store, namespace) {
     if (!schema._fields) {
         Object.defineProperty(schema, '_fields', {
-            value: createObject({})
+            value: createObject({}),
         });
     }
     if (!store.state[namespace][schema.entityName]) {
@@ -229,7 +230,7 @@ function registerSchema(schema, store, namespace) {
         if (key in schema._fields)
             return;
         schema._fields[key] = new FieldDefinition({
-            entity: function () { return value; }
+            entity: function () { return value; },
         });
     });
     (Array.isArray(schema.fields) ? schema.fields : Object.keys(schema.fields || {})).forEach(function (key) {
@@ -239,7 +240,7 @@ function registerSchema(schema, store, namespace) {
     });
     Object.defineProperties(schema, {
         _namespace: { value: namespace },
-        _store: { value: store }
+        _store: { value: store },
     });
     Object.freeze(schema);
 }
@@ -331,7 +332,7 @@ function normalize(raw, entityDef, visited, entities, depth) {
     }
     return {
         result: result,
-        entities: entities
+        entities: entities,
     };
 }
 
@@ -443,7 +444,7 @@ var ModelArray = /** @class */ (function (_super) {
         Object.defineProperties(_this, {
             _context: { value: context },
             _key: { value: key },
-            _store: { value: getConstructor(context)._store }
+            _store: { value: getConstructor(context)._store },
         });
         _super.prototype.push.apply(_this, items);
         Object.setPrototypeOf(_this, ModelArray.prototype);
@@ -511,7 +512,7 @@ var ModelArray = /** @class */ (function (_super) {
             id: this._context._id,
             key: this._key,
             value: value,
-            schema: schema
+            schema: schema,
         });
     };
     ModelArray.prototype._extractUtils = function (withRawData) {
@@ -524,7 +525,7 @@ var ModelArray = /** @class */ (function (_super) {
         return {
             contextSchema: contextSchema,
             rawContext: rawContext,
-            schema: schema
+            schema: schema,
         };
     };
     __decorate([
@@ -573,26 +574,26 @@ var Query = /** @class */ (function () {
                 }
                 if (isBoolean(args[0])) {
                     this[type].push({
-                        operand: args[0]
+                        operand: args[0],
                     });
                 }
                 else {
                     this[type].push({
-                        key: args[0]
+                        key: args[0],
                     });
                 }
                 break;
             case 2:
                 this[type].push({
                     key: args[0],
-                    value: args[1]
+                    value: args[1],
                 });
                 break;
             case 3:
                 this[type].push({
                     key: args[0],
                     operand: args[1],
-                    value: args[2]
+                    value: args[2],
                 });
                 break;
             default:
@@ -946,7 +947,7 @@ function createAccessor(target, key) {
             target._connected
                 ? _store.commit(path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value, schema: schema })
                 : Vue__default['default'].set(this._caches[getCacheName(isRelationship)], key, value);
-        }
+        },
     });
 }
 function getIdValue(model, schema) {
@@ -964,7 +965,7 @@ var Model = /** @class */ (function () {
             _caches: { value: Object.fromEntries(cacheNames.map(function (name) { return [name, {}]; })) },
             _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true },
             _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
-            _id: { value: id, enumerable: false, configurable: false, writable: true }
+            _id: { value: id, enumerable: false, configurable: false, writable: true },
         });
         var _fields = getConstructor(this)._fields;
         Object.keys(_fields).forEach(function (key) {
@@ -1031,7 +1032,7 @@ var Model = /** @class */ (function () {
                         .dispatch(constructor._namespace + "/update", {
                         id: this._id,
                         data: data,
-                        schema: constructor
+                        schema: constructor,
                     })
                         .then(function (id) {
                         _this._connected = true;
@@ -1082,7 +1083,7 @@ var Model = /** @class */ (function () {
                         id: this._id,
                         related: related,
                         data: data,
-                        schema: constructor
+                        schema: constructor,
                     })];
             });
         });
@@ -1096,7 +1097,7 @@ var Model = /** @class */ (function () {
                         id: this._id,
                         related: related,
                         relatedId: relatedId,
-                        schema: constructor
+                        schema: constructor,
                     })];
             });
         });
@@ -1253,7 +1254,7 @@ function createModule(store) {
                     data: (_c = {},
                         _c[related] = data,
                         _c),
-                    schema: schema
+                    schema: schema,
                 });
             },
             _b[Actions.REMOVE_RELATED] = function (_a, _b) {
@@ -1281,7 +1282,7 @@ function createModule(store) {
                             data: (_a = {},
                                 _a[related] = relatedItems.filter(function (item) { return !relatedIds_1.includes(getIdValue(item, relatedSchema)); }),
                                 _a),
-                            schema: schema
+                            schema: schema,
                         });
                     }));
                 }
@@ -1291,7 +1292,7 @@ function createModule(store) {
                         data: (_c = {},
                             _c[related] = null,
                             _c),
-                        schema: schema
+                        schema: schema,
                     });
                 }
             },
@@ -1354,7 +1355,7 @@ function createModule(store) {
                 if (opts === void 0) { opts = {}; }
                 return getters[Getters.FIND_BY_IDS](Object.keys(state[schema.entityName]), schema, opts);
             }; },
-            _c)
+            _c),
     };
 }
 var modelCache = new Map();
@@ -1367,7 +1368,7 @@ function resolveModel(schema, rawData, options) {
             modelCache.set(schema, createObject());
         }
         var cache = modelCache.get(schema);
-        return (_a = cache[id]) !== null && _a !== void 0 ? _a : (cache[id] = new schema(rawData, options));
+        return ((_a = cache[id]) !== null && _a !== void 0 ? _a : (cache[id] = new schema(rawData, options)));
     }
     else
         return new schema(rawData, options);
@@ -1387,7 +1388,7 @@ function Field(options) {
 
 var defaultPluginOptions = {
     schemas: [],
-    namespace: 'database'
+    namespace: 'database',
 };
 function generateDatabasePlugin(options) {
     var _a = __assign(__assign({}, defaultPluginOptions), options), schemas = _a.schemas, namespace = _a.namespace;

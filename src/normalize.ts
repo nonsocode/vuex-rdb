@@ -19,11 +19,11 @@ export function normalize(
     result = null;
   } else if (Array.isArray(raw) && Array.isArray(entityDef)) {
     result = raw
-      .map(r => {
+      .map((r) => {
         const { result } = normalize(r, schema, visited, entities, depth + 1);
         return result;
       })
-      .filter(id => id != null);
+      .filter((id) => id != null);
   } else {
     if (visited.has(raw)) {
       result = visited.get(raw);
@@ -49,6 +49,6 @@ export function normalize(
 
   return {
     result,
-    entities
+    entities,
   };
 }

@@ -14,7 +14,7 @@ function validateItems(items: any[], schema: Schema) {
 function validate() {
   return (target, key, descriptor: PropertyDescriptor) => {
     const method: Function = descriptor.value;
-    descriptor.value = function(this: ModelArray<any>, ...args) {
+    descriptor.value = function (this: ModelArray<any>, ...args) {
       const { schema } = this._extractUtils();
       validateItems(args, schema);
       method.apply(this, args);
@@ -25,7 +25,7 @@ function validate() {
 function validateSplice() {
   return (target, key, descriptor: PropertyDescriptor) => {
     const method: Function = descriptor.value;
-    descriptor.value = function(this: ModelArray<any>, ...args) {
+    descriptor.value = function (this: ModelArray<any>, ...args) {
       const { schema } = this._extractUtils();
       let [, , ...items] = args;
       items.length && validateItems(items, schema);
@@ -43,7 +43,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     Object.defineProperties(this, {
       _context: { value: context },
       _key: { value: key },
-      _store: { value: getConstructor(context)._store }
+      _store: { value: getConstructor(context)._store },
     });
     super.push.apply(this, items);
     Object.setPrototypeOf(this, ModelArray.prototype);
@@ -53,9 +53,9 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
   push(...items) {
     const { schema, rawContext } = this._extractUtils(true);
     const referenceArray = rawContext[this._key] || [];
-    items.forEach(item => normalizeAndStore(this._store, item, schema));
+    items.forEach((item) => normalizeAndStore(this._store, item, schema));
 
-    const ids = items.map(item => getIdValue(item, schema));
+    const ids = items.map((item) => getIdValue(item, schema));
 
     this._mutateContext([...referenceArray, ...ids]);
     super.push(...(schema.findByIds(ids, { load: this._context._load?.[this._key] }) as any));
@@ -66,7 +66,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     const { schema } = this._extractUtils();
     const removed = super.pop();
 
-    this._mutateContext(this.map(item => getIdValue(item, schema)));
+    this._mutateContext(this.map((item) => getIdValue(item, schema)));
     return removed;
   }
 
@@ -74,9 +74,9 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
   unshift(...items) {
     const { schema, rawContext } = this._extractUtils(true);
     const referenceArray = rawContext[this._key] || [];
-    items.forEach(item => normalizeAndStore(this._store, item, schema));
+    items.forEach((item) => normalizeAndStore(this._store, item, schema));
 
-    const ids = items.map(item => getIdValue(item, schema));
+    const ids = items.map((item) => getIdValue(item, schema));
 
     this._mutateContext([...ids, ...referenceArray]);
 
@@ -87,7 +87,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
   shift() {
     const { schema } = this._extractUtils();
     const removed = super.shift();
-    this._mutateContext(this.map(item => getIdValue(item, schema)));
+    this._mutateContext(this.map((item) => getIdValue(item, schema)));
     return removed;
   }
 
@@ -96,9 +96,9 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     const [start, count, ...rest] = args;
     const { schema } = this._extractUtils();
     let result;
-    rest.forEach(item => normalizeAndStore(this._store, item, schema));
+    rest.forEach((item) => normalizeAndStore(this._store, item, schema));
     result = args.length === 0 ? [] : super.splice(start, count, ...rest);
-    this._mutateContext(this.map(item => getIdValue(item, schema)));
+    this._mutateContext(this.map((item) => getIdValue(item, schema)));
     return result;
   }
 
@@ -108,7 +108,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
       id: this._context._id,
       key: this._key,
       value,
-      schema
+      schema,
     });
   }
 
@@ -124,7 +124,7 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     return {
       contextSchema,
       rawContext,
-      schema
+      schema,
     };
   }
 }

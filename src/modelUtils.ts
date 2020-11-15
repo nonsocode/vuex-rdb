@@ -11,7 +11,7 @@ export function getConstructor(model: Model<any>): Schema {
 
 export function validateEntry(data: any, definition: FieldDefinition): boolean {
   const relDef = getRelationshipSchema(definition);
-  return definition.isList ? data.every(item => getIdValue(item, relDef) != null) : getIdValue(data, relDef) != null;
+  return definition.isList ? data.every((item) => getIdValue(item, relDef) != null) : getIdValue(data, relDef) != null;
 }
 
 export function normalizeAndStore(store: Store<any>, data: any, entityDef: Relationship): IdValue | IdValue[] {
@@ -33,7 +33,7 @@ export function modelToObject(model: Model, schema: Schema, seen: Map<Model, obj
         if (value == null) {
           acc[key] = null;
         } else if (Array.isArray(value) && fieldDef.isList) {
-          acc[key] = value.map(item => (seen.has(item) ? seen.get(item) : modelToObject(item, relatedShema, seen)));
+          acc[key] = value.map((item) => (seen.has(item) ? seen.get(item) : modelToObject(item, relatedShema, seen)));
         } else {
           acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedShema, seen);
         }

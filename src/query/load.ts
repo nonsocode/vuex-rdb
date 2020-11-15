@@ -1,15 +1,14 @@
-import {LoadWhereFunction, Relationship, RelationshipModel, WhereFunction} from '../types';
-import {createObject, isFunction, isString} from '../utils';
-import {getLoads} from './query-utils';
-import {ContextualQuery} from "./contextual-query";
+import { LoadWhereFunction, Relationship, RelationshipModel, WhereFunction } from '../types';
+import { createObject, isFunction, isString } from '../utils';
+import { getLoads } from './query-utils';
+import { ContextualQuery } from './contextual-query';
 import { LoadQuery } from './load-query';
 
 export class Load<T extends Relationship = Relationship> {
   loads: Map<string, Load> = new Map();
   conditions: Set<ContextualQuery<T>> = new Set();
 
-  constructor(protected relationship: T) {
-  }
+  constructor(protected relationship: T) {}
 
   addLoad(name: string, load: Load) {
     this.loads.set(name, load);
@@ -29,12 +28,12 @@ export class Load<T extends Relationship = Relationship> {
 
   apply(data: RelationshipModel<T>) {
     if (this.conditions.size == 0 || data == null) return data;
-    const conditions = [...this.conditions]
+    const conditions = [...this.conditions];
     if (Array.isArray(this.relationship)) {
-      return (data as RelationshipModel<T>[]).filter(item => {
-        return conditions.some(condition => condition.matchItem(item))
-      })
-    } else if (conditions.some(condition => condition.matchItem(data))) {
+      return (data as RelationshipModel<T>[]).filter((item) => {
+        return conditions.some((condition) => condition.matchItem(item));
+      });
+    } else if (conditions.some((condition) => condition.matchItem(data))) {
       return data;
     }
   }
@@ -52,12 +51,12 @@ export class Load<T extends Relationship = Relationship> {
       const segments = key.split('.'); // [user, posts, *, issues, comments]
 
       const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this as Load]);
-      loads.forEach(load => {
+      loads.forEach((load) => {
         if (isFunction(val)) {
           const query = new LoadQuery(load);
           val.call(null, query);
-          load.addCondition(query)
-        } 
+          load.addCondition(query);
+        }
       });
     });
     return this;
@@ -69,7 +68,7 @@ export class Load<T extends Relationship = Relationship> {
     switch (args.length) {
       case 1:
         if (Array.isArray(firstArg)) {
-          firstArg.forEach(item => (rawLoads[item] = true));
+          firstArg.forEach((item) => (rawLoads[item] = true));
         } else if (isString) {
           rawLoads[firstArg] = true;
         } else {
@@ -85,7 +84,3 @@ export class Load<T extends Relationship = Relationship> {
     return rawLoads;
   }
 }
-
-
-
-

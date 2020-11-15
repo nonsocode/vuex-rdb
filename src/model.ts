@@ -11,7 +11,7 @@ import { Load } from './query/load';
 
 const cacheNames = ['data', 'relationship'];
 
-const getCacheName = isRelationship => cacheNames[isRelationship ? 1 : 0];
+const getCacheName = (isRelationship) => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, schema: Schema): any => {
   return ['string', 'number'].includes(typeof id) ? schema.find(id) : id;
 };
@@ -89,7 +89,7 @@ function createAccessor(target: Model<any>, key) {
       target._connected
         ? _store.commit(`${path}/${Mutations.SET_PROP}`, { id: this._id, key, value, schema })
         : Vue.set(this._caches[getCacheName(isRelationship)], key, value);
-    }
+    },
   });
 }
 
@@ -156,14 +156,14 @@ export class Model<T extends any = any> {
   constructor(data?: Partial<T>, opts?: { load?: Load; connected?: boolean }) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
-      _caches: { value: Object.fromEntries(cacheNames.map(name => [name, {}])) },
+      _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
       _connected: { value: !!opts?.connected, enumerable: false, configurable: true },
       _load: { value: opts?.load, enumerable: false, configurable: true },
-      _id: { value: id, enumerable: false, configurable: false, writable: true }
+      _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
 
     const { _fields } = getConstructor(this);
-    Object.keys(_fields).forEach(key => {
+    Object.keys(_fields).forEach((key) => {
       createAccessor(this, key);
     });
     if (!this._connected) {
@@ -190,7 +190,7 @@ export class Model<T extends any = any> {
           if (val == null) {
             acc[key] = val;
           } else if (Array.isArray(val)) {
-            acc[key] = val.map(item =>
+            acc[key] = val.map((item) =>
               item.toJSON ? (hasSeen(item, node) ? '>>> Recursive item <<<' : item.toJSON(key, node)) : item
             );
           } else {
@@ -221,9 +221,9 @@ export class Model<T extends any = any> {
       .dispatch(`${constructor._namespace}/update`, {
         id: this._id,
         data,
-        schema: constructor
+        schema: constructor,
       })
-      .then(id => {
+      .then((id) => {
         this._connected = true;
         return id;
       });
@@ -238,7 +238,7 @@ export class Model<T extends any = any> {
    * transform them to actual models
    */
   async $save(): Promise<number | string> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const constructor = getConstructor(this);
       if (this._connected) {
         console.warn('No need calling $save');
@@ -249,7 +249,7 @@ export class Model<T extends any = any> {
         resolve(
           constructor._store
             .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
-            .then(res => {
+            .then((res) => {
               this._id = res;
               this._connected = true;
               return res;
@@ -271,7 +271,7 @@ export class Model<T extends any = any> {
       id: this._id,
       related,
       data,
-      schema: constructor
+      schema: constructor,
     });
   }
 
@@ -291,7 +291,7 @@ export class Model<T extends any = any> {
       id: this._id,
       related,
       relatedId,
-      schema: constructor
+      schema: constructor,
     });
   }
 
