@@ -48,12 +48,10 @@ function createAccessor(target: Model<any>, key) {
           if (relationshipDef.isList) {
             if (value) {
               value = Related.findByIds(value, opts);
-              if (!opts.load) {
-                return value;
-              } else {
+              if (opts.load) {
                 value = opts.load.apply(value);
-                return value && new ModelArray(target, key, value);
               }
+              return value && new ModelArray(target, key, value);
             }
             return;
           }

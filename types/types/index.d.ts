@@ -32,7 +32,7 @@ export declare type Normalized = {
 };
 export declare type Schema = typeof Model;
 export declare type Relationship = Schema | [Schema];
-export declare type RelationshipGenerator = () => Relationship;
+export declare type RelationshipFactory = () => Relationship;
 export declare type RelationshipModel<T extends Relationship> = T extends typeof Model ? InstanceType<T> : T extends [typeof Model] ? InstanceType<T[0]>[] : never;
 export interface PluginOptions {
     /**

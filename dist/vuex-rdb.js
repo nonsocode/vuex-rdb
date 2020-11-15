@@ -919,13 +919,10 @@ function createAccessor(target, key) {
                     if (relationshipDef.isList) {
                         if (value) {
                             value = Related.findByIds(value, opts);
-                            if (!opts.load) {
-                                return value;
-                            }
-                            else {
+                            if (opts.load) {
                                 value = opts.load.apply(value);
-                                return value && new ModelArray(target, key, value);
                             }
+                            return value && new ModelArray(target, key, value);
                         }
                         return;
                     }
@@ -1256,7 +1253,7 @@ function createModule(store) {
                 if (!(related in schema._fields) && schema._fields[related].isRelationship) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
-                var item = getters[Getters.FIND](id, { load: [related] }, schema);
+                var item = getters[Getters.FIND](id, schema);
                 if (!item) {
                     throw new Error("The item doesn't exist");
                 }
@@ -1282,7 +1279,7 @@ function createModule(store) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var ids = Array.isArray(id) ? id : [id];
-                var items = getters[Getters.FIND_BY_IDS](ids, { load: [related] }, schema);
+                var items = getters[Getters.FIND_BY_IDS](ids, schema);
                 if (items.length === 0) {
                     console.warn('Invalid id Provided');
                     return;
@@ -1349,7 +1346,7 @@ function createModule(store) {
             _b),
         getters: (_c = {},
             _c[Getters.GET_RAW] = function (state) { return function (id, schema) { return state[schema.entityName][id]; }; },
-            _c[Getters.FIND] = function (state, getters, rootState, rootGetters) { return function (id, schema, opts) {
+            _c[Getters.FIND] = function (state, getters) { return function (id, schema, opts) {
                 if (opts === void 0) { opts = {}; }
                 var data = getters[Getters.GET_RAW](id, schema);
                 if (!data) {

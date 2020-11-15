@@ -44,7 +44,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
         if (!(related in schema._fields) && schema._fields[related].isRelationship) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
-        const item: Model<any> = getters[Getters.FIND](id, { load: [related] }, schema);
+        const item: Model<any> = getters[Getters.FIND](id,  schema);
         if (!item) {
           throw new Error("The item doesn't exist");
         }
@@ -69,7 +69,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const ids = Array.isArray(id) ? id : [id];
-        const items = getters[Getters.FIND_BY_IDS](ids, { load: [related] }, schema);
+        const items = getters[Getters.FIND_BY_IDS](ids, schema);
         if (items.length === 0) {
           console.warn('Invalid id Provided');
           return;
@@ -136,7 +136,7 @@ export function createModule<T>(store: Store<any>): Module<ModelState, any> {
     },
     getters: {
       [Getters.GET_RAW]: (state) => (id, schema: Schema) => state[schema.entityName][id],
-      [Getters.FIND]: (state, getters, rootState, rootGetters) => (id, schema: Schema, opts: FindOptions = {} ) => {
+      [Getters.FIND]: (state, getters) => (id, schema: Schema, opts: FindOptions = {} ) => {
         const data = getters[Getters.GET_RAW](id, schema);
         if (!data) {
           return;

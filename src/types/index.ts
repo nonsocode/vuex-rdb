@@ -37,7 +37,7 @@ export type Normalized = {
 export type Schema = typeof Model;
 
 export type Relationship = Schema | [Schema];
-export type RelationshipGenerator = () => Relationship;
+export type RelationshipFactory = () => Relationship;
 export type RelationshipModel<T extends Relationship> = T extends typeof Model
   ? InstanceType<T>
   : T extends [typeof Model]
