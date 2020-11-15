@@ -1223,14 +1223,14 @@ function createModule(store) {
                 var items = _a.items, schema = _a.schema;
                 Object.entries(items).forEach(function (_a) {
                     var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                    var storeItem = state[schema.entityName][id];
-                    if (!storeItem) {
-                        return Vue__default['default'].set(state[schema.entityName], id, entity);
-                    }
-                    Object.entries(entity).forEach(function (_a) {
-                        var _b = __read(_a, 2), key = _b[0], value = _b[1];
-                        Vue__default['default'].set(storeItem, key, value);
-                    });
+                    // const storeItem = state[schema.entityName][id];
+                    // if(!storeItem) {
+                    // return Vue.set(state[schema.entityName], id, entity)
+                    // }
+                    Vue__default['default'].set(state[schema.entityName], id, __assign(__assign({}, state[schema.entityName][id]), entity));
+                    // Object.entries(entity).forEach(([key, value]) => {
+                    // Vue.set(storeItem,key, value);
+                    // })
                 });
             },
             _a[Mutations.SET_PROP] = function (state, _a) {
