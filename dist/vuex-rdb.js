@@ -610,6 +610,8 @@ var ContextualQuery = /** @class */ (function (_super) {
         return _this;
     }
     ContextualQuery.prototype.matchItem = function (item) {
+        if (!this.and.length && !this.or.length)
+            return true;
         var result = [];
         var comparator = getComparator(item);
         result.push(!!(this.and.length && this.and.every(comparator)));
@@ -712,6 +714,34 @@ function getLoads(loads, key) {
     return newLoads;
 }
 
+var LoadQuery = /** @class */ (function (_super) {
+    __extends(LoadQuery, _super);
+    function LoadQuery(load) {
+        var _this = _super.call(this) || this;
+        _this.load = load;
+        return _this;
+    }
+    LoadQuery.prototype.with = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        switch (args.length) {
+            case 1:
+            case 2:
+                this.load.parse(args[0], args[1]);
+                break;
+            default:
+                throw new Error('Invalid arguments supplied');
+        }
+        return this;
+    };
+    LoadQuery.prototype.get = function () {
+        throw new Error('Method not implemented.');
+    };
+    return LoadQuery;
+}(ContextualQuery));
+
 var Load = /** @class */ (function () {
     function Load(relationship) {
         this.relationship = relationship;
@@ -763,8 +793,6 @@ var Load = /** @class */ (function () {
                     val.call(null, query);
                     load.addCondition(query);
                 }
-                else
-                    load.addCondition(new ContextualQuery().where(true));
             });
         });
         return this;
@@ -798,40 +826,11 @@ var Load = /** @class */ (function () {
     };
     return Load;
 }());
-var LoadQuery = /** @class */ (function (_super) {
-    __extends(LoadQuery, _super);
-    function LoadQuery(load) {
-        var _this = _super.call(this) || this;
-        _this.load = load;
-        return _this;
-    }
-    LoadQuery.prototype.with = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        switch (args.length) {
-            case 1:
-                this.load.parse(args[0]);
-                break;
-            case 2:
-                this.load.parse(args[0], args[1]);
-                break;
-            default:
-                throw new Error('Invalid arguments supplied');
-        }
-        return this;
-    };
-    LoadQuery.prototype.get = function () {
-        throw new Error('Method not implemented.');
-    };
-    return LoadQuery;
-}(ContextualQuery));
 
 var ModelQuery = /** @class */ (function (_super) {
     __extends(ModelQuery, _super);
     function ModelQuery(schema) {
-        var _this = _super.call(this) || this;
+        var _this = _super.call(this, null) || this;
         _this.schema = schema;
         _this.withArgs = [];
         return _this;
@@ -848,23 +847,7 @@ var ModelQuery = /** @class */ (function (_super) {
         if (!this.load) {
             this.load = new Load(this.schema);
         }
-    };
-    ModelQuery.prototype.initLoadArgs = function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        switch (args.length) {
-            case 1:
-                this.load.parse(args[0]);
-                break;
-            case 2:
-                this.load.parse(args[0], args[1]);
-                break;
-            default:
-                throw new Error('Invalid arguments supplied');
-        }
-        return this;
+        return this.load;
     };
     ModelQuery.prototype.get = function () {
         var _this = this;
@@ -873,8 +856,9 @@ var ModelQuery = /** @class */ (function (_super) {
         if (items.length) {
             if (this.withArgs.length) {
                 this.initLoad();
-                this.withArgs.forEach(function (arg) {
-                    _this.initLoadArgs.apply(_this, __spread(arg));
+                this.withArgs.forEach(function (_a) {
+                    var _b = __read(_a, 2), first = _b[0], second = _b[1];
+                    _super.prototype.with.call(_this, first, second);
                 });
             }
             items = items.map(function (item) {
@@ -884,7 +868,7 @@ var ModelQuery = /** @class */ (function (_super) {
         return items;
     };
     return ModelQuery;
-}(ContextualQuery));
+}(LoadQuery));
 
 var cacheNames = ['data', 'relationship'];
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
@@ -1223,14 +1207,15 @@ function createModule(store) {
                 var items = _a.items, schema = _a.schema;
                 Object.entries(items).forEach(function (_a) {
                     var _b = __read(_a, 2), id = _b[0], entity = _b[1];
-                    // const storeItem = state[schema.entityName][id];
-                    // if(!storeItem) {
-                    // return Vue.set(state[schema.entityName], id, entity)
-                    // }
-                    Vue__default['default'].set(state[schema.entityName], id, __assign(__assign({}, state[schema.entityName][id]), entity));
-                    // Object.entries(entity).forEach(([key, value]) => {
-                    // Vue.set(storeItem,key, value);
-                    // })
+                    var storeItem = state[schema.entityName][id];
+                    if (!storeItem) {
+                        return Vue__default['default'].set(state[schema.entityName], id, entity);
+                    }
+                    // Vue.set(state[schema.entityName], id, {...state[schema.entityName][id], ...entity})
+                    Object.entries(entity).forEach(function (_a) {
+                        var _b = __read(_a, 2), key = _b[0], value = _b[1];
+                        Vue__default['default'].set(storeItem, key, value);
+                    });
                 });
             },
             _a[Mutations.SET_PROP] = function (state, _a) {

@@ -1,6 +1,7 @@
 import { Store } from 'vuex';
 import { Model } from '../model';
-import { Load, LoadQuery } from '../query/load';
+import { Load } from '../query/load';
+import { LoadQuery } from "../query/load-query";
 import { Query } from '../query/query';
 
 export enum Mutations {

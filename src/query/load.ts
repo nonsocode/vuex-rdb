@@ -2,6 +2,7 @@ import {LoadWhereFunction, Relationship, RelationshipModel, WhereFunction} from 
 import {createObject, isFunction, isString} from '../utils';
 import {getLoads} from './query-utils';
 import {ContextualQuery} from "./contextual-query";
+import { LoadQuery } from './load-query';
 
 export class Load<T extends Relationship = Relationship> {
   loads: Map<string, Load> = new Map();
@@ -42,9 +43,9 @@ export class Load<T extends Relationship = Relationship> {
     return this.relationship;
   }
 
-  parse(relationshipName: string, queryFunction: LoadWhereFunction): this;
+  parse(relationshipName: string, queryFunction?: LoadWhereFunction): this;
   parse(relationshipName: string | string[] | Record<string, LoadWhereFunction | true>): this;
-  parse(...args: any[]): this {
+  parse(...args): this {
     const rawLoads = this.parseRawLoadArgs(...args);
 
     Object.entries(rawLoads).forEach(([key, val]) => {
@@ -56,7 +57,7 @@ export class Load<T extends Relationship = Relationship> {
           const query = new LoadQuery(load);
           val.call(null, query);
           load.addCondition(query)
-        } else load.addCondition(new ContextualQuery().where(true));
+        } 
       });
     });
     return this;
@@ -85,47 +86,6 @@ export class Load<T extends Relationship = Relationship> {
   }
 }
 
-const withitems = {
-  'posts.comments': query => {
-    query.where('timestamp', '>', 112212).with({
-      user: query => {
-        query.where('id', 1).with('features');
-      }
-    });
-  },
-  'posts.comments.user': query => {
-    query.where('id', 2);
-  }
-};
-const transformed = {
-  posts: {
-    comments: {}
-  }
-};
 
 
-export class LoadQuery extends ContextualQuery<Load> {
-  constructor(private load: Load) {
-    super();
-  }
 
-  with(relationshipName: string, queryFunction: LoadWhereFunction): this;
-  with(record: string | string[] | Record<string, LoadWhereFunction | boolean>): this;
-  with(...args) {
-    switch (args.length) {
-      case 1:
-        this.load.parse(args[0]);
-        break;
-      case 2:
-        this.load.parse(args[0], args[1]);
-        break;
-      default:
-        throw new Error('Invalid arguments supplied');
-    }
-    return this;
-  }
-
-  get(): any {
-    throw new Error('Method not implemented.');
-  }
-}

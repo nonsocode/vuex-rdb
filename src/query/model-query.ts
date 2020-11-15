@@ -1,21 +1,19 @@
 import { getIdValue } from 'src/model';
-import {LoadWhereFunction, Schema} from '../types';
+import { LoadWhereFunction, Schema } from '../types';
 import { Load } from './load';
-import {ContextualQuery} from "./contextual-query";
+import { LoadQuery } from './load-query';
 
-export class ModelQuery<T extends Schema> extends ContextualQuery<T> {
-  load: Load<Schema>;
-  withArgs: any = [];
+export class ModelQuery<T extends Schema> extends LoadQuery {
+  protected withArgs = [];
 
   constructor(private schema: T) {
-    super();
+    super(null);
   }
 
-  with(relationshipName: string, queryFunction: LoadWhereFunction): this;
-  with(record: string | string[] | Record<string, LoadWhereFunction | boolean>): this;
+  with(relationshipName: string, queryFunction?: LoadWhereFunction): this;
+  with(record: string[] | Record<string, LoadWhereFunction | boolean>): this;
   with(...args) {
     this.withArgs.push(args);
-
     return this;
   }
 
@@ -23,20 +21,7 @@ export class ModelQuery<T extends Schema> extends ContextualQuery<T> {
     if (!this.load) {
       this.load = new Load(this.schema);
     }
-  }
-
-  private initLoadArgs(...args) {
-    switch (args.length) {
-      case 1:
-        this.load.parse(args[0]);
-        break;
-      case 2:
-        this.load.parse(args[0], args[1]);
-        break;
-      default:
-        throw new Error('Invalid arguments supplied');
-    }
-    return this;
+    return this.load;
   }
 
   get(): InstanceType<T>[] {
@@ -45,8 +30,8 @@ export class ModelQuery<T extends Schema> extends ContextualQuery<T> {
     if (items.length) {
       if (this.withArgs.length) {
         this.initLoad();
-        this.withArgs.forEach(arg => {
-          this.initLoadArgs(...arg);
+        this.withArgs.forEach(([first, second]) => {
+          super.with(first, second);
         });
       }
       items = items.map(item => {
