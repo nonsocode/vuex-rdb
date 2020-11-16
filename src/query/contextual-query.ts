@@ -10,11 +10,11 @@ export class ContextualQuery<T, P extends any = any> extends Query<T> {
   }
 
   matchItem(item: any): boolean {
-    if (!this.and.length && !this.or.length) return true;
+    if (!this.whereAnds.length && !this.whereOrs.length) return true;
     const result: boolean[] = [];
     const comparator = getComparator(item);
-    result.push(!!(this.and.length && this.and.every(comparator)));
-    result.push(!!(this.or.length && this.or.some(comparator)));
+    result.push(!!(this.whereAnds.length && this.whereAnds.every(comparator)));
+    result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
     return result.some(identity);
   }
 

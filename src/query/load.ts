@@ -26,13 +26,13 @@ export class Load<T extends Relationship = Relationship> {
     this.conditions.add(where);
   }
 
-  apply(data: RelationshipModel<T>) {
+  apply(data: RelationshipModel<T>): RelationshipModel<T> {
     if (this.conditions.size == 0 || data == null) return data;
     const conditions = [...this.conditions];
     if (Array.isArray(this.relationship)) {
       return (data as RelationshipModel<T>[]).filter((item) => {
         return conditions.some((condition) => condition.matchItem(item));
-      });
+      }) as RelationshipModel<T>;
     } else if (conditions.some((condition) => condition.matchItem(data))) {
       return data;
     }
