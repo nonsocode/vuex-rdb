@@ -81,7 +81,6 @@ export interface FindOptions {
 
 export type MixedDefinition = Schema | Schema[] | Rel;
 
-
 export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 
 export type NodeTree = {

@@ -1,6 +1,6 @@
-import { getIdValue, Model } from './model';
-import { getConstructor, normalizeAndStore } from './modelUtils';
-import { Getters, Mutations, Schema } from './types';
+import {getIdValue, Model} from './model';
+import {getConstructor, normalizeAndStore} from './modelUtils';
+import {Getters, Mutations, Schema} from './types';
 import {Store} from 'vuex';
 import {Rel} from './relationships/relationhsip';
 
@@ -11,6 +11,7 @@ function validateItems(items: any[], schema: Schema) {
     }
   }
 }
+
 function validate() {
   return (target, key, descriptor: PropertyDescriptor) => {
     const method: Function = descriptor.value;

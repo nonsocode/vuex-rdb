@@ -1,8 +1,8 @@
 import {FieldDefinition, SimpleFieldDefinition} from './relationships/field-definition';
 import {createObject} from './utils';
-import { Store } from 'vuex';
+import {Store} from 'vuex';
 import Vue from 'vue';
-import { Schema } from './types';
+import {Schema} from './types';
 
 export const nameModelMap: Map<string, Schema> = new Map();
 

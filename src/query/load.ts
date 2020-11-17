@@ -1,7 +1,7 @@
 import {LoadWhereFunction, RelationshipModel, Schema, WhereFunction} from '../types';
 import {createObject, isFunction, isString} from '../utils';
-import { getLoads } from './query-utils';
-import { ContextualQuery } from './contextual-query';
+import {getLoads} from './query-utils';
+import {ContextualQuery} from './contextual-query';
 import {LoadQuery} from './load-query';
 import {ListLike, Rel} from '../relationships/relationhsip';
 

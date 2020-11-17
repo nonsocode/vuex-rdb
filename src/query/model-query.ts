@@ -1,6 +1,6 @@
-import { getIdValue } from 'src/model';
-import { LoadWhereFunction, Schema } from '../types';
-import { Load } from './load';
+import {getIdValue} from 'src/model';
+import {LoadWhereFunction, Schema} from '../types';
+import {Load} from './load';
 import {LoadQuery} from './load-query';
 import {ItemRelationship} from '../relationships/item';
 

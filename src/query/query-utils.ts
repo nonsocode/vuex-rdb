@@ -1,4 +1,4 @@
-import { get, isBoolean, isFunction, isString } from '../utils';
+import {get, isBoolean, isFunction, isString} from '../utils';
 import {ContextualQuery} from './contextual-query';
 import {Where} from '../types';
 import {Load} from './load';

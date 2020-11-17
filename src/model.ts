@@ -280,7 +280,7 @@ export class Model<T extends any = any> {
    * entities to remove as a second parameter or leave blank to remove all items
    */
   $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
-  $removeRelated(related: string, ids?: (IdValue)[]): Promise<IdValue>;
+  $removeRelated(related: string, ids?: IdValue[]): Promise<IdValue>;
   async $removeRelated(related, relatedId): Promise<IdValue> {
     const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._namespace}/${Actions.REMOVE_RELATED}`, {
@@ -342,9 +342,9 @@ export class Model<T extends any = any> {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items, schema: [this]});
   }
 
-  static query<T extends Schema>(this: T, fn?: ((query: ModelQuery<T>) => void)): ModelQuery<T> {
+  static query<T extends Schema>(this: T, fn?: (query: ModelQuery<T>) => void): ModelQuery<T> {
     const query = new ModelQuery(this);
-    fn && fn(query)
+    fn && fn(query);
     return query;
   }
 }

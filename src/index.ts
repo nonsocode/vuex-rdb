@@ -3,8 +3,8 @@ import {createModule} from './module';
 import {PluginOptions} from './types';
 import {Model} from './model';
 import {Field} from './annotations/field';
-import {Item} from "./annotations/item";
-import {List} from "./annotations/list";
+import {Item} from './annotations/item';
+import {List} from './annotations/list';
 
 const defaultPluginOptions = {
   schemas: [],

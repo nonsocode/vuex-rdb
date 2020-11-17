@@ -76,12 +76,7 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
       },
       [Actions.REMOVE_RELATED](
         {dispatch, getters},
-        {
-          id,
-          related,
-          relatedId,
-          schema,
-        }: { id: string; related: any; relatedId: (IdValue) | (IdValue)[]; schema: Schema }
+        {id, related, relatedId, schema}: { id: string; related: any; relatedId: IdValue | IdValue[]; schema: Schema }
       ) {
         if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
           throw new Error(`Unknown Relationship: [${related}]`);
