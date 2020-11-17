@@ -342,7 +342,9 @@ export class Model<T extends any = any> {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items, schema: [this]});
   }
 
-  static query<T extends Schema>(this: T): ModelQuery<T> {
-    return new ModelQuery(this);
+  static query<T extends Schema>(this: T, fn?: ((query: ModelQuery<T>) => void)): ModelQuery<T> {
+    const query = new ModelQuery(this);
+    fn && fn(query)
+    return query;
   }
 }
