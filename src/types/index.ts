@@ -1,8 +1,11 @@
-import { Store } from 'vuex';
-import { Model } from '../model';
-import { Load } from '../query/load';
-import { LoadQuery } from '../query/load-query';
-import { Query } from '../query/query';
+import {Store} from 'vuex';
+import {Model} from '../model';
+import {Load} from '../query/load';
+import {LoadQuery} from '../query/load-query';
+import {Query} from '../query/query';
+import {Rel} from '../relationships/relationhsip';
+import {ItemRelationship} from '../relationships/item';
+import {ListRelationship} from '../relationships/list';
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
@@ -23,11 +26,14 @@ export enum Getters {
   FIND_BY_IDS = 'findByIds',
   ALL = 'all',
 }
+
 export type TypeOrFunction<T> = T | TypeFunction<T>;
+
 export interface TypeFunction<T> extends Function {
   (this: null, data: any): T;
 }
-export type ModelState = Record<string | number, any>;
+
+export type ModelState = Record<IdValue, any>;
 export type Cache = Map<Schema, Record<IdValue, object>>;
 export type IdValue = string | number;
 export type Normalized = {
@@ -35,15 +41,16 @@ export type Normalized = {
   entities: Cache;
 };
 
-export type Schema = typeof Model;
+export type Factory<T extends any = any> = () => T;
 
-export type Relationship = Schema | [Schema];
-export type RelationshipFactory = () => Relationship;
-export type RelationshipModel<T extends Relationship> = T extends typeof Model
-  ? InstanceType<T>
-  : T extends [typeof Model]
-  ? InstanceType<T[0]>[]
-  : never;
+export type Schema = typeof Model;
+export type SchemaFactory<T extends Schema> = Factory<T>;
+export type RelationshipModel<T extends Rel> = T extends ItemRelationship<infer U>
+  ? InstanceType<U>
+  : T extends ListRelationship<infer U>
+    ? InstanceType<U>[]
+    : never;
+
 export interface PluginOptions {
   /**
    * The namespace of the database in the Vuex store
@@ -71,15 +78,16 @@ export interface FindOptions {
    */
   load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
-export type EntityName = string;
-export type StorePath = string;
+
+export type MixedDefinition = Schema | Schema[] | Rel;
+
 
 export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
+
 export type NodeTree = {
   parentNode?: NodeTree;
   item: any;
 };
-
 export type WhereValue = string | number | boolean | object | any[];
 export type WhereKey<T> = string | WhereFunction<T>;
 export type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean;
@@ -98,3 +106,9 @@ export interface WhereFunction<T> {
 export interface LoadWhereFunction extends WhereFunction<Load> {
   (query: LoadQuery): boolean | void;
 }
+
+export type FieldDefinitionOptions =
+  | {
+  default?: Factory;
+}
+  | Factory;

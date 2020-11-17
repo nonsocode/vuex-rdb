@@ -1,13 +1,14 @@
-import { hasSeen, identity, isFunction } from './utils';
-import { Actions, FindOptions, Getters, Mutations, Relationship, Schema } from './types';
-import { Store } from 'vuex';
-import { getRelationshipSchema } from './relationships';
-import { FieldDefinition } from './FieldDefinition';
-import { getConstructor, modelToObject, normalizeAndStore, validateEntry } from './modelUtils';
+import {hasSeen, identity, isFunction} from './utils';
+import {Actions, FindOptions, Getters, IdValue, Mutations, Schema} from './types';
+import {Store} from 'vuex';
+import {FieldDefinition} from './relationships/field-definition';
+import {getConstructor, modelToObject, normalizeAndStore, validateEntry} from './modelUtils';
 import Vue from 'vue';
-import { ModelArray } from './modelArray';
-import { ModelQuery } from './query/model-query';
-import { Load } from './query/load';
+import {ModelArray} from './modelArray';
+import {ModelQuery} from './query/model-query';
+import {Load} from './query/load';
+import {ListLike, Rel} from './relationships/relationhsip';
+import {ListRelationship} from './relationships/list';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -15,24 +16,18 @@ const getCacheName = (isRelationship) => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id: any, schema: Schema): any => {
   return ['string', 'number'].includes(typeof id) ? schema.find(id) : id;
 };
-const proxySetter = (target: Model<any>, key: string, value) => {
-  if (!(key in target)) {
-    createAccessor(target, key);
-  }
-  target[key] = value;
-  return true;
-};
-function cacheDefaults(model: Model<any>, overrides = {}) {
+
+function cacheDefaults(model: Model, overrides = {}) {
   Object.entries(getConstructor(model)._fields).forEach(([key, definition]) => {
-    model._caches[getCacheName(definition.isRelationship)][key] = overrides[key] ?? definition.default;
+    model._caches[getCacheName(definition instanceof Rel)][key] = overrides[key] ?? definition.default;
   });
 }
 
-function createAccessor(target: Model<any>, key) {
+function createAccessor(target: Model, key) {
   const schema = getConstructor(target);
-  const { _namespace: path, _store, _fields, id } = schema;
-  const isRelationship = key in _fields && _fields[key].isRelationship;
-  const relationshipDef = isRelationship ? _fields[key] : null;
+  const {_namespace: path, _store, _fields, id} = schema;
+  const isRelationship = _fields[key] instanceof Rel;
+  const relationshipDef: Rel = isRelationship ? <Rel>_fields[key] : null;
   const load = target._load;
 
   Object.defineProperty(target, key, {
@@ -43,9 +38,9 @@ function createAccessor(target: Model<any>, key) {
         const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, schema);
         let value = raw[key];
         if (isRelationship) {
-          const opts = { load: load?.getLoad(key) };
-          const Related = getRelationshipSchema(relationshipDef);
-          if (relationshipDef.isList) {
+          const opts = {load: load?.getLoad(key)};
+          const Related = relationshipDef.schema;
+          if (relationshipDef instanceof ListLike) {
             if (value) {
               value = Related.findByIds(value, opts);
               if (opts.load) {
@@ -66,16 +61,16 @@ function createAccessor(target: Model<any>, key) {
     set(value) {
       if (value != null) {
         if (isRelationship) {
-          const Related = getRelationshipSchema(relationshipDef);
+          const Related: Schema = relationshipDef.schema;
           value = parseIfLiteral(value, Related);
-          if (relationshipDef.isList) {
+          if (relationshipDef instanceof ListLike) {
             value = Array.isArray(value) ? value : [value].filter(identity);
           }
           if (target._connected) {
             if (!validateEntry(value, relationshipDef)) {
               throw new Error(`An item being assigned to the property [${key}] does not have a valid identifier`);
             }
-            value = normalizeAndStore(_store, value, relationshipDef.entity);
+            value = normalizeAndStore(_store, value, relationshipDef);
           }
         } else if (target._connected && (isFunction(id) || id == key)) {
           const oldId = getIdValue(target, schema);
@@ -93,7 +88,7 @@ function createAccessor(target: Model<any>, key) {
   });
 }
 
-export function getIdValue<T>(model: T, schema: Schema): string | number {
+export function getIdValue<T>(model: T, schema: Schema): IdValue {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id as string];
 }
 
@@ -126,7 +121,7 @@ export class Model<T extends any = any> {
    * receives a model-like param as input and returns the id;
    * @default 'id'
    */
-  static id: string | ((...args: any[]) => string | number) = 'id';
+  static id: string | ((...args: any[]) => IdValue) = 'id';
 
   /**
    * Used when rendering as JSON. Useful when an enitity has a cylcic relationship.
@@ -185,8 +180,8 @@ export class Model<T extends any = any> {
     const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
       if (key in constructor._fields) {
-        if (constructor._fields[key].isRelationship) {
-          const node = { item: this, parentNode };
+        if (constructor._fields[key] instanceof Rel) {
+          const node = {item: this, parentNode};
           if (val == null) {
             acc[key] = val;
           } else if (Array.isArray(val)) {
@@ -207,15 +202,15 @@ export class Model<T extends any = any> {
   /**
    * Converts the model to a plain javascript object.
    */
-  $toObject(parentNode?: any): Partial<T> {
-    return modelToObject(this, getConstructor(this));
+  $toObject(allProps: boolean = false): Partial<T> {
+    return modelToObject(this, getConstructor(this), allProps);
   }
 
   /**
    * Update the properties of the model with the given data. You don't need to pass the full model.
    * You can pass only the props you want to update, You can also pass related models or model-like data
    */
-  async $update(data: Partial<T> = {}): Promise<string | number> {
+  async $update(data: Partial<T> = {}): Promise<IdValue> {
     const constructor = getConstructor(this);
     return constructor._store
       .dispatch(`${constructor._namespace}/update`, {
@@ -258,14 +253,15 @@ export class Model<T extends any = any> {
       }
     });
   }
+
   /**
    * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
    * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
    * `this` model
    */
-  $addRelated(related: string, data: Object): Promise<string | number>;
-  $addRelated(related: string, items: any[]): Promise<string | number>;
-  async $addRelated(related, data): Promise<string | number> {
+  $addRelated(related: string, data: Object): Promise<IdValue>;
+  $addRelated(related: string, items: any[]): Promise<IdValue>;
+  async $addRelated(related, data): Promise<IdValue> {
     const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD_RELATED}`, {
       id: this._id,
@@ -283,9 +279,9 @@ export class Model<T extends any = any> {
    * if it's a list relationship, you can specify an identifier or a list of identifiers of the related
    * entities to remove as a second parameter or leave blank to remove all items
    */
-  $removeRelated(related: string, id?: string | number): Promise<string | number>;
-  $removeRelated(related: string, ids?: (string | number)[]): Promise<string | number>;
-  async $removeRelated(related, relatedId): Promise<string | number> {
+  $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
+  $removeRelated(related: string, ids?: (IdValue)[]): Promise<IdValue>;
+  async $removeRelated(related, relatedId): Promise<IdValue> {
     const constructor = getConstructor(this);
     return constructor._store.dispatch(`${constructor._namespace}/${Actions.REMOVE_RELATED}`, {
       id: this._id,
@@ -296,48 +292,20 @@ export class Model<T extends any = any> {
   }
 
   /**
-   * This is an alternative to the `Field(() => RelatedModel)` decorator
-   *
-   * A record of all the possible relationships of this Schema. Currently, two types are supported
-   *
-   * - list
-   * - item
-   *
-   * lists are just Model classes in an Array while an Item is the Model Class itself
-   *
-   * So if we have a `UserModel` that has many `Posts`, we'd define it like so
-   *
-   * ```javascript
-   * class UserModel extends Model {
-   *   static get() {
-   *     return {
-   *       posts: [PostModel], // this signifies a list relationship
-   *       school: SchoolModel // This represents an item type relationship
-   *     }
-   *   }
-   * }
-   * ```
-   * @deprecated
-   */
-  static get relationships(): Record<string, Relationship> {
-    return {};
-  }
-
-  /**
    * This is an alternative to the `Field()` decorator.
    *
    * Specify the different fields of the class
    * in an array or an object that contains the field names as it's keys
    * @deprecated
    */
-  static get fields(): Record<string, true> | string[] {
+  static get fields(): Record<string, FieldDefinition> {
     return {};
   }
 
   /**
    * Find a model by the specified identifier
    */
-  static find<T extends Schema>(this: T, id: string | number, opts: FindOptions = {}): InstanceType<T> {
+  static find<T extends Schema>(this: T, id: IdValue, opts: FindOptions = {}): InstanceType<T> {
     return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
   }
 
@@ -361,8 +329,8 @@ export class Model<T extends any = any> {
    *
    * It returns a promise of the inserted entity's id
    */
-  static add(item: any): Promise<string | number> {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items: item, schema: this });
+  static add(item: any): Promise<IdValue> {
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items: item, schema: this});
   }
 
   /**
@@ -370,8 +338,8 @@ export class Model<T extends any = any> {
    *
    * It returns a promise of an array of ids for the inserted entities.
    */
-  static addAll(items: any[]): Promise<Array<string | number>> {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
+  static addAll(items: any[]): Promise<Array<IdValue>> {
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items, schema: [this]});
   }
 
   static query<T extends Schema>(this: T): ModelQuery<T> {

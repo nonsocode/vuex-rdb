@@ -1,13 +1,13 @@
-import { NodeTree, TypeFunction, TypeOrFunction } from './types';
+import {IdValue, NodeTree, TypeOrFunction} from './types';
 
 export const identity = (k) => k;
 
-export function mergeUnique(items: Array<any>, key: TypeOrFunction<string | number>) {
-  const keyFunction: TypeOrFunction<string | number> = isFunction(key) ? key : (item) => item[key];
+export function mergeUnique(items: Array<any>, key: TypeOrFunction<IdValue>) {
+  const keyFunction: TypeOrFunction<IdValue> = isFunction(key) ? key : (item) => item[key];
   const map = new Map();
   items.forEach((item) => {
     const key = keyFunction.call(null, item);
-    map.set(key, map.has(key) ? { ...map.get(key), ...item } : item);
+    map.set(key, map.has(key) ? {...map.get(key), ...item} : item);
   });
   return [...map.values()];
 }

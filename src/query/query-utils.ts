@@ -1,8 +1,8 @@
 import { get, isBoolean, isFunction, isString } from '../utils';
-import { ContextualQuery } from './contextual-query';
-import { Relationship, Where } from '../types';
-import { getRelationshipSchema } from '../relationships';
-import { Load } from './load';
+import {ContextualQuery} from './contextual-query';
+import {Where} from '../types';
+import {Load} from './load';
+import {Rel} from '../relationships/relationhsip';
 
 export const getComparator = <T>(item) => (where: Where<T>) => {
   if (isFunction(where.key)) {
@@ -43,7 +43,7 @@ export const getComparator = <T>(item) => (where: Where<T>) => {
   }
 };
 
-const addToLoads = (key: string, relationship: Relationship, originalLoad: Load, newLoads: Load[]) => {
+const addToLoads = (key: string, relationship: Rel, originalLoad: Load, newLoads: Load[]) => {
   if (originalLoad.has(key)) {
     newLoads.push(originalLoad.getLoad(key));
   } else {
@@ -56,17 +56,17 @@ const addToLoads = (key: string, relationship: Relationship, originalLoad: Load,
 export function getLoads(loads: Load[], key: string) {
   const newLoads: Load[] = [];
   for (const load of loads) {
-    const schema = getRelationshipSchema(load.getRelationship());
+    const schema = load.getRelationship().schema;
     if (key === '*') {
       Object.entries(schema._fields)
-        .filter(([, fieldDef]) => fieldDef.isRelationship)
+        .filter(([, fieldDef]) => fieldDef instanceof Rel)
         .forEach(([key, value]) => {
-          addToLoads(key, value.entity, load, newLoads);
+          addToLoads(key, <Rel>value, load, newLoads);
         });
-    } else if (!schema._fields[key] || !schema._fields[key].isRelationship) {
+    } else if (!schema._fields[key] || !(schema._fields[key] instanceof Rel)) {
       console.warn(`[${key}] is not a relationship`);
     } else {
-      addToLoads(key, schema._fields[key].entity, load, newLoads);
+      addToLoads(key, <Rel>schema._fields[key], load, newLoads);
     }
   }
   return newLoads;

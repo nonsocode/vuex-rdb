@@ -1,13 +1,23 @@
-import { Model } from 'src';
-import { getIdValue } from './model';
-import { getRelationshipSchema } from './relationships';
-import { Normalized, Relationship } from './types';
-import { createObject } from './utils';
+import {Model} from 'src';
+import {getIdValue} from './model';
+import {IdValue, MixedDefinition, Normalized, Schema} from './types';
+import {createObject} from './utils';
+import {ListLike, Rel} from './relationships/relationhsip';
+
+const listLike = (entityDef: MixedDefinition) => Array.isArray(entityDef) || entityDef instanceof ListLike;
+const getRelationshipSchema = (entityDef: MixedDefinition): Schema =>
+  Array.isArray(entityDef)
+    ? entityDef[0]
+    : (<Schema>entityDef).prototype instanceof Model
+    ? <Schema>entityDef
+    : entityDef instanceof Rel
+      ? (<Rel>entityDef).schema
+      : null;
 
 export function normalize(
   raw,
-  entityDef: Relationship,
-  visited = new Map<any, string | number>(),
+  entityDef: MixedDefinition,
+  visited = new Map<any, IdValue>(),
   entities: Normalized['entities'] = new Map(),
   depth = 0
 ): Normalized {
@@ -17,10 +27,10 @@ export function normalize(
   let result;
   if (raw == null) {
     result = null;
-  } else if (Array.isArray(raw) && Array.isArray(entityDef)) {
+  } else if (Array.isArray(raw) && listLike(entityDef)) {
     result = raw
       .map((r) => {
-        const { result } = normalize(r, schema, visited, entities, depth + 1);
+        const {result} = normalize(r, schema, visited, entities, depth + 1);
         return result;
       })
       .filter((id) => id != null);
@@ -33,9 +43,10 @@ export function normalize(
       visited.set(raw, id);
       for (let [key, value] of Object.entries(raw)) {
         if (key in fields) {
-          normalized[key] = fields[key].isRelationship
-            ? normalize(value, fields[key].entity, visited, entities, depth + 1).result
-            : value;
+          normalized[key] =
+            fields[key] instanceof Rel
+              ? normalize(value, <Rel>fields[key], visited, entities, depth + 1).result
+              : value;
         } else {
           // Ignore if this property isn't defined on the model
         }

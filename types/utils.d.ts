@@ -1,6 +1,6 @@
-import { NodeTree, TypeOrFunction } from './types';
+import { IdValue, NodeTree, TypeOrFunction } from './types';
 export declare const identity: (k: any) => any;
-export declare function mergeUnique(items: Array<any>, key: TypeOrFunction<string | number>): any[];
+export declare function mergeUnique(items: Array<any>, key: TypeOrFunction<IdValue>): any[];
 export declare function isFunction<T extends Function>(fn: any): fn is T;
 export declare function isBoolean(arg: any): arg is boolean;
 export declare function isString(string: any): string is string;

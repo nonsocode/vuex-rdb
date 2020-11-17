@@ -1,7 +1,7 @@
 import { Where, WhereFunction, WhereOperand, WhereValue } from '../types';
 export declare abstract class Query<T> {
-    protected and: Where<T>[];
-    protected or: Where<T>[];
+    protected whereAnds: Where<T>[];
+    protected whereOrs: Where<T>[];
     protected constructor();
     where(key: string, operand: WhereOperand, value: WhereValue): this;
     where(key: string, value: WhereValue | WhereFunction<T>): this;

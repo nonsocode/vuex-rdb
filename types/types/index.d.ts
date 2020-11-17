@@ -3,6 +3,9 @@ import { Model } from '../model';
 import { Load } from '../query/load';
 import { LoadQuery } from '../query/load-query';
 import { Query } from '../query/query';
+import { Rel } from '../relationships/relationhsip';
+import { ItemRelationship } from '../relationships/item';
+import { ListRelationship } from '../relationships/list';
 export declare enum Mutations {
     ADD_ALL = "ADD_ALL",
     PATCH_TEMPS = "PATCH_TEMPS",
@@ -24,17 +27,17 @@ export declare type TypeOrFunction<T> = T | TypeFunction<T>;
 export interface TypeFunction<T> extends Function {
     (this: null, data: any): T;
 }
-export declare type ModelState = Record<string | number, any>;
+export declare type ModelState = Record<IdValue, any>;
 export declare type Cache = Map<Schema, Record<IdValue, object>>;
 export declare type IdValue = string | number;
 export declare type Normalized = {
     result: IdValue | IdValue[];
     entities: Cache;
 };
+export declare type Factory<T extends any = any> = () => T;
 export declare type Schema = typeof Model;
-export declare type Relationship = Schema | [Schema];
-export declare type RelationshipFactory = () => Relationship;
-export declare type RelationshipModel<T extends Relationship> = T extends typeof Model ? InstanceType<T> : T extends [typeof Model] ? InstanceType<T[0]>[] : never;
+export declare type SchemaFactory<T extends Schema> = Factory<T>;
+export declare type RelationshipModel<T extends Rel> = T extends ItemRelationship<infer U> ? InstanceType<U> : T extends ListRelationship<infer U> ? InstanceType<U>[] : never;
 export interface PluginOptions {
     /**
      * The namespace of the database in the Vuex store
@@ -60,8 +63,7 @@ export interface FindOptions {
      */
     load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
-export declare type EntityName = string;
-export declare type StorePath = string;
+export declare type MixedDefinition = Schema | Schema[] | Rel;
 export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 export declare type NodeTree = {
     parentNode?: NodeTree;
@@ -82,3 +84,6 @@ export interface WhereFunction<T> {
 export interface LoadWhereFunction extends WhereFunction<Load> {
     (query: LoadQuery): boolean | void;
 }
+export declare type FieldDefinitionOptions = {
+    default?: Factory;
+} | Factory;

@@ -1,9 +1,9 @@
-import { FindOptions, Relationship, Schema } from './types';
+import { FindOptions, IdValue, Schema } from './types';
 import { Store } from 'vuex';
-import { FieldDefinition } from './FieldDefinition';
+import { FieldDefinition } from './relationships/field-definition';
 import { ModelQuery } from './query/model-query';
 import { Load } from './query/load';
-export declare function getIdValue<T>(model: T, schema: Schema): string | number;
+export declare function getIdValue<T>(model: T, schema: Schema): IdValue;
 export declare class Model<T extends any = any> {
     /**
      * The namespace in the vuex store
@@ -29,7 +29,7 @@ export declare class Model<T extends any = any> {
      * receives a model-like param as input and returns the id;
      * @default 'id'
      */
-    static id: string | ((...args: any[]) => string | number);
+    static id: string | ((...args: any[]) => IdValue);
     /**
      * Used when rendering as JSON. Useful when an enitity has a cylcic relationship.
      * It specifies exactly which relationships would be rendered out in the JSON representation
@@ -63,12 +63,12 @@ export declare class Model<T extends any = any> {
     /**
      * Converts the model to a plain javascript object.
      */
-    $toObject(parentNode?: any): Partial<T>;
+    $toObject(allProps?: boolean): Partial<T>;
     /**
      * Update the properties of the model with the given data. You don't need to pass the full model.
      * You can pass only the props you want to update, You can also pass related models or model-like data
      */
-    $update(data?: Partial<T>): Promise<string | number>;
+    $update(data?: Partial<T>): Promise<IdValue>;
     /**
      * Useful when a model is created using `new Model()`.
      * You can assign properties to the model like you would any other javascript
@@ -83,8 +83,8 @@ export declare class Model<T extends any = any> {
      * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
      * `this` model
      */
-    $addRelated(related: string, data: Object): Promise<string | number>;
-    $addRelated(related: string, items: any[]): Promise<string | number>;
+    $addRelated(related: string, data: Object): Promise<IdValue>;
+    $addRelated(related: string, items: any[]): Promise<IdValue>;
     /**
      * Remove the specified entity as a relationship of `this` model
      *
@@ -93,33 +93,8 @@ export declare class Model<T extends any = any> {
      * if it's a list relationship, you can specify an identifier or a list of identifiers of the related
      * entities to remove as a second parameter or leave blank to remove all items
      */
-    $removeRelated(related: string, id?: string | number): Promise<string | number>;
-    $removeRelated(related: string, ids?: (string | number)[]): Promise<string | number>;
-    /**
-     * This is an alternative to the `Field(() => RelatedModel)` decorator
-     *
-     * A record of all the possible relationships of this Schema. Currently, two types are supported
-     *
-     * - list
-     * - item
-     *
-     * lists are just Model classes in an Array while an Item is the Model Class itself
-     *
-     * So if we have a `UserModel` that has many `Posts`, we'd define it like so
-     *
-     * ```javascript
-     * class UserModel extends Model {
-     *   static get() {
-     *     return {
-     *       posts: [PostModel], // this signifies a list relationship
-     *       school: SchoolModel // This represents an item type relationship
-     *     }
-     *   }
-     * }
-     * ```
-     * @deprecated
-     */
-    static get relationships(): Record<string, Relationship>;
+    $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
+    $removeRelated(related: string, ids?: (IdValue)[]): Promise<IdValue>;
     /**
      * This is an alternative to the `Field()` decorator.
      *
@@ -127,11 +102,11 @@ export declare class Model<T extends any = any> {
      * in an array or an object that contains the field names as it's keys
      * @deprecated
      */
-    static get fields(): Record<string, true> | string[];
+    static get fields(): Record<string, FieldDefinition>;
     /**
      * Find a model by the specified identifier
      */
-    static find<T extends Schema>(this: T, id: string | number, opts?: FindOptions): InstanceType<T>;
+    static find<T extends Schema>(this: T, id: IdValue, opts?: FindOptions): InstanceType<T>;
     /**
      * Find all items that match the specified ids
      *
@@ -146,12 +121,12 @@ export declare class Model<T extends any = any> {
      *
      * It returns a promise of the inserted entity's id
      */
-    static add(item: any): Promise<string | number>;
+    static add(item: any): Promise<IdValue>;
     /**
      * Add the passed items to the database. It should match this model's schema.
      *
      * It returns a promise of an array of ids for the inserted entities.
      */
-    static addAll(items: any[]): Promise<Array<string | number>>;
+    static addAll(items: any[]): Promise<Array<IdValue>>;
     static query<T extends Schema>(this: T): ModelQuery<T>;
 }

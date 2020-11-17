@@ -1,7 +1,8 @@
 import { getIdValue } from 'src/model';
 import { LoadWhereFunction, Schema } from '../types';
 import { Load } from './load';
-import { LoadQuery } from './load-query';
+import {LoadQuery} from './load-query';
+import {ItemRelationship} from '../relationships/item';
 
 export class ModelQuery<T extends Schema> extends LoadQuery {
   protected withArgs = [];
@@ -19,7 +20,7 @@ export class ModelQuery<T extends Schema> extends LoadQuery {
 
   private initLoad() {
     if (!this.load) {
-      this.load = new Load(this.schema);
+      this.load = new Load(new ItemRelationship(() => this.schema));
     }
     return this.load;
   }

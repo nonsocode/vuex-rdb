@@ -5,7 +5,7 @@ import { Load } from './load';
 export class LoadQuery extends ContextualQuery<Load> {
   whereHasAnds: any[] = [];
   whereHasOrs: any[] = [];
-  
+
   constructor(protected load: Load) {
     super();
   }
@@ -28,5 +28,5 @@ export class LoadQuery extends ContextualQuery<Load> {
     throw new Error('Method not implemented.');
   }
 
-  whereHas(relationshipPath: string,)
+  // whereHas(relationshipPath: string);
 }

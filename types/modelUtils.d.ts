@@ -1,8 +1,8 @@
 import { Model } from './model';
 import { Store } from 'vuex';
-import { IdValue, Relationship, Schema } from './types';
-import { FieldDefinition } from './FieldDefinition';
+import { IdValue, MixedDefinition, Schema } from './types';
+import { Rel } from './relationships/relationhsip';
 export declare function getConstructor(model: Model<any>): Schema;
-export declare function validateEntry(data: any, definition: FieldDefinition): boolean;
-export declare function normalizeAndStore(store: Store<any>, data: any, entityDef: Relationship): IdValue | IdValue[];
-export declare function modelToObject(model: Model, schema: Schema, seen?: Map<Model, object>): {};
+export declare function validateEntry(data: any, relationship: Rel): boolean;
+export declare function normalizeAndStore(store: Store<any>, data: any, entityDef: MixedDefinition): IdValue | IdValue[];
+export declare function modelToObject(model: Model, schema: Schema, allProps: boolean, seen?: Map<Model, object>): {};

@@ -1,16 +1,18 @@
-import { LoadWhereFunction, Relationship, RelationshipModel, WhereFunction } from '../types';
-import { createObject, isFunction, isString } from '../utils';
+import {LoadWhereFunction, RelationshipModel, Schema, WhereFunction} from '../types';
+import {createObject, isFunction, isString} from '../utils';
 import { getLoads } from './query-utils';
 import { ContextualQuery } from './contextual-query';
-import { LoadQuery } from './load-query';
+import {LoadQuery} from './load-query';
+import {ListLike, Rel} from '../relationships/relationhsip';
 
-export class Load<T extends Relationship = Relationship> {
+export class Load<S extends Schema = Schema, T extends Rel<S> = Rel<S>> {
   loads: Map<string, Load> = new Map();
   conditions: Set<ContextualQuery<T>> = new Set();
 
-  constructor(protected relationship: T) {}
+  constructor(protected relationship: T) {
+  }
 
-  addLoad(name: string, load: Load) {
+  addLoad<R extends Schema>(name: string, load: Load<R>) {
     this.loads.set(name, load);
   }
 
@@ -29,7 +31,7 @@ export class Load<T extends Relationship = Relationship> {
   apply(data: RelationshipModel<T>): RelationshipModel<T> {
     if (this.conditions.size == 0 || data == null) return data;
     const conditions = [...this.conditions];
-    if (Array.isArray(this.relationship)) {
+    if (this.relationship instanceof ListLike) {
       return (data as RelationshipModel<T>[]).filter((item) => {
         return conditions.some((condition) => condition.matchItem(item));
       }) as RelationshipModel<T>;

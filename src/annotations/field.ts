@@ -1,20 +1,22 @@
-import { Model } from '../model';
-import { Relationship, RelationshipFactory, Schema } from '../types';
-import { createObject, isFunction } from '../utils';
-import { FieldDefinition } from '../FieldDefinition';
+import {Model} from '../model';
+import {FieldDefinitionOptions, Schema} from '../types';
+import {createObject} from '../utils';
+import {SimpleFieldDefinition} from '../relationships/field-definition';
 
-export type FieldDefinitionOptions = {
-  entity?: RelationshipFactory;
-  default?(): any;
-};
 
-export function Field(options: FieldDefinitionOptions | RelationshipFactory = {}) {
-  return (target: Model<any>, propname: string, other?: any): void => {
+export function Field(options: FieldDefinitionOptions = {}) {
+  return (target: Model, propName: string): void => {
     const constructor = target.constructor as Schema;
     if (constructor._fields == null) {
       constructor._fields = createObject();
     }
-
-    constructor._fields[propname] = new FieldDefinition(isFunction(options) ? { entity: options } : options);
+    if (propName in constructor._fields) {
+      return;
+    }
+    constructor._fields[propName] = new SimpleFieldDefinition(options);
   };
 }
+
+Field.define = function (options: FieldDefinitionOptions = {}): SimpleFieldDefinition {
+  return new SimpleFieldDefinition(options);
+};

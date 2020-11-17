@@ -1,19 +1,14 @@
-import { getRelationshipSchema, isList } from './relationships';
-import { createObject, identity, isFunction, mergeUnique } from './utils';
-import { getIdValue, Model } from './model';
-import { ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions } from './types';
-import { Module, Store } from 'vuex';
-const sum = require('hash-sum');
-
 import Vue from 'vue';
-import { normalizeAndStore } from './modelUtils';
-import { Load } from './query/load';
-export function generateModuleName(namespace, key) {
-  namespace = namespace || '';
-  const chunks = namespace.split('/');
-  chunks.push(key);
-  return chunks.join('/');
-}
+import {createObject, identity, isFunction, mergeUnique} from './utils';
+import {getIdValue, Model} from './model';
+import {ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions, IdValue} from './types';
+import {Module, Store} from 'vuex';
+
+import {normalizeAndStore} from './modelUtils';
+import {Load} from './query/load';
+import {ItemRelationship} from './relationships/item';
+import {ListLike, Rel} from './relationships/relationhsip';
+
 export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<ModelState, any> {
   return {
     namespaced: true,
@@ -49,23 +44,26 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
       },
     },
     actions: {
-      [Actions.ADD](ctx, { items, schema }) {
+      [Actions.ADD](ctx, {items, schema}) {
         return normalizeAndStore(store, items, schema);
       },
-      [Actions.ADD_RELATED]({ dispatch, getters }, { id, related, data, schema }) {
-        if (!(related in schema._fields) && schema._fields[related].isRelationship) {
+      [Actions.ADD_RELATED](
+        {dispatch, getters},
+        {id, related, data, schema}: { id: string; related: string; data: any; schema: Schema }
+      ) {
+        if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
-        const item: Model<any> = getters[Getters.FIND](id, schema);
+        const item: Model = getters[Getters.FIND](id, schema);
         if (!item) {
           throw new Error("The item doesn't exist");
         }
-        const relationshipDef = schema._fields[related];
+        const relationshipDef = <Rel>schema._fields[related];
 
-        if (relationshipDef.isList) {
+        if (relationshipDef instanceof ListLike) {
           const items = (Array.isArray(data) ? data : [data]).filter(identity);
           data = item[related] || [];
-          data = mergeUnique(data.concat(items), (item) => getIdValue(item, getRelationshipSchema(relationshipDef)));
+          data = mergeUnique(data.concat(items), (item) => getIdValue(item, relationshipDef.schema));
         }
 
         return dispatch(Actions.UPDATE, {
@@ -76,8 +74,16 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
           schema,
         });
       },
-      [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId, schema }) {
-        if (!(related in schema._fields) && schema._fields[related].isRelationship) {
+      [Actions.REMOVE_RELATED](
+        {dispatch, getters},
+        {
+          id,
+          related,
+          relatedId,
+          schema,
+        }: { id: string; related: any; relatedId: (IdValue) | (IdValue)[]; schema: Schema }
+      ) {
+        if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const ids = Array.isArray(id) ? id : [id];
@@ -87,9 +93,9 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
           return;
         }
 
-        const relationshipDef = schema._fields[related];
-        const relatedSchema = getRelationshipSchema(relationshipDef);
-        if (isList(relationshipDef)) {
+        const relationshipDef = <Rel>schema._fields[related];
+        const relatedSchema = relationshipDef.schema;
+        if (relationshipDef instanceof ListLike) {
           const relatedIds = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];
           return Promise.all(
             items.map((item) => {
@@ -155,7 +161,9 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
         }
         let load;
         if (opts.load) {
-          load = !(opts.load instanceof Load) ? new Load(schema).parse(opts.load) : opts.load;
+          load = !(opts.load instanceof Load)
+            ? new Load(new ItemRelationship(() => schema)).parse(opts.load)
+            : opts.load;
         }
         return resolveModel(schema, data, { load, connected: true });
       },
