@@ -1184,8 +1184,10 @@ var Model = /** @class */ (function () {
     Model.addAll = function (items) {
         return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: items, schema: [this] });
     };
-    Model.query = function () {
-        return new ModelQuery(this);
+    Model.query = function (fn) {
+        var query = new ModelQuery(this);
+        fn && fn(query);
+        return query;
     };
     /**
      * The identifier for the model. It also accepts an id resolver function that

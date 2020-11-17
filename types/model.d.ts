@@ -128,5 +128,5 @@ export declare class Model<T extends any = any> {
      * It returns a promise of an array of ids for the inserted entities.
      */
     static addAll(items: any[]): Promise<Array<IdValue>>;
-    static query<T extends Schema>(this: T): ModelQuery<T>;
+    static query<T extends Schema>(this: T, fn?: ((query: ModelQuery<T>) => void)): ModelQuery<T>;
 }
