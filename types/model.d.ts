@@ -94,7 +94,7 @@ export declare class Model<T extends any = any> {
      * entities to remove as a second parameter or leave blank to remove all items
      */
     $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
-    $removeRelated(related: string, ids?: (IdValue)[]): Promise<IdValue>;
+    $removeRelated(related: string, ids?: IdValue[]): Promise<IdValue>;
     /**
      * This is an alternative to the `Field()` decorator.
      *
@@ -128,5 +128,5 @@ export declare class Model<T extends any = any> {
      * It returns a promise of an array of ids for the inserted entities.
      */
     static addAll(items: any[]): Promise<Array<IdValue>>;
-    static query<T extends Schema>(this: T, fn?: ((query: ModelQuery<T>) => void)): ModelQuery<T>;
+    static query<T extends Schema>(this: T, fn?: (query: ModelQuery<T>) => void): ModelQuery<T>;
 }
