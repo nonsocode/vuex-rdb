@@ -1,6 +1,6 @@
 {
   "name": "vuex-rdb",
-  "version": "0.20.2",
+  "version": "0.20.4",
   "description": "An Active record database for vuex",
   "main": "dist/vuex-rdb.js",
   "typings": "types/index.d.ts",
@@ -15,7 +15,7 @@
     "types"
   ],
   "scripts": {
-    "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
+    "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/bundle.js",
     "pretify": "prettier  --config ./.prettierrc -w src"
   },
   "peerDependencies": {

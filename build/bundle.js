@@ -27,7 +27,7 @@ const esConfig = {
     sourcemap: true,
   },
 
-  plugins: [typescript(), resolve()]
+  plugins: [typescript({target: 'es2018'}), resolve()]
 };
 
 const browserConfig = {
