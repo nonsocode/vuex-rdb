@@ -1,9 +1,10 @@
 {
   "name": "vuex-rdb",
-  "version": "0.20.4",
+  "version": "0.20.5",
   "description": "An Active record database for vuex",
   "main": "dist/vuex-rdb.js",
   "typings": "types/index.d.ts",
+  "browser": "dist/vuex-rdb.es.js",
   "module": "dist/vuex-rdb.es.js",
   "unpkg": "dist/vuex-rdb.min.js",
   "repository": "https://github.com/nonsocode/vuex-rdb.git",
