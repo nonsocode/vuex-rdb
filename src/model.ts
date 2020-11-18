@@ -1,7 +1,16 @@
 import {hasSeen, identity, isFunction} from './utils';
-import {Actions, FindOptions, Getters, IdValue, Mutations, Schema} from './types';
+import {
+  Actions,
+  FieldDefinitionOptions,
+  FindOptions,
+  Getters,
+  IdValue,
+  Mutations,
+  Schema,
+  SchemaFactory,
+} from './types';
 import {Store} from 'vuex';
-import {FieldDefinition} from './relationships/field-definition';
+import {FieldDefinition, SimpleFieldDefinition} from './relationships/field-definition';
 import {getConstructor, modelToObject, normalizeAndStore, validateEntry} from './modelUtils';
 import Vue from 'vue';
 import {ModelArray} from './modelArray';
@@ -9,6 +18,8 @@ import {ModelQuery} from './query/model-query';
 import {Load} from './query/load';
 import {ListLike, Rel} from './relationships/relationhsip';
 import {ListRelationship} from './relationships/list';
+import {ItemRelationship} from './relationships/item';
+import {Field, Item, List} from './index';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -340,6 +351,18 @@ export class Model<T extends any = any> {
    */
   static addAll(items: any[]): Promise<Array<IdValue>> {
     return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items, schema: [this]});
+  }
+
+  static $item<T extends Schema>(factory: SchemaFactory<T>): ItemRelationship<T> {
+    return Item.define(factory, () => this);
+  }
+
+  static $list<T extends Schema>(factory: SchemaFactory<T>): ListRelationship<T> {
+    return List.define(factory, () => this);
+  }
+
+  static $field(options: FieldDefinitionOptions = {}): SimpleFieldDefinition {
+    return Field.define(options);
   }
 
   static query<T extends Schema>(this: T, fn?: (query: ModelQuery<T>) => void): ModelQuery<T> {

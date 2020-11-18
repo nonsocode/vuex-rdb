@@ -12,10 +12,13 @@ export function Item<T extends Schema>(factory: SchemaFactory<T>) {
     if (propName in constructor._fields) {
       return;
     }
-    constructor._fields[propName] = Item.define(factory);
+    constructor._fields[propName] = Item.define(factory, () => constructor);
   };
 }
 
-Item.define = function <T extends Schema>(factory: SchemaFactory<T>): ItemRelationship<T> {
-  return new ItemRelationship(factory);
+Item.define = function <T extends Schema, P extends Schema>(
+  factory: SchemaFactory<T>,
+  parentFactory: SchemaFactory<P>
+): ItemRelationship<T> {
+  return new ItemRelationship(factory, parentFactory);
 };

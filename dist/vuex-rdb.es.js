@@ -250,14 +250,23 @@ var Getters;
  */
 var Rel = /** @class */ (function (_super) {
     __extends(Rel, _super);
-    function Rel(factory) {
+    function Rel(factory, parentFactory) {
         var _this = _super.call(this) || this;
         _this.factory = factory;
+        _this.parentFactory = parentFactory;
         return _this;
     }
     Object.defineProperty(Rel.prototype, "schema", {
         get: function () {
             return this.factory();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Rel.prototype, "parentSchema", {
+        get: function () {
+            var _a;
+            return (_a = this.parentFactory) === null || _a === void 0 ? void 0 : _a.call(this);
         },
         enumerable: false,
         configurable: true
@@ -1178,6 +1187,18 @@ var Model = /** @class */ (function () {
     Model.addAll = function (items) {
         return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: items, schema: [this] });
     };
+    Model.$item = function (factory) {
+        var _this = this;
+        return Item.define(factory, function () { return _this; });
+    };
+    Model.$list = function (factory) {
+        var _this = this;
+        return List.define(factory, function () { return _this; });
+    };
+    Model.$field = function (options) {
+        if (options === void 0) { options = {}; }
+        return Field.define(options);
+    };
     Model.query = function (fn) {
         var query = new ModelQuery(this);
         fn && fn(query);
@@ -1382,7 +1403,7 @@ function Field(options) {
         if (propName in constructor._fields) {
             return;
         }
-        constructor._fields[propName] = new SimpleFieldDefinition(options);
+        constructor._fields[propName] = Field.define(options);
     };
 }
 Field.define = function (options) {
@@ -1399,11 +1420,11 @@ function Item(factory) {
         if (propName in constructor._fields) {
             return;
         }
-        constructor._fields[propName] = Item.define(factory);
+        constructor._fields[propName] = Item.define(factory, function () { return constructor; });
     };
 }
-Item.define = function (factory) {
-    return new ItemRelationship(factory);
+Item.define = function (factory, parentFactory) {
+    return new ItemRelationship(factory, parentFactory);
 };
 
 var ListRelationship = /** @class */ (function (_super) {
@@ -1423,10 +1444,10 @@ function List(factory) {
         if (propName in constructor._fields) {
             return;
         }
-        constructor._fields[propName] = List.define(factory);
+        constructor._fields[propName] = List.define(factory, function () { return constructor; });
     };
 }
-List.define = function (factory) {
+List.define = function (factory, parentFactory) {
     return new ListRelationship(factory);
 };
 

@@ -17,13 +17,17 @@ import {FieldDefinition} from './field-definition';
  * ```
  *
  */
-export abstract class Rel<T extends Schema = Schema> extends FieldDefinition {
-  constructor(private factory: SchemaFactory<T>) {
+export abstract class Rel<T extends Schema = Schema, P extends Schema = Schema> extends FieldDefinition {
+  constructor(private factory: SchemaFactory<T>, private parentFactory?: SchemaFactory<P>) {
     super();
   }
 
   get schema() {
     return this.factory();
+  }
+
+  get parentSchema() {
+    return this.parentFactory?.();
   }
 }
 

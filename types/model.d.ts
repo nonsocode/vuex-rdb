@@ -1,8 +1,10 @@
-import { FindOptions, IdValue, Schema } from './types';
+import { FieldDefinitionOptions, FindOptions, IdValue, Schema, SchemaFactory } from './types';
 import { Store } from 'vuex';
-import { FieldDefinition } from './relationships/field-definition';
+import { FieldDefinition, SimpleFieldDefinition } from './relationships/field-definition';
 import { ModelQuery } from './query/model-query';
 import { Load } from './query/load';
+import { ListRelationship } from './relationships/list';
+import { ItemRelationship } from './relationships/item';
 export declare function getIdValue<T>(model: T, schema: Schema): IdValue;
 export declare class Model<T extends any = any> {
     /**
@@ -128,5 +130,8 @@ export declare class Model<T extends any = any> {
      * It returns a promise of an array of ids for the inserted entities.
      */
     static addAll(items: any[]): Promise<Array<IdValue>>;
+    static $item<T extends Schema>(factory: SchemaFactory<T>): ItemRelationship<T>;
+    static $list<T extends Schema>(factory: SchemaFactory<T>): ListRelationship<T>;
+    static $field(options?: FieldDefinitionOptions): SimpleFieldDefinition;
     static query<T extends Schema>(this: T, fn?: (query: ModelQuery<T>) => void): ModelQuery<T>;
 }

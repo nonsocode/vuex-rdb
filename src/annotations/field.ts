@@ -12,7 +12,7 @@ export function Field(options: FieldDefinitionOptions = {}) {
     if (propName in constructor._fields) {
       return;
     }
-    constructor._fields[propName] = new SimpleFieldDefinition(options);
+    constructor._fields[propName] = Field.define(options);
   };
 }
 

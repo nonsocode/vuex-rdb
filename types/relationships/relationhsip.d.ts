@@ -16,10 +16,12 @@ import { FieldDefinition } from './field-definition';
  * ```
  *
  */
-export declare abstract class Rel<T extends Schema = Schema> extends FieldDefinition {
+export declare abstract class Rel<T extends Schema = Schema, P extends Schema = Schema> extends FieldDefinition {
     private factory;
-    constructor(factory: SchemaFactory<T>);
+    private parentFactory?;
+    constructor(factory: SchemaFactory<T>, parentFactory?: SchemaFactory<P>);
     get schema(): T;
+    get parentSchema(): P;
 }
 export declare abstract class ListLike<T extends Schema> extends Rel<T> {
 }

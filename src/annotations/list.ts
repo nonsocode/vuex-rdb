@@ -12,10 +12,13 @@ export function List<T extends Schema>(factory: SchemaFactory<T>) {
     if (propName in constructor._fields) {
       return;
     }
-    constructor._fields[propName] = List.define(factory);
+    constructor._fields[propName] = List.define(factory, () => constructor);
   };
 }
 
-List.define = function <T extends Schema>(factory: SchemaFactory<T>): ListRelationship<T> {
+List.define = function <T extends Schema, P extends Schema>(
+  factory: SchemaFactory<T>,
+  parentFactory: SchemaFactory<P>
+): ListRelationship<T> {
   return new ListRelationship(factory);
 };

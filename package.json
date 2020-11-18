@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/package.js",
-    "pretify": "prettier -w src"
+    "pretify": "prettier  --config ./.prettierrc -w src"
   },
   "peerDependencies": {
     "vue": "^2.6.0",
