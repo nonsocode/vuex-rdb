@@ -6,7 +6,7 @@ const commonConfig = {
   input: 'src/index.ts',
   external: ['vuex', 'vue'],
   output: {
-    file: 'dist/vuex-rdb.js',
+    file: 'dist/vuex-rdb.cjs.js',
     format: 'cjs',
     esModule: false
   },
@@ -32,6 +32,19 @@ const esConfig = {
 
 const browserConfig = {
   input: 'src/index.ts',
+  external: ['vuex', 'vue'],
+  output: {
+    file: 'dist/vuex-rdb.js',
+    format: 'es',
+    esModule: true,
+    sourcemap: true,
+  },
+
+  plugins: [typescript(), resolve()]
+};
+
+const cdnConfig = {
+  input: 'src/index.ts',
   external: ['vue', 'vuex'],
   output: {
     file: 'dist/vuex-rdb.min.js',
@@ -40,4 +53,4 @@ const browserConfig = {
   },
   plugins: [resolve(), terser(), typescript()]
 };
-export default [esConfig, browserConfig, commonConfig];
+export default [esConfig, cdnConfig, commonConfig, browserConfig];

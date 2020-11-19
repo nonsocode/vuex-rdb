@@ -1,4 +1,10 @@
-import Vue from 'vue';
+'use strict';
+
+var Vue = require('vue');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var Vue__default = /*#__PURE__*/_interopDefaultLegacy(Vue);
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -196,7 +202,7 @@ function registerSchema(schema, store, namespace) {
         });
     }
     if (!store.state[namespace][schema.entityName]) {
-        Vue.set(store.state[namespace], schema.entityName, {});
+        Vue__default['default'].set(store.state[namespace], schema.entityName, {});
     }
     if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
         schema._fields[schema.id] = new SimpleFieldDefinition();
@@ -978,7 +984,7 @@ function createAccessor(target, key) {
             }
             target._connected
                 ? _store.commit(path + "/" + Mutations.SET_PROP, { id: this._id, key: key, value: value, schema: schema })
-                : Vue.set(this._caches[getCacheName(isRelationship)], key, value);
+                : Vue__default['default'].set(this._caches[getCacheName(isRelationship)], key, value);
         },
     });
 }
@@ -1005,7 +1011,7 @@ var Model = /** @class */ (function () {
         });
         if (!this._connected) {
             cacheDefaults(this, data || {});
-            Vue.observable(this._caches);
+            Vue__default['default'].observable(this._caches);
         }
         // No need for proxy
         // return new Proxy<Model>(this, {
@@ -1240,7 +1246,7 @@ function createModule(store, schemas) {
                 if (state[schema.entityName][id] == null) {
                     throw new Error('Entity does not exist');
                 }
-                Vue.set(state[schema.entityName][id], key, value);
+                Vue__default['default'].set(state[schema.entityName][id], key, value);
             },
             _a),
         actions: (_b = {},
@@ -1465,5 +1471,8 @@ function generateDatabasePlugin(options) {
     };
 }
 
-export { Field, Item, List, Model, generateDatabasePlugin };
-//# sourceMappingURL=vuex-rdb.js.map
+exports.Field = Field;
+exports.Item = Item;
+exports.List = List;
+exports.Model = Model;
+exports.generateDatabasePlugin = generateDatabasePlugin;
