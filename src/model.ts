@@ -20,6 +20,8 @@ import {ListLike, Relationship} from './relationships/relationhsip';
 import {ListRelationship} from './relationships/list';
 import {ItemRelationship} from './relationships/item';
 import {Field, Item, List} from './index';
+import {BelongsTo} from './annotations/belongs-to';
+import {BelongsToRelationship} from './relationships/belongs-to';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -60,6 +62,9 @@ function createAccessor(target: Model, key) {
               return value && new ModelArray(target, key, value);
             }
             return;
+          } else if (relationshipDef instanceof BelongsToRelationship) {
+            if (!raw?.[relationshipDef.foreignKey]) return;
+            value = raw[relationshipDef.foreignKey];
           }
           value = Related.find(value, opts);
           return opts.load ? opts.load.apply(value) : value;
@@ -85,15 +90,21 @@ function createAccessor(target: Model, key) {
           }
         } else if (target._connected && (isFunction(id) || id == key)) {
           const oldId = getIdValue(target, schema);
-          const newId = getIdValue({ ...target, [key]: value }, schema);
+          const newId = getIdValue({...target, [key]: value}, schema);
           if (oldId != newId) {
-            throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
+            throw new Error('This update is not allowed because the resolved id is different from the original value');
           }
         }
       }
 
+      if (isRelationship && target._connected) {
+        if (relationshipDef instanceof BelongsToRelationship) {
+          key = relationshipDef.foreignKey;
+        }
+      }
+
       target._connected
-        ? _store.commit(`${path}/${Mutations.SET_PROP}`, { id: this._id, key, value, schema })
+        ? _store.commit(`${path}/${Mutations.SET_PROP}`, {id: this._id, key, value, schema})
         : Vue.set(this._caches[getCacheName(isRelationship)], key, value);
     },
   });
@@ -162,13 +173,13 @@ export class Model<T extends any = any> {
   constructor(data?: Partial<T>, opts?: { load?: Load; connected?: boolean }) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
-      _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
-      _connected: { value: !!opts?.connected, enumerable: false, configurable: true },
-      _load: { value: opts?.load, enumerable: false, configurable: true },
-      _id: { value: id, enumerable: false, configurable: false, writable: true },
+      _caches: {value: Object.fromEntries(cacheNames.map((name) => [name, {}]))},
+      _connected: {value: !!opts?.connected, enumerable: false, configurable: true},
+      _load: {value: opts?.load, enumerable: false, configurable: true},
+      _id: {value: id, enumerable: false, configurable: false, writable: true},
     });
 
-    const { _fields } = getConstructor(this);
+    const {_fields} = getConstructor(this);
     Object.keys(_fields).forEach((key) => {
       createAccessor(this, key);
     });
@@ -250,11 +261,11 @@ export class Model<T extends any = any> {
         console.warn('No need calling $save');
       } else {
         const item = cacheNames.reduce((acc, name) => {
-          return { ...acc, ...this._caches[name] };
+          return {...acc, ...this._caches[name]};
         }, {});
         resolve(
           constructor._store
-            .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
+            .dispatch(`${constructor._namespace}/${Actions.ADD}`, {items: item, schema: constructor})
             .then((res) => {
               this._id = res;
               this._connected = true;
@@ -363,6 +374,10 @@ export class Model<T extends any = any> {
 
   static $field(options: FieldDefinitionOptions = {}): SimpleFieldDefinition {
     return Field.define(options);
+  }
+
+  static $belongsTo<T extends Schema>(factory: SchemaFactory<T>, foreignKey: string): BelongsToRelationship<T> {
+    return BelongsTo.define(factory, () => this, foreignKey);
   }
 
   static query<T extends Schema>(this: T, fn?: (query: ModelQuery<T>) => void): ModelQuery<T> {

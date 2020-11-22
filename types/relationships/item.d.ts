@@ -1,4 +1,4 @@
 import { Schema } from '../types';
-import { Rel } from './relationhsip';
-export declare class ItemRelationship<T extends Schema> extends Rel<T> {
+import { Relationship } from './relationhsip';
+export declare class ItemRelationship<T extends Schema> extends Relationship<T> {
 }

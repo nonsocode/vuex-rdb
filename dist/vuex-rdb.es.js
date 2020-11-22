@@ -117,7 +117,7 @@ var Getters;
  * ```
  *
  */
-class Rel extends FieldDefinition {
+class Relationship extends FieldDefinition {
     constructor(factory, parentFactory) {
         super();
         this.factory = factory;
@@ -131,7 +131,20 @@ class Rel extends FieldDefinition {
         return (_a = this.parentFactory) === null || _a === void 0 ? void 0 : _a.call(this);
     }
 }
-class ListLike extends Rel {
+class ListLike extends Relationship {
+}
+
+class ItemRelationship extends Relationship {
+}
+
+class ListRelationship extends ListLike {
+}
+
+class BelongsToRelationship extends Relationship {
+    constructor(schemaFactory, parentSchemaFactory, foreignKey) {
+        super(schemaFactory, parentSchemaFactory);
+        this.foreignKey = foreignKey;
+    }
 }
 
 const listLike = (entityDef) => Array.isArray(entityDef) || entityDef instanceof ListLike;
@@ -139,13 +152,12 @@ const getRelationshipSchema = (entityDef) => Array.isArray(entityDef)
     ? entityDef[0]
     : entityDef.prototype instanceof Model
         ? entityDef
-        : entityDef instanceof Rel
+        : entityDef instanceof Relationship
             ? entityDef.schema
             : null;
 function normalize(raw, entityDef, visited = new Map(), entities = new Map(), depth = 0) {
     const schema = getRelationshipSchema(entityDef);
     const fields = schema._fields;
-    let normalized = {};
     let result;
     if (raw == null) {
         result = null;
@@ -163,21 +175,35 @@ function normalize(raw, entityDef, visited = new Map(), entities = new Map(), de
             result = visited.get(raw);
         }
         else {
-            const id = getIdValue(raw, schema);
-            result = id;
-            visited.set(raw, id);
-            for (let [key, value] of Object.entries(raw)) {
-                if (key in fields) {
-                    normalized[key] =
-                        fields[key] instanceof Rel
-                            ? normalize(value, fields[key], visited, entities, depth + 1).result
-                            : value;
-                }
-            }
+            result = getIdValue(raw, schema);
+            visited.set(raw, result);
             if (!entities.has(schema)) {
                 entities.set(schema, createObject());
             }
-            entities.get(schema)[id] = { ...entities.get(schema)[id], ...normalized };
+            if (!entities.get(schema)[result]) {
+                entities.get(schema)[result] = {};
+            }
+            let normalized = entities.get(schema)[result];
+            for (let [key, value] of Object.entries(raw)) {
+                if (!(key in fields))
+                    continue;
+                if (!(fields[key] instanceof Relationship)) {
+                    normalized[key] = value;
+                    continue;
+                }
+                const fieldDefinition = fields[key];
+                const { result } = normalize(value, fields[key], visited, entities, depth + 1);
+                switch (true) {
+                    case fieldDefinition instanceof ItemRelationship:
+                    case fieldDefinition instanceof ListRelationship:
+                        normalized[key] = result;
+                        break;
+                    case fieldDefinition instanceof BelongsToRelationship:
+                        const { foreignKey } = fieldDefinition;
+                        normalized[foreignKey] = result;
+                        break;
+                }
+            }
         }
     }
     return {
@@ -208,7 +234,7 @@ function modelToObject(model, schema, allProps, seen = new Map()) {
     Object.entries(model).reduce((acc, [key, value]) => {
         if (key in schema._fields) {
             const fieldDef = schema._fields[key];
-            if (fieldDef instanceof Rel) {
+            if (fieldDef instanceof Relationship) {
                 const relatedSchema = fieldDef.schema;
                 if (value == null) {
                     acc[key] = null;
@@ -490,12 +516,12 @@ function getLoads(loads, key) {
         const schema = load.getRelationship().schema;
         if (key === '*') {
             Object.entries(schema._fields)
-                .filter(([, fieldDef]) => fieldDef instanceof Rel)
+                .filter(([, fieldDef]) => fieldDef instanceof Relationship)
                 .forEach(([key, value]) => {
                 addToLoads(key, value, load, newLoads);
             });
         }
-        else if (!schema._fields[key] || !(schema._fields[key] instanceof Rel)) {
+        else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
             console.warn(`[${key}] is not a relationship`);
         }
         else {
@@ -602,9 +628,6 @@ class Load {
     }
 }
 
-class ItemRelationship extends Rel {
-}
-
 class ModelQuery extends LoadQuery {
     constructor(schema) {
         super(null);
@@ -639,6 +662,22 @@ class ModelQuery extends LoadQuery {
     }
 }
 
+function BelongsTo(factory, foreignKey) {
+    return (target, propName) => {
+        const constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = BelongsTo.define(factory, () => constructor, foreignKey);
+    };
+}
+BelongsTo.define = function (factory, parentFactory, foreignKey) {
+    return new BelongsToRelationship(factory, parentFactory, foreignKey);
+};
+
 const cacheNames = ['data', 'relationship'];
 const getCacheName = (isRelationship) => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id, schema) => {
@@ -647,13 +686,13 @@ const parseIfLiteral = (id, schema) => {
 function cacheDefaults(model, overrides = {}) {
     Object.entries(getConstructor(model)._fields).forEach(([key, definition]) => {
         var _a;
-        model._caches[getCacheName(definition instanceof Rel)][key] = (_a = overrides[key]) !== null && _a !== void 0 ? _a : definition.default;
+        model._caches[getCacheName(definition instanceof Relationship)][key] = (_a = overrides[key]) !== null && _a !== void 0 ? _a : definition.default;
     });
 }
 function createAccessor(target, key) {
     const schema = getConstructor(target);
     const { _namespace: path, _store, _fields, id } = schema;
-    const isRelationship = _fields[key] instanceof Rel;
+    const isRelationship = _fields[key] instanceof Relationship;
     const relationshipDef = isRelationship ? _fields[key] : null;
     const load = target._load;
     Object.defineProperty(target, key, {
@@ -676,6 +715,11 @@ function createAccessor(target, key) {
                             return value && new ModelArray(target, key, value);
                         }
                         return;
+                    }
+                    else if (relationshipDef instanceof BelongsToRelationship) {
+                        if (!(raw === null || raw === void 0 ? void 0 : raw[relationshipDef.foreignKey]))
+                            return;
+                        value = raw[relationshipDef.foreignKey];
                     }
                     value = Related.find(value, opts);
                     return opts.load ? opts.load.apply(value) : value;
@@ -705,8 +749,13 @@ function createAccessor(target, key) {
                     const oldId = getIdValue(target, schema);
                     const newId = getIdValue({ ...target, [key]: value }, schema);
                     if (oldId != newId) {
-                        throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
+                        throw new Error('This update is not allowed because the resolved id is different from the original value');
                     }
+                }
+            }
+            if (isRelationship && target._connected) {
+                if (relationshipDef instanceof BelongsToRelationship) {
+                    key = relationshipDef.foreignKey;
                 }
             }
             target._connected
@@ -752,7 +801,7 @@ class Model {
         const constructor = getConstructor(this);
         return Object.entries(this).reduce((acc, [key, val]) => {
             if (key in constructor._fields) {
-                if (constructor._fields[key] instanceof Rel) {
+                if (constructor._fields[key] instanceof Relationship) {
                     const node = { item: this, parentNode };
                     if (val == null) {
                         acc[key] = val;
@@ -894,6 +943,9 @@ class Model {
     static $field(options = {}) {
         return Field.define(options);
     }
+    static $belongsTo(factory, foreignKey) {
+        return BelongsTo.define(factory, () => this, foreignKey);
+    }
     static query(fn) {
         const query = new ModelQuery(this);
         fn && fn(query);
@@ -944,7 +996,7 @@ function createModule(store, schemas) {
                 return normalizeAndStore(store, items, schema);
             },
             [Actions.ADD_RELATED]({ dispatch, getters }, { id, related, data, schema }) {
-                if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
+                if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
                     throw new Error(`Unknown Relationship: [${related}]`);
                 }
                 const item = getters[Getters.FIND](id, schema);
@@ -966,7 +1018,7 @@ function createModule(store, schemas) {
                 });
             },
             [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId, schema }) {
-                if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
+                if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
                     throw new Error(`Unknown Relationship: [${related}]`);
                 }
                 const ids = Array.isArray(id) ? id : [id];
@@ -1107,9 +1159,6 @@ Item.define = function (factory, parentFactory) {
     return new ItemRelationship(factory, parentFactory);
 };
 
-class ListRelationship extends ListLike {
-}
-
 function List(factory) {
     return (target, propName, other) => {
         const constructor = target.constructor;
@@ -1140,5 +1189,5 @@ function generateDatabasePlugin(options) {
     };
 }
 
-export { Field, Item, List, Model, generateDatabasePlugin };
+export { BelongsTo, Field, Item, List, Model, generateDatabasePlugin };
 //# sourceMappingURL=vuex-rdb.es.js.map

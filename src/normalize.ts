@@ -3,6 +3,9 @@ import {getIdValue} from './model';
 import {IdValue, MixedDefinition, Normalized, Schema} from './types';
 import {createObject} from './utils';
 import {ListLike, Relationship} from './relationships/relationhsip';
+import {ItemRelationship} from './relationships/item';
+import {ListRelationship} from './relationships/list';
+import {BelongsToRelationship} from './relationships/belongs-to';
 
 const listLike = (entityDef: MixedDefinition) => Array.isArray(entityDef) || entityDef instanceof ListLike;
 const getRelationshipSchema = (entityDef: MixedDefinition): Schema =>
@@ -23,7 +26,6 @@ export function normalize(
 ): Normalized {
   const schema = getRelationshipSchema(entityDef);
   const fields = schema._fields;
-  let normalized = {};
   let result;
   if (raw == null) {
     result = null;
@@ -38,23 +40,35 @@ export function normalize(
     if (visited.has(raw)) {
       result = visited.get(raw);
     } else {
-      const id = getIdValue(raw, schema);
-      result = id;
-      visited.set(raw, id);
-      for (let [key, value] of Object.entries(raw)) {
-        if (key in fields) {
-          normalized[key] =
-            fields[key] instanceof Relationship
-              ? normalize(value, <Relationship>fields[key], visited, entities, depth + 1).result
-              : value;
-        } else {
-          // Ignore if this property isn't defined on the model
-        }
-      }
+      result = getIdValue(raw, schema);
+      visited.set(raw, result);
       if (!entities.has(schema)) {
         entities.set(schema, createObject());
       }
-      entities.get(schema)[id] = { ...entities.get(schema)[id], ...normalized };
+      if (!entities.get(schema)[result]) {
+        entities.get(schema)[result] = {}
+      }
+      let normalized = entities.get(schema)[result];
+
+      for (let [key, value] of Object.entries(raw)) {
+        if (!(key in fields)) continue;
+        if (!(fields[key] instanceof Relationship)) {
+          normalized[key] = value;
+          continue;
+        }
+        const fieldDefinition = fields[key];
+        const {result} = normalize(value, <Relationship>fields[key], visited, entities, depth + 1);
+        switch (true) {
+          case fieldDefinition instanceof ItemRelationship:
+          case fieldDefinition instanceof ListRelationship:
+            normalized[key] = result;
+            break;
+          case fieldDefinition instanceof BelongsToRelationship:
+            const {foreignKey} = <BelongsToRelationship<Schema>>fieldDefinition;
+            normalized[foreignKey] = result;
+            break;
+        }
+      }
     }
   }
 

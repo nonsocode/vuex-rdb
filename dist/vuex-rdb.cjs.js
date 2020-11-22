@@ -254,22 +254,22 @@ var Getters;
  * ```
  *
  */
-var Rel = /** @class */ (function (_super) {
-    __extends(Rel, _super);
-    function Rel(factory, parentFactory) {
+var Relationship = /** @class */ (function (_super) {
+    __extends(Relationship, _super);
+    function Relationship(factory, parentFactory) {
         var _this = _super.call(this) || this;
         _this.factory = factory;
         _this.parentFactory = parentFactory;
         return _this;
     }
-    Object.defineProperty(Rel.prototype, "schema", {
+    Object.defineProperty(Relationship.prototype, "schema", {
         get: function () {
             return this.factory();
         },
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(Rel.prototype, "parentSchema", {
+    Object.defineProperty(Relationship.prototype, "parentSchema", {
         get: function () {
             var _a;
             return (_a = this.parentFactory) === null || _a === void 0 ? void 0 : _a.call(this);
@@ -277,7 +277,7 @@ var Rel = /** @class */ (function (_super) {
         enumerable: false,
         configurable: true
     });
-    return Rel;
+    return Relationship;
 }(FieldDefinition));
 var ListLike = /** @class */ (function (_super) {
     __extends(ListLike, _super);
@@ -285,7 +285,33 @@ var ListLike = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     return ListLike;
-}(Rel));
+}(Relationship));
+
+var ItemRelationship = /** @class */ (function (_super) {
+    __extends(ItemRelationship, _super);
+    function ItemRelationship() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ItemRelationship;
+}(Relationship));
+
+var ListRelationship = /** @class */ (function (_super) {
+    __extends(ListRelationship, _super);
+    function ListRelationship() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ListRelationship;
+}(ListLike));
+
+var BelongsToRelationship = /** @class */ (function (_super) {
+    __extends(BelongsToRelationship, _super);
+    function BelongsToRelationship(schemaFactory, parentSchemaFactory, foreignKey) {
+        var _this = _super.call(this, schemaFactory, parentSchemaFactory) || this;
+        _this.foreignKey = foreignKey;
+        return _this;
+    }
+    return BelongsToRelationship;
+}(Relationship));
 
 var listLike = function (entityDef) { return Array.isArray(entityDef) || entityDef instanceof ListLike; };
 var getRelationshipSchema = function (entityDef) {
@@ -293,7 +319,7 @@ var getRelationshipSchema = function (entityDef) {
         ? entityDef[0]
         : entityDef.prototype instanceof Model
             ? entityDef
-            : entityDef instanceof Rel
+            : entityDef instanceof Relationship
                 ? entityDef.schema
                 : null;
 };
@@ -304,7 +330,6 @@ function normalize(raw, entityDef, visited, entities, depth) {
     if (depth === void 0) { depth = 0; }
     var schema = getRelationshipSchema(entityDef);
     var fields = schema._fields;
-    var normalized = {};
     var result;
     if (raw == null) {
         result = null;
@@ -322,20 +347,35 @@ function normalize(raw, entityDef, visited, entities, depth) {
             result = visited.get(raw);
         }
         else {
-            var id = getIdValue(raw, schema);
-            result = id;
-            visited.set(raw, id);
+            result = getIdValue(raw, schema);
+            visited.set(raw, result);
+            if (!entities.has(schema)) {
+                entities.set(schema, createObject());
+            }
+            if (!entities.get(schema)[result]) {
+                entities.get(schema)[result] = {};
+            }
+            var normalized = entities.get(schema)[result];
             try {
                 for (var _b = __values(Object.entries(raw)), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var _d = __read(_c.value, 2), key = _d[0], value = _d[1];
-                    if (key in fields) {
-                        normalized[key] =
-                            fields[key] instanceof Rel
-                                ? normalize(value, fields[key], visited, entities, depth + 1).result
-                                : value;
+                    if (!(key in fields))
+                        continue;
+                    if (!(fields[key] instanceof Relationship)) {
+                        normalized[key] = value;
+                        continue;
                     }
-                    else {
-                        // Ignore if this property isn't defined on the model
+                    var fieldDefinition = fields[key];
+                    var result_1 = normalize(value, fields[key], visited, entities, depth + 1).result;
+                    switch (true) {
+                        case fieldDefinition instanceof ItemRelationship:
+                        case fieldDefinition instanceof ListRelationship:
+                            normalized[key] = result_1;
+                            break;
+                        case fieldDefinition instanceof BelongsToRelationship:
+                            var foreignKey = fieldDefinition.foreignKey;
+                            normalized[foreignKey] = result_1;
+                            break;
                     }
                 }
             }
@@ -346,10 +386,6 @@ function normalize(raw, entityDef, visited, entities, depth) {
                 }
                 finally { if (e_1) throw e_1.error; }
             }
-            if (!entities.has(schema)) {
-                entities.set(schema, createObject());
-            }
-            entities.get(schema)[id] = __assign(__assign({}, entities.get(schema)[id]), normalized);
         }
     }
     return {
@@ -393,7 +429,7 @@ function modelToObject(model, schema, allProps, seen) {
         var _b = __read(_a, 2), key = _b[0], value = _b[1];
         if (key in schema._fields) {
             var fieldDef = schema._fields[key];
-            if (fieldDef instanceof Rel) {
+            if (fieldDef instanceof Relationship) {
                 var relatedSchema_1 = fieldDef.schema;
                 if (value == null) {
                     acc[key] = null;
@@ -712,14 +748,14 @@ function getLoads(loads, key) {
             Object.entries(schema._fields)
                 .filter(function (_a) {
                 var _b = __read(_a, 2), fieldDef = _b[1];
-                return fieldDef instanceof Rel;
+                return fieldDef instanceof Relationship;
             })
                 .forEach(function (_a) {
                 var _b = __read(_a, 2), key = _b[0], value = _b[1];
                 addToLoads(key, value, load, newLoads);
             });
         }
-        else if (!schema._fields[key] || !(schema._fields[key] instanceof Rel)) {
+        else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
             console.warn("[" + key + "] is not a relationship");
         }
         else {
@@ -857,14 +893,6 @@ var Load = /** @class */ (function () {
     return Load;
 }());
 
-var ItemRelationship = /** @class */ (function (_super) {
-    __extends(ItemRelationship, _super);
-    function ItemRelationship() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    return ItemRelationship;
-}(Rel));
-
 var ModelQuery = /** @class */ (function (_super) {
     __extends(ModelQuery, _super);
     function ModelQuery(schema) {
@@ -909,6 +937,22 @@ var ModelQuery = /** @class */ (function (_super) {
     return ModelQuery;
 }(LoadQuery));
 
+function BelongsTo(factory, foreignKey) {
+    return function (target, propName) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = BelongsTo.define(factory, function () { return constructor; }, foreignKey);
+    };
+}
+BelongsTo.define = function (factory, parentFactory, foreignKey) {
+    return new BelongsToRelationship(factory, parentFactory, foreignKey);
+};
+
 var cacheNames = ['data', 'relationship'];
 var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
 var parseIfLiteral = function (id, schema) {
@@ -919,13 +963,13 @@ function cacheDefaults(model, overrides) {
     Object.entries(getConstructor(model)._fields).forEach(function (_a) {
         var _b;
         var _c = __read(_a, 2), key = _c[0], definition = _c[1];
-        model._caches[getCacheName(definition instanceof Rel)][key] = (_b = overrides[key]) !== null && _b !== void 0 ? _b : definition.default;
+        model._caches[getCacheName(definition instanceof Relationship)][key] = (_b = overrides[key]) !== null && _b !== void 0 ? _b : definition.default;
     });
 }
 function createAccessor(target, key) {
     var schema = getConstructor(target);
     var path = schema._namespace, _store = schema._store, _fields = schema._fields, id = schema.id;
-    var isRelationship = _fields[key] instanceof Rel;
+    var isRelationship = _fields[key] instanceof Relationship;
     var relationshipDef = isRelationship ? _fields[key] : null;
     var load = target._load;
     Object.defineProperty(target, key, {
@@ -948,6 +992,11 @@ function createAccessor(target, key) {
                             return value && new ModelArray(target, key, value);
                         }
                         return;
+                    }
+                    else if (relationshipDef instanceof BelongsToRelationship) {
+                        if (!(raw === null || raw === void 0 ? void 0 : raw[relationshipDef.foreignKey]))
+                            return;
+                        value = raw[relationshipDef.foreignKey];
                     }
                     value = Related.find(value, opts);
                     return opts.load ? opts.load.apply(value) : value;
@@ -978,8 +1027,13 @@ function createAccessor(target, key) {
                     var oldId = getIdValue(target, schema);
                     var newId = getIdValue(__assign(__assign({}, target), (_a = {}, _a[key] = value, _a)), schema);
                     if (oldId != newId) {
-                        throw new Error('This update is not allowed becasue the resolved id is different from the orginal value');
+                        throw new Error('This update is not allowed because the resolved id is different from the original value');
                     }
+                }
+            }
+            if (isRelationship && target._connected) {
+                if (relationshipDef instanceof BelongsToRelationship) {
+                    key = relationshipDef.foreignKey;
                 }
             }
             target._connected
@@ -1028,7 +1082,7 @@ var Model = /** @class */ (function () {
         return Object.entries(this).reduce(function (acc, _a) {
             var _b = __read(_a, 2), key = _b[0], val = _b[1];
             if (key in constructor._fields) {
-                if (constructor._fields[key] instanceof Rel) {
+                if (constructor._fields[key] instanceof Relationship) {
                     var node_1 = { item: _this, parentNode: parentNode };
                     if (val == null) {
                         acc[key] = val;
@@ -1205,6 +1259,10 @@ var Model = /** @class */ (function () {
         if (options === void 0) { options = {}; }
         return Field.define(options);
     };
+    Model.$belongsTo = function (factory, foreignKey) {
+        var _this = this;
+        return BelongsTo.define(factory, function () { return _this; }, foreignKey);
+    };
     Model.query = function (fn) {
         var query = new ModelQuery(this);
         fn && fn(query);
@@ -1258,7 +1316,7 @@ function createModule(store, schemas) {
                 var _c;
                 var dispatch = _a.dispatch, getters = _a.getters;
                 var id = _b.id, related = _b.related, data = _b.data, schema = _b.schema;
-                if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
+                if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var item = getters[Getters.FIND](id, schema);
@@ -1283,7 +1341,7 @@ function createModule(store, schemas) {
                 var _c;
                 var dispatch = _a.dispatch, getters = _a.getters;
                 var id = _b.id, related = _b.related, relatedId = _b.relatedId, schema = _b.schema;
-                if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
+                if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
                     throw new Error("Unknown Relationship: [" + related + "]");
                 }
                 var ids = Array.isArray(id) ? id : [id];
@@ -1433,14 +1491,6 @@ Item.define = function (factory, parentFactory) {
     return new ItemRelationship(factory, parentFactory);
 };
 
-var ListRelationship = /** @class */ (function (_super) {
-    __extends(ListRelationship, _super);
-    function ListRelationship() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    return ListRelationship;
-}(ListLike));
-
 function List(factory) {
     return function (target, propName, other) {
         var constructor = target.constructor;
@@ -1471,6 +1521,7 @@ function generateDatabasePlugin(options) {
     };
 }
 
+exports.BelongsTo = BelongsTo;
 exports.Field = Field;
 exports.Item = Item;
 exports.List = List;

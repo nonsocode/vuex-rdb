@@ -3,7 +3,7 @@ import { Model } from '../model';
 import { Load } from '../query/load';
 import { LoadQuery } from '../query/load-query';
 import { Query } from '../query/query';
-import { Rel } from '../relationships/relationhsip';
+import { Relationship } from '../relationships/relationhsip';
 import { ItemRelationship } from '../relationships/item';
 import { ListRelationship } from '../relationships/list';
 export declare enum Mutations {
@@ -37,7 +37,7 @@ export declare type Normalized = {
 export declare type Factory<T extends any = any> = () => T;
 export declare type Schema = typeof Model;
 export declare type SchemaFactory<T extends Schema> = Factory<T>;
-export declare type RelationshipModel<T extends Rel> = T extends ItemRelationship<infer U> ? InstanceType<U> : T extends ListRelationship<infer U> ? InstanceType<U>[] : never;
+export declare type RelationshipModel<T extends Relationship> = T extends ItemRelationship<infer U> ? InstanceType<U> : T extends ListRelationship<infer U> ? InstanceType<U>[] : never;
 export interface PluginOptions {
     /**
      * The namespace of the database in the Vuex store
@@ -63,7 +63,7 @@ export interface FindOptions {
      */
     load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
-export declare type MixedDefinition = Schema | Schema[] | Rel;
+export declare type MixedDefinition = Schema | Schema[] | Relationship;
 export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 export declare type NodeTree = {
     parentNode?: NodeTree;

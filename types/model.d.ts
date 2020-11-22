@@ -5,6 +5,7 @@ import { ModelQuery } from './query/model-query';
 import { Load } from './query/load';
 import { ListRelationship } from './relationships/list';
 import { ItemRelationship } from './relationships/item';
+import { BelongsToRelationship } from './relationships/belongs-to';
 export declare function getIdValue<T>(model: T, schema: Schema): IdValue;
 export declare class Model<T extends any = any> {
     /**
@@ -133,5 +134,6 @@ export declare class Model<T extends any = any> {
     static $item<T extends Schema>(factory: SchemaFactory<T>): ItemRelationship<T>;
     static $list<T extends Schema>(factory: SchemaFactory<T>): ListRelationship<T>;
     static $field(options?: FieldDefinitionOptions): SimpleFieldDefinition;
+    static $belongsTo<T extends Schema>(factory: SchemaFactory<T>, foreignKey: string): BelongsToRelationship<T>;
     static query<T extends Schema>(this: T, fn?: (query: ModelQuery<T>) => void): ModelQuery<T>;
 }
