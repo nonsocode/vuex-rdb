@@ -7,7 +7,7 @@ import {Module, Store} from 'vuex';
 import {normalizeAndStore} from './modelUtils';
 import {Load} from './query/load';
 import {ItemRelationship} from './relationships/item';
-import {ListLike, Rel} from './relationships/relationhsip';
+import {ListLike, Relationship} from './relationships/relationhsip';
 
 export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<ModelState, any> {
   return {
@@ -51,14 +51,14 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
         {dispatch, getters},
         {id, related, data, schema}: { id: string; related: string; data: any; schema: Schema }
       ) {
-        if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
+        if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const item: Model = getters[Getters.FIND](id, schema);
         if (!item) {
           throw new Error("The item doesn't exist");
         }
-        const relationshipDef = <Rel>schema._fields[related];
+        const relationshipDef = <Relationship>schema._fields[related];
 
         if (relationshipDef instanceof ListLike) {
           const items = (Array.isArray(data) ? data : [data]).filter(identity);
@@ -78,7 +78,7 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
         {dispatch, getters},
         {id, related, relatedId, schema}: { id: string; related: any; relatedId: IdValue | IdValue[]; schema: Schema }
       ) {
-        if (!(related in schema._fields && schema._fields[related] instanceof Rel)) {
+        if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
           throw new Error(`Unknown Relationship: [${related}]`);
         }
         const ids = Array.isArray(id) ? id : [id];
@@ -88,7 +88,7 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
           return;
         }
 
-        const relationshipDef = <Rel>schema._fields[related];
+        const relationshipDef = <Relationship>schema._fields[related];
         const relatedSchema = relationshipDef.schema;
         if (relationshipDef instanceof ListLike) {
           const relatedIds = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];

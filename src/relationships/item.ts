@@ -1,5 +1,5 @@
 import {Schema} from '../types';
-import {Rel} from './relationhsip';
+import {Relationship} from './relationhsip';
 
-export class ItemRelationship<T extends Schema> extends Rel<T> {
+export class ItemRelationship<T extends Schema> extends Relationship<T> {
 }

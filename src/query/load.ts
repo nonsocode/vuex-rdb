@@ -3,9 +3,9 @@ import {createObject, isFunction, isString} from '../utils';
 import {getLoads} from './query-utils';
 import {ContextualQuery} from './contextual-query';
 import {LoadQuery} from './load-query';
-import {ListLike, Rel} from '../relationships/relationhsip';
+import {ListLike, Relationship} from '../relationships/relationhsip';
 
-export class Load<S extends Schema = Schema, T extends Rel<S> = Rel<S>> {
+export class Load<S extends Schema = Schema, T extends Relationship<S> = Relationship<S>> {
   loads: Map<string, Load> = new Map();
   conditions: Set<ContextualQuery<T>> = new Set();
 

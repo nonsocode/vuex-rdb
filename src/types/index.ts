@@ -3,7 +3,7 @@ import {Model} from '../model';
 import {Load} from '../query/load';
 import {LoadQuery} from '../query/load-query';
 import {Query} from '../query/query';
-import {Rel} from '../relationships/relationhsip';
+import {Relationship} from '../relationships/relationhsip';
 import {ItemRelationship} from '../relationships/item';
 import {ListRelationship} from '../relationships/list';
 
@@ -45,7 +45,7 @@ export type Factory<T extends any = any> = () => T;
 
 export type Schema = typeof Model;
 export type SchemaFactory<T extends Schema> = Factory<T>;
-export type RelationshipModel<T extends Rel> = T extends ItemRelationship<infer U>
+export type RelationshipModel<T extends Relationship> = T extends ItemRelationship<infer U>
   ? InstanceType<U>
   : T extends ListRelationship<infer U>
     ? InstanceType<U>[]
@@ -79,7 +79,7 @@ export interface FindOptions {
   load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
 
-export type MixedDefinition = Schema | Schema[] | Rel;
+export type MixedDefinition = Schema | Schema[] | Relationship;
 
 export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
 

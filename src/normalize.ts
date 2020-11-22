@@ -2,7 +2,7 @@ import {Model} from 'src';
 import {getIdValue} from './model';
 import {IdValue, MixedDefinition, Normalized, Schema} from './types';
 import {createObject} from './utils';
-import {ListLike, Rel} from './relationships/relationhsip';
+import {ListLike, Relationship} from './relationships/relationhsip';
 
 const listLike = (entityDef: MixedDefinition) => Array.isArray(entityDef) || entityDef instanceof ListLike;
 const getRelationshipSchema = (entityDef: MixedDefinition): Schema =>
@@ -10,8 +10,8 @@ const getRelationshipSchema = (entityDef: MixedDefinition): Schema =>
     ? entityDef[0]
     : (<Schema>entityDef).prototype instanceof Model
     ? <Schema>entityDef
-    : entityDef instanceof Rel
-      ? (<Rel>entityDef).schema
+    : entityDef instanceof Relationship
+      ? (<Relationship>entityDef).schema
       : null;
 
 export function normalize(
@@ -44,8 +44,8 @@ export function normalize(
       for (let [key, value] of Object.entries(raw)) {
         if (key in fields) {
           normalized[key] =
-            fields[key] instanceof Rel
-              ? normalize(value, <Rel>fields[key], visited, entities, depth + 1).result
+            fields[key] instanceof Relationship
+              ? normalize(value, <Relationship>fields[key], visited, entities, depth + 1).result
               : value;
         } else {
           // Ignore if this property isn't defined on the model

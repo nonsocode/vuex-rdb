@@ -16,7 +16,7 @@ import Vue from 'vue';
 import {ModelArray} from './modelArray';
 import {ModelQuery} from './query/model-query';
 import {Load} from './query/load';
-import {ListLike, Rel} from './relationships/relationhsip';
+import {ListLike, Relationship} from './relationships/relationhsip';
 import {ListRelationship} from './relationships/list';
 import {ItemRelationship} from './relationships/item';
 import {Field, Item, List} from './index';
@@ -30,15 +30,15 @@ const parseIfLiteral = (id: any, schema: Schema): any => {
 
 function cacheDefaults(model: Model, overrides = {}) {
   Object.entries(getConstructor(model)._fields).forEach(([key, definition]) => {
-    model._caches[getCacheName(definition instanceof Rel)][key] = overrides[key] ?? definition.default;
+    model._caches[getCacheName(definition instanceof Relationship)][key] = overrides[key] ?? definition.default;
   });
 }
 
 function createAccessor(target: Model, key) {
   const schema = getConstructor(target);
   const {_namespace: path, _store, _fields, id} = schema;
-  const isRelationship = _fields[key] instanceof Rel;
-  const relationshipDef: Rel = isRelationship ? <Rel>_fields[key] : null;
+  const isRelationship = _fields[key] instanceof Relationship;
+  const relationshipDef: Relationship = isRelationship ? <Relationship>_fields[key] : null;
   const load = target._load;
 
   Object.defineProperty(target, key, {
@@ -191,7 +191,7 @@ export class Model<T extends any = any> {
     const constructor = getConstructor(this);
     return Object.entries(this).reduce((acc, [key, val]) => {
       if (key in constructor._fields) {
-        if (constructor._fields[key] instanceof Rel) {
+        if (constructor._fields[key] instanceof Relationship) {
           const node = {item: this, parentNode};
           if (val == null) {
             acc[key] = val;

@@ -3,13 +3,13 @@ import {normalize} from './normalize';
 import {Store} from 'vuex';
 import {IdValue, MixedDefinition, Mutations, Schema} from './types';
 import {FieldDefinition} from './relationships/field-definition';
-import {ListLike, Rel} from './relationships/relationhsip';
+import {ListLike, Relationship} from './relationships/relationhsip';
 
 export function getConstructor(model: Model<any>): Schema {
   return model.constructor as Schema;
 }
 
-export function validateEntry(data: any, relationship: Rel): boolean {
+export function validateEntry(data: any, relationship: Relationship): boolean {
   const schema = relationship.schema;
   return relationship instanceof ListLike
     ? (<any[]>data).every((item) => getIdValue(item, schema) != null)
@@ -30,7 +30,7 @@ export function modelToObject(model: Model, schema: Schema, allProps: boolean, s
   Object.entries(model).reduce((acc, [key, value]) => {
     if (key in schema._fields) {
       const fieldDef: FieldDefinition = schema._fields[key];
-      if (fieldDef instanceof Rel) {
+      if (fieldDef instanceof Relationship) {
         const relatedSchema = fieldDef.schema;
         if (value == null) {
           acc[key] = null;

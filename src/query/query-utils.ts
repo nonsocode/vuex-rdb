@@ -2,7 +2,7 @@ import {get, isBoolean, isFunction, isString} from '../utils';
 import {ContextualQuery} from './contextual-query';
 import {Where} from '../types';
 import {Load} from './load';
-import {Rel} from '../relationships/relationhsip';
+import {Relationship} from '../relationships/relationhsip';
 
 export const getComparator = <T>(item) => (where: Where<T>) => {
   if (isFunction(where.key)) {
@@ -43,7 +43,7 @@ export const getComparator = <T>(item) => (where: Where<T>) => {
   }
 };
 
-const addToLoads = (key: string, relationship: Rel, originalLoad: Load, newLoads: Load[]) => {
+const addToLoads = (key: string, relationship: Relationship, originalLoad: Load, newLoads: Load[]) => {
   if (originalLoad.has(key)) {
     newLoads.push(originalLoad.getLoad(key));
   } else {
@@ -59,14 +59,14 @@ export function getLoads(loads: Load[], key: string) {
     const schema = load.getRelationship().schema;
     if (key === '*') {
       Object.entries(schema._fields)
-        .filter(([, fieldDef]) => fieldDef instanceof Rel)
+        .filter(([, fieldDef]) => fieldDef instanceof Relationship)
         .forEach(([key, value]) => {
-          addToLoads(key, <Rel>value, load, newLoads);
+          addToLoads(key, <Relationship>value, load, newLoads);
         });
-    } else if (!schema._fields[key] || !(schema._fields[key] instanceof Rel)) {
+    } else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
       console.warn(`[${key}] is not a relationship`);
     } else {
-      addToLoads(key, <Rel>schema._fields[key], load, newLoads);
+      addToLoads(key, <Relationship>schema._fields[key], load, newLoads);
     }
   }
   return newLoads;
