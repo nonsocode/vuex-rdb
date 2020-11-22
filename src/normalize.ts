@@ -46,7 +46,7 @@ export function normalize(
         entities.set(schema, createObject());
       }
       if (!entities.get(schema)[result]) {
-        entities.get(schema)[result] = {}
+        entities.get(schema)[result] = {};
       }
       let normalized = entities.get(schema)[result];
 
