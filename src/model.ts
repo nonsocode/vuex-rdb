@@ -1,4 +1,4 @@
-import {hasSeen, identity, isFunction} from './utils';
+import { hasSeen, identity, isFunction } from './utils';
 import {
   Actions,
   FieldDefinitionOptions,
@@ -9,19 +9,19 @@ import {
   Schema,
   SchemaFactory,
 } from './types';
-import {Store} from 'vuex';
-import {FieldDefinition, SimpleFieldDefinition} from './relationships/field-definition';
-import {getConstructor, modelToObject, normalizeAndStore, validateEntry} from './modelUtils';
+import { Store } from 'vuex';
+import { FieldDefinition, SimpleFieldDefinition } from './relationships/field-definition';
+import { getConstructor, modelToObject, normalizeAndStore, validateEntry } from './modelUtils';
 import Vue from 'vue';
-import {ModelArray} from './modelArray';
-import {ModelQuery} from './query/model-query';
-import {Load} from './query/load';
-import {ListLike, Relationship} from './relationships/relationhsip';
-import {ListRelationship} from './relationships/list';
-import {ItemRelationship} from './relationships/item';
-import {Field, Item, List} from './index';
-import {BelongsTo} from './annotations/belongs-to';
-import {BelongsToRelationship} from './relationships/belongs-to';
+import { ModelArray } from './modelArray';
+import { ModelQuery } from './query/model-query';
+import { Load } from './query/load';
+import { ListLike, Relationship } from './relationships/relationhsip';
+import { ListRelationship } from './relationships/list';
+import { ItemRelationship } from './relationships/item';
+import { Field, Item, List } from './index';
+import { BelongsTo } from './annotations/belongs-to';
+import { BelongsToRelationship } from './relationships/belongs-to';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -38,7 +38,7 @@ function cacheDefaults(model: Model, overrides = {}) {
 
 function createAccessor(target: Model, key) {
   const schema = getConstructor(target);
-  const {_namespace: path, _store, _fields, id} = schema;
+  const { _namespace: path, _store, _fields, id } = schema;
   const isRelationship = _fields[key] instanceof Relationship;
   const relationshipDef: Relationship = isRelationship ? <Relationship>_fields[key] : null;
   const load = target._load;
@@ -51,7 +51,7 @@ function createAccessor(target: Model, key) {
         const raw: any = _store.getters[`${path}/${Getters.GET_RAW}`](this._id, schema);
         let value = raw[key];
         if (isRelationship) {
-          const opts = {load: load?.getLoad(key)};
+          const opts = { load: load?.getLoad(key) };
           const Related = relationshipDef.schema;
           if (relationshipDef instanceof ListLike) {
             if (value) {
@@ -90,7 +90,7 @@ function createAccessor(target: Model, key) {
           }
         } else if (target._connected && (isFunction(id) || id == key)) {
           const oldId = getIdValue(target, schema);
-          const newId = getIdValue({...target, [key]: value}, schema);
+          const newId = getIdValue({ ...target, [key]: value }, schema);
           if (oldId != newId) {
             throw new Error('This update is not allowed because the resolved id is different from the original value');
           }
@@ -104,7 +104,7 @@ function createAccessor(target: Model, key) {
       }
 
       target._connected
-        ? _store.commit(`${path}/${Mutations.SET_PROP}`, {id: this._id, key, value, schema})
+        ? _store.commit(`${path}/${Mutations.SET_PROP}`, { id: this._id, key, value, schema })
         : Vue.set(this._caches[getCacheName(isRelationship)], key, value);
     },
   });
@@ -173,13 +173,13 @@ export class Model<T extends any = any> {
   constructor(data?: Partial<T>, opts?: { load?: Load; connected?: boolean }) {
     const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
-      _caches: {value: Object.fromEntries(cacheNames.map((name) => [name, {}]))},
-      _connected: {value: !!opts?.connected, enumerable: false, configurable: true},
-      _load: {value: opts?.load, enumerable: false, configurable: true},
-      _id: {value: id, enumerable: false, configurable: false, writable: true},
+      _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
+      _connected: { value: !!opts?.connected, enumerable: false, configurable: true },
+      _load: { value: opts?.load, enumerable: false, configurable: true },
+      _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
 
-    const {_fields} = getConstructor(this);
+    const { _fields } = getConstructor(this);
     Object.keys(_fields).forEach((key) => {
       createAccessor(this, key);
     });
@@ -203,7 +203,7 @@ export class Model<T extends any = any> {
     return Object.entries(this).reduce((acc, [key, val]) => {
       if (key in constructor._fields) {
         if (constructor._fields[key] instanceof Relationship) {
-          const node = {item: this, parentNode};
+          const node = { item: this, parentNode };
           if (val == null) {
             acc[key] = val;
           } else if (Array.isArray(val)) {
@@ -261,11 +261,11 @@ export class Model<T extends any = any> {
         console.warn('No need calling $save');
       } else {
         const item = cacheNames.reduce((acc, name) => {
-          return {...acc, ...this._caches[name]};
+          return { ...acc, ...this._caches[name] };
         }, {});
         resolve(
           constructor._store
-            .dispatch(`${constructor._namespace}/${Actions.ADD}`, {items: item, schema: constructor})
+            .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
             .then((res) => {
               this._id = res;
               this._connected = true;
@@ -352,7 +352,7 @@ export class Model<T extends any = any> {
    * It returns a promise of the inserted entity's id
    */
   static add(item: any): Promise<IdValue> {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items: item, schema: this});
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items: item, schema: this });
   }
 
   /**
@@ -361,7 +361,7 @@ export class Model<T extends any = any> {
    * It returns a promise of an array of ids for the inserted entities.
    */
   static addAll(items: any[]): Promise<Array<IdValue>> {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, {items, schema: [this]});
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
   }
 
   static $item<T extends Schema>(factory: SchemaFactory<T>): ItemRelationship<T> {

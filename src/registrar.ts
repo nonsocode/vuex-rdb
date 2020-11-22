@@ -1,8 +1,8 @@
-import {FieldDefinition, SimpleFieldDefinition} from './relationships/field-definition';
-import {createObject} from './utils';
-import {Store} from 'vuex';
+import { FieldDefinition, SimpleFieldDefinition } from './relationships/field-definition';
+import { createObject } from './utils';
+import { Store } from 'vuex';
 import Vue from 'vue';
-import {Schema} from './types';
+import { Schema } from './types';
 
 export const nameModelMap: Map<string, Schema> = new Map();
 
@@ -24,8 +24,8 @@ export function registerSchema(schema: Schema, store: Store<any>, namespace: str
   }
 
   Object.defineProperties(schema, {
-    _namespace: {value: namespace},
-    _store: {value: store},
+    _namespace: { value: namespace },
+    _store: { value: store },
   });
   Object.freeze(schema);
 }

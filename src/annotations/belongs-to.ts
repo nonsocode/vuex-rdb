@@ -1,8 +1,8 @@
-import {Model} from '../model';
-import {Schema, SchemaFactory} from '../types';
-import {createObject} from '../utils';
-import {ItemRelationship} from '../relationships/item';
-import {BelongsToRelationship} from '../relationships/belongs-to';
+import { Model } from '../model';
+import { Schema, SchemaFactory } from '../types';
+import { createObject } from '../utils';
+import { ItemRelationship } from '../relationships/item';
+import { BelongsToRelationship } from '../relationships/belongs-to';
 
 export function BelongsTo<T extends Schema>(factory: SchemaFactory<T>, foreignKey: string) {
   return (target: Model, propName: string): void => {

@@ -1,8 +1,8 @@
-import {get, isBoolean, isFunction, isString} from '../utils';
-import {ContextualQuery} from './contextual-query';
-import {Where} from '../types';
-import {Load} from './load';
-import {Relationship} from '../relationships/relationhsip';
+import { get, isBoolean, isFunction, isString } from '../utils';
+import { ContextualQuery } from './contextual-query';
+import { Where } from '../types';
+import { Load } from './load';
+import { Relationship } from '../relationships/relationhsip';
 
 export const getComparator = <T>(item) => (where: Where<T>) => {
   if (isFunction(where.key)) {

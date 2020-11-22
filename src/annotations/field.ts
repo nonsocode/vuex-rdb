@@ -1,7 +1,7 @@
-import {Model} from '../model';
-import {FieldDefinitionOptions, Schema} from '../types';
-import {createObject} from '../utils';
-import {SimpleFieldDefinition} from '../relationships/field-definition';
+import { Model } from '../model';
+import { FieldDefinitionOptions, Schema } from '../types';
+import { createObject } from '../utils';
+import { SimpleFieldDefinition } from '../relationships/field-definition';
 
 export function Field(options: FieldDefinitionOptions = {}) {
   return (target: Model, propName: string): void => {

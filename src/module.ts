@@ -1,13 +1,13 @@
 import Vue from 'vue';
-import {createObject, identity, isFunction, mergeUnique} from './utils';
-import {getIdValue, Model} from './model';
-import {ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions, IdValue} from './types';
-import {Module, Store} from 'vuex';
+import { createObject, identity, isFunction, mergeUnique } from './utils';
+import { getIdValue, Model } from './model';
+import { ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions, IdValue } from './types';
+import { Module, Store } from 'vuex';
 
-import {normalizeAndStore} from './modelUtils';
-import {Load} from './query/load';
-import {ItemRelationship} from './relationships/item';
-import {ListLike, Relationship} from './relationships/relationhsip';
+import { normalizeAndStore } from './modelUtils';
+import { Load } from './query/load';
+import { ItemRelationship } from './relationships/item';
+import { ListLike, Relationship } from './relationships/relationhsip';
 
 export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<ModelState, any> {
   return {
@@ -44,12 +44,12 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
       },
     },
     actions: {
-      [Actions.ADD](ctx, {items, schema}) {
+      [Actions.ADD](ctx, { items, schema }) {
         return normalizeAndStore(store, items, schema);
       },
       [Actions.ADD_RELATED](
-        {dispatch, getters},
-        {id, related, data, schema}: { id: string; related: string; data: any; schema: Schema }
+        { dispatch, getters },
+        { id, related, data, schema }: { id: string; related: string; data: any; schema: Schema }
       ) {
         if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
           throw new Error(`Unknown Relationship: [${related}]`);
@@ -75,8 +75,8 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
         });
       },
       [Actions.REMOVE_RELATED](
-        {dispatch, getters},
-        {id, related, relatedId, schema}: { id: string; related: any; relatedId: IdValue | IdValue[]; schema: Schema }
+        { dispatch, getters },
+        { id, related, relatedId, schema }: { id: string; related: any; relatedId: IdValue | IdValue[]; schema: Schema }
       ) {
         if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
           throw new Error(`Unknown Relationship: [${related}]`);

@@ -1,7 +1,7 @@
-import {Model} from '../model';
-import {Schema, SchemaFactory} from '../types';
-import {createObject} from '../utils';
-import {ItemRelationship} from '../relationships/item';
+import { Model } from '../model';
+import { Schema, SchemaFactory } from '../types';
+import { createObject } from '../utils';
+import { ItemRelationship } from '../relationships/item';
 
 export function Item<T extends Schema>(factory: SchemaFactory<T>) {
   return (target: Model, propName: string): void => {

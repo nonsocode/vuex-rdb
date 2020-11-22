@@ -1,8 +1,8 @@
-import {getIdValue, Model} from './model';
-import {getConstructor, normalizeAndStore} from './modelUtils';
-import {Getters, Mutations, Schema} from './types';
-import {Store} from 'vuex';
-import {Relationship} from './relationships/relationhsip';
+import { getIdValue, Model } from './model';
+import { getConstructor, normalizeAndStore } from './modelUtils';
+import { Getters, Mutations, Schema } from './types';
+import { Store } from 'vuex';
+import { Relationship } from './relationships/relationhsip';
 
 function validateItems(items: any[], schema: Schema) {
   for (const item of items) {
@@ -118,9 +118,9 @@ export class ModelArray<T extends Model<T>> extends Array<T> {
     const schema: Schema = (<Relationship>contextSchema._fields[this._key]).schema;
     const rawContext = withRawData
       ? this._store.getters[`${contextSchema._namespace}/${Getters.GET_RAW}`](
-        getIdValue(this._context, contextSchema),
-        contextSchema
-      )
+          getIdValue(this._context, contextSchema),
+          contextSchema
+        )
       : null;
     return {
       contextSchema,

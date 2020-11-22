@@ -1,5 +1,5 @@
-import {isFunction} from 'src/utils';
-import {FieldDefinitionOptions, Factory} from '../types';
+import { isFunction } from 'src/utils';
+import { FieldDefinitionOptions, Factory } from '../types';
 
 export abstract class FieldDefinition {
   private readonly _default?: Factory;
