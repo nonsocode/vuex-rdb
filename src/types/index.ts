@@ -1,11 +1,11 @@
-import {Store} from 'vuex';
-import {Model} from '../model';
-import {Load} from '../query/load';
-import {LoadQuery} from '../query/load-query';
-import {Query} from '../query/query';
-import {Relationship} from '../relationships/relationhsip';
-import {ItemRelationship} from '../relationships/item';
-import {ListRelationship} from '../relationships/list';
+import { Store } from 'vuex';
+import { Model } from '../model';
+import { Load } from '../query/load';
+import { LoadQuery } from '../query/load-query';
+import { Query } from '../query/query';
+import { Relationship } from '../relationships/relationhsip';
+import { ItemRelationship } from '../relationships/item';
+import { ListRelationship } from '../relationships/list';
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
@@ -48,8 +48,8 @@ export type SchemaFactory<T extends Schema> = Factory<T>;
 export type RelationshipModel<T extends Relationship> = T extends ItemRelationship<infer U>
   ? InstanceType<U>
   : T extends ListRelationship<infer U>
-    ? InstanceType<U>[]
-    : never;
+  ? InstanceType<U>[]
+  : never;
 
 export interface PluginOptions {
   /**
@@ -108,6 +108,6 @@ export interface LoadWhereFunction extends WhereFunction<Load> {
 
 export type FieldDefinitionOptions =
   | {
-  default?: Factory;
-}
+      default?: Factory;
+    }
   | Factory;

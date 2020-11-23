@@ -3,8 +3,9 @@ import { Schema, SchemaFactory } from '../types';
 import { createObject } from '../utils';
 import { ItemRelationship } from '../relationships/item';
 import { BelongsToRelationship } from '../relationships/belongs-to';
+import { HasManyRelationship } from '../relationships/HasMany';
 
-export function BelongsTo<T extends Schema>(factory: SchemaFactory<T>, foreignKey: string) {
+export function HasMany<T extends Schema>(factory: SchemaFactory<T>, foreignKey: string) {
   return (target: Model, propName: string): void => {
     const constructor = target.constructor as Schema;
     if (constructor._fields == null) {
@@ -13,14 +14,14 @@ export function BelongsTo<T extends Schema>(factory: SchemaFactory<T>, foreignKe
     if (propName in constructor._fields) {
       return;
     }
-    constructor._fields[propName] = BelongsTo.define(factory, () => constructor, foreignKey);
+    constructor._fields[propName] = HasMany.define(factory, () => constructor, foreignKey);
   };
 }
 
-BelongsTo.define = function <T extends Schema, P extends Schema>(
+HasMany.define = function <T extends Schema, P extends Schema>(
   factory: SchemaFactory<T>,
   parentFactory: SchemaFactory<P>,
   foreignKey: string
-): BelongsToRelationship<T> {
-  return new BelongsToRelationship(factory, parentFactory, foreignKey);
+): HasManyRelationship<T> {
+  return new HasManyRelationship(factory, parentFactory, foreignKey);
 };

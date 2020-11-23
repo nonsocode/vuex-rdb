@@ -1,5 +1,5 @@
-import {Schema, SchemaFactory} from '../types';
-import {FieldDefinition} from './field-definition';
+import { Schema, SchemaFactory } from '../types';
+import { FieldDefinition } from './field-definition';
 
 /**
  * The idea is to have more definitive types of relationships
@@ -31,5 +31,4 @@ export abstract class Relationship<T extends Schema = Schema, P extends Schema =
   }
 }
 
-export abstract class ListLike<T extends Schema> extends Relationship<T> {
-}
+export abstract class ListLike<T extends Schema> extends Relationship<T> {}

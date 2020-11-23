@@ -1,16 +1,15 @@
-import {LoadWhereFunction, RelationshipModel, Schema, WhereFunction} from '../types';
-import {createObject, isFunction, isString} from '../utils';
-import {getLoads} from './query-utils';
-import {ContextualQuery} from './contextual-query';
-import {LoadQuery} from './load-query';
-import {ListLike, Relationship} from '../relationships/relationhsip';
+import { LoadWhereFunction, RelationshipModel, Schema, WhereFunction } from '../types';
+import { createObject, isFunction, isString } from '../utils';
+import { getLoads } from './query-utils';
+import { ContextualQuery } from './contextual-query';
+import { LoadQuery } from './load-query';
+import { ListLike, Relationship } from '../relationships/relationhsip';
 
 export class Load<S extends Schema = Schema, T extends Relationship<S> = Relationship<S>> {
   loads: Map<string, Load> = new Map();
   conditions: Set<ContextualQuery<T>> = new Set();
 
-  constructor(protected relationship: T) {
-  }
+  constructor(protected relationship: T) {}
 
   addLoad<R extends Schema>(name: string, load: Load<R>) {
     this.loads.set(name, load);
@@ -50,7 +49,7 @@ export class Load<S extends Schema = Schema, T extends Relationship<S> = Relatio
     const rawLoads = this.parseRawLoadArgs(...args);
 
     Object.entries(rawLoads).forEach(([key, val]) => {
-      const segments = key.split('.'); // [user, posts, *, issues, comments]
+      const segments = key.split('.');
 
       const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this as Load]);
       loads.forEach((load) => {
