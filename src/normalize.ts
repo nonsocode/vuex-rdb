@@ -6,6 +6,7 @@ import { ListLike, Relationship } from './relationships/relationhsip';
 import { ItemRelationship } from './relationships/item';
 import { ListRelationship } from './relationships/list';
 import { BelongsToRelationship } from './relationships/belongs-to';
+import { HasManyRelationship } from './relationships/HasMany';
 
 const listLike = (entityDef: MixedDefinition) => Array.isArray(entityDef) || entityDef instanceof ListLike;
 const getRelationshipSchema = (entityDef: MixedDefinition): Schema =>
@@ -49,24 +50,36 @@ export function normalize(
         entities.get(schema)[result] = {};
       }
       let normalized = entities.get(schema)[result];
-
+      let relEntries: [string, any][] = [];
       for (let [key, value] of Object.entries(raw)) {
         if (!(key in fields)) continue;
         if (!(fields[key] instanceof Relationship)) {
           normalized[key] = value;
           continue;
         }
+        relEntries.push([key, value]);
+      }
+      for (let [key, value] of relEntries) {
         const fieldDefinition = fields[key];
-        const { result } = normalize(value, <Relationship>fields[key], visited, entities, depth + 1);
+        const { result: relatedResult } = normalize(value, <Relationship>fields[key], visited, entities, depth + 1);
         switch (true) {
           case fieldDefinition instanceof ItemRelationship:
-          case fieldDefinition instanceof ListRelationship:
-            normalized[key] = result;
+          case fieldDefinition instanceof ListRelationship: {
+            normalized[key] = relatedResult;
             break;
-          case fieldDefinition instanceof BelongsToRelationship:
+          }
+          case fieldDefinition instanceof HasManyRelationship: {
+            const { schema, foreignKey } = <HasManyRelationship<Schema>>fieldDefinition;
+            (<IdValue[]>relatedResult)?.forEach((id) => {
+              entities.get(schema)[id][foreignKey] = result;
+            });
+            break;
+          }
+          case fieldDefinition instanceof BelongsToRelationship: {
             const { foreignKey } = <BelongsToRelationship<Schema>>fieldDefinition;
-            normalized[foreignKey] = result;
+            normalized[foreignKey] = relatedResult;
             break;
+          }
         }
       }
     }

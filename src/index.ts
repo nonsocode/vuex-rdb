@@ -6,6 +6,7 @@ import { Field } from './annotations/field';
 import { Item } from './annotations/item';
 import { List } from './annotations/list';
 import { BelongsTo } from './annotations/belongs-to';
+import { HasMany } from './annotations/has-many';
 
 const defaultPluginOptions = {
   schemas: [],
@@ -22,4 +23,4 @@ function generateDatabasePlugin(options: PluginOptions) {
   };
 }
 
-export { Model, Field, Item, List, BelongsTo, generateDatabasePlugin };
+export { Model, Field, Item, List, BelongsTo, HasMany, generateDatabasePlugin };

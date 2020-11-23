@@ -35,9 +35,11 @@ export function modelToObject(model: Model, schema: Schema, allProps: boolean, s
         if (value == null) {
           acc[key] = null;
         } else if (Array.isArray(value) && fieldDef instanceof ListLike) {
-          acc[key] = value.map((item) =>
-            seen.has(item) ? seen.get(item) : modelToObject(item, relatedSchema, allProps, seen)
-          );
+          let items = [];
+          for (const item of value) {
+            items.push(seen.has(item) ? seen.get(item) : modelToObject(item, relatedSchema, allProps, seen));
+          }
+          acc[key] = items;
         } else {
           acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedSchema, allProps, seen);
         }

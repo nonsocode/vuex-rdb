@@ -49,7 +49,7 @@ export class Load<S extends Schema = Schema, T extends Relationship<S> = Relatio
     const rawLoads = this.parseRawLoadArgs(...args);
 
     Object.entries(rawLoads).forEach(([key, val]) => {
-      const segments = key.split('.'); // [user, posts, *, issues, comments]
+      const segments = key.split('.');
 
       const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this as Load]);
       loads.forEach((load) => {
