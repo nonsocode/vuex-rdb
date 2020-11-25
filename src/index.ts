@@ -7,6 +7,8 @@ import { Item } from './annotations/item';
 import { List } from './annotations/list';
 import { BelongsTo } from './annotations/belongs-to';
 import { HasMany } from './annotations/has-many';
+import { Index } from './relationships/indices';
+import { HasManyRelationship } from './relationships/HasMany';
 
 const defaultPluginOptions = {
   schemas: [],
@@ -16,10 +18,18 @@ const defaultPluginOptions = {
 function generateDatabasePlugin(options: PluginOptions) {
   const { schemas, namespace } = { ...defaultPluginOptions, ...options };
   return (store) => {
-    store.registerModule(namespace, createModule(store, schemas));
+    const index = new Index(store, namespace);
+    Object.defineProperty(Model, 'index', {
+      value: index,
+    });
     schemas.forEach((schema) => {
       registerSchema(schema, store, namespace);
+      Object.values(schema._fields).forEach((definition) => {
+        if (definition instanceof HasManyRelationship) index.addIndex(definition);
+      });
     });
+    store.registerModule(namespace, createModule(store, schemas, index));
+    index.init();
   };
 }
 

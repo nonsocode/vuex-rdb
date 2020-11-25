@@ -6,11 +6,13 @@ import { Query } from '../query/query';
 import { Relationship } from '../relationships/relationhsip';
 import { ItemRelationship } from '../relationships/item';
 import { ListRelationship } from '../relationships/list';
+import { HasManyRelationship } from '../relationships/HasMany';
 
 export enum Mutations {
   ADD_ALL = 'ADD_ALL',
   PATCH_TEMPS = 'PATCH_TEMPS',
   SET_PROP = 'SET_PROP',
+  SET_INDEX = 'SET_INDEX',
 }
 
 export enum Actions {
@@ -25,6 +27,7 @@ export enum Getters {
   GET_RAW = 'getRaw',
   FIND_BY_IDS = 'findByIds',
   ALL = 'all',
+  GET_INDEX = 'getIndex',
 }
 
 export type TypeOrFunction<T> = T | TypeFunction<T>;
@@ -33,7 +36,8 @@ export interface TypeFunction<T> extends Function {
   (this: null, data: any): T;
 }
 
-export type ModelState = Record<IdValue, any>;
+export type Indices = Record<string, Record<string, Record<IdValue, IdValue[]>>>;
+export type ModelState = { data: Record<IdValue, any>; indices: Indices };
 export type Cache = Map<Schema, Record<IdValue, object>>;
 export type IdValue = string | number;
 export type Normalized = {

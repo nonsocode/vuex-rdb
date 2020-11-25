@@ -1,34 +1,38 @@
 import Vue from 'vue';
 import { createObject, identity, isFunction, mergeUnique } from './utils';
 import { getIdValue, Model } from './model';
-import { ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions, IdValue } from './types';
+import { ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions, IdValue, Indices } from './types';
 import { Module, Store } from 'vuex';
 
 import { normalizeAndStore } from './modelUtils';
 import { Load } from './query/load';
 import { ItemRelationship } from './relationships/item';
 import { ListLike, Relationship } from './relationships/relationhsip';
+import { Index } from './relationships/indices';
 
-export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<ModelState, any> {
+export function createModule<T>(store: Store<any>, schemas: Schema[], index: Index): Module<ModelState, any> {
   return {
     namespaced: true,
     state: () => {
-      return [...new Set(schemas.map((schema) => schema.entityName))].reduce((state, name) => {
-        state[name] = {};
-        return state;
-      }, {});
+      return {
+        indices: index.toObject() as Indices,
+        data: [...new Set(schemas.map((schema) => schema.entityName))].reduce((state, name) => {
+          state[name] = {};
+          return state;
+        }, {}),
+      };
     },
     mutations: {
       [Mutations.ADD_ALL](state, { items, schema }: { items: Cache; schema: Schema }) {
         const storeName = schema.entityName;
-        state[storeName] = {
-          ...state[storeName],
+        state.data[storeName] = {
+          ...state.data[storeName],
           ...Object.fromEntries(
             Object.entries(items).map(([id, entity]) => {
               return [
                 id,
                 {
-                  ...state[storeName][id],
+                  ...state.data[storeName][id],
                   ...entity,
                 },
               ];
@@ -37,10 +41,13 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
         };
       },
       [Mutations.SET_PROP](state, { id, key, value, schema }: { id: string; key: string; value: any; schema: Schema }) {
-        if (state[schema.entityName][id] == null) {
+        if (state.data[schema.entityName][id] == null) {
           throw new Error('Entity does not exist');
         }
-        Vue.set(state[schema.entityName][id], key, value);
+        Vue.set(state.data[schema.entityName][id], key, value);
+      },
+      [Mutations.SET_INDEX](state, { indexName, data }) {
+        Vue.set(state.indices, indexName, data);
       },
     },
     actions: {
@@ -148,8 +155,10 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
       },
     },
     getters: {
-      [Getters.GET_RAW]: (state) => (id, schema: Schema) => state[schema.entityName][id],
-      [Getters.FIND]: (state, getters) => (id, schema: Schema, opts: FindOptions = {}) => {
+      [Getters.GET_RAW]: (state) => (id, schema: Schema) => state.data[schema.entityName][id],
+      [Getters.GET_INDEX]: (state) => (schema: Schema, path: string, id) =>
+        state.indices[schema.entityName][path]?.[id] || [],
+      [Getters.FIND]: (_, getters) => (id, schema: Schema, opts: FindOptions = {}) => {
         const data = getters[Getters.GET_RAW](id, schema);
         if (!data) {
           return;
@@ -162,13 +171,13 @@ export function createModule<T>(store: Store<any>, schemas: Schema[]): Module<Mo
         }
         return resolveModel(schema, data, { load, connected: true });
       },
-      [Getters.FIND_BY_IDS]: (state, getters) => {
+      [Getters.FIND_BY_IDS]: (_, getters) => {
         return function (ids = [], schema: Schema, opts = {}) {
           return ids.map((id) => getters[Getters.FIND](id, schema, opts)).filter(identity);
         };
       },
       [Getters.ALL]: (state, getters) => (schema: Schema, opts = {}) => {
-        return getters[Getters.FIND_BY_IDS](Object.keys(state[schema.entityName]), schema, opts);
+        return getters[Getters.FIND_BY_IDS](Object.keys(state.data[schema.entityName]), schema, opts);
       },
     },
   };

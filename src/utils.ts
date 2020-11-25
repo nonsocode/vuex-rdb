@@ -24,7 +24,7 @@ export function isString(string: any): string is string {
   return typeof string === 'string';
 }
 
-export function createObject<T>(object?: T): T {
+export function createObject<T extends object>(object?: T): T {
   const o = Object.create(null);
   object &&
     Object.entries(object).forEach(([key, value]) => {

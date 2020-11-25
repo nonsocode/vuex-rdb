@@ -7,6 +7,7 @@ import { ListRelationship } from './relationships/list';
 import { ItemRelationship } from './relationships/item';
 import { BelongsToRelationship } from './relationships/belongs-to';
 import { HasManyRelationship } from './relationships/HasMany';
+import { Index } from './relationships/indices';
 export declare function getIdValue<T>(model: T, schema: Schema): IdValue;
 export declare class Model<T extends any = any> {
   /**
@@ -28,6 +29,10 @@ export declare class Model<T extends any = any> {
    * @internal
    */
   static _fields: Record<string, FieldDefinition>;
+  /**
+   * @internal
+   */
+  static index: Index;
   /**
    * The identifier for the model. It also accepts an id resolver function that
    * receives a model-like param as input and returns the id;

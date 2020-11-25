@@ -24,6 +24,7 @@ import { BelongsTo } from './annotations/belongs-to';
 import { BelongsToRelationship } from './relationships/belongs-to';
 import { HasManyRelationship } from './relationships/HasMany';
 import { HasMany } from './annotations/has-many';
+import { Index } from './relationships/indices';
 
 const cacheNames = ['data', 'relationship'];
 
@@ -95,10 +96,10 @@ function createAccessor(target: Model, key) {
           if (relationshipDef instanceof ListLike) {
             if (relationshipDef instanceof HasManyRelationship) {
               // Todo: index and Cache relationship keys
-              value = relationshipDef.schema
-                .all(opts)
-                .filter((item) => item[relationshipDef.foreignKey] == this._id)
-                .map((item) => getIdValue(item, relationshipDef.schema));
+              value = schema.index.get(relationshipDef, this._id);
+              // .all(opts)
+              // .filter((item) => item[relationshipDef.foreignKey] == this._id)
+              // .map((item) => getIdValue(item, relationshipDef.schema));
             }
             if (value) {
               value = Related.findByIds(value, opts);
@@ -155,6 +156,11 @@ export class Model<T extends any = any> {
    * @internal
    */
   static _fields: Record<string, FieldDefinition>;
+
+  /**
+   * @internal
+   */
+  static index: Index;
 
   /**
    * The identifier for the model. It also accepts an id resolver function that

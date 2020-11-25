@@ -319,9 +319,6 @@ function registerSchema(schema, store, namespace) {
       value: createObject({}),
     });
   }
-  if (!store.state[namespace][schema.entityName]) {
-    Vue__default['default'].set(store.state[namespace], schema.entityName, {});
-  }
   if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
     schema._fields[schema.id] = new SimpleFieldDefinition();
   }
@@ -340,6 +337,7 @@ var Mutations;
   Mutations['ADD_ALL'] = 'ADD_ALL';
   Mutations['PATCH_TEMPS'] = 'PATCH_TEMPS';
   Mutations['SET_PROP'] = 'SET_PROP';
+  Mutations['SET_INDEX'] = 'SET_INDEX';
 })(Mutations || (Mutations = {}));
 var Actions;
 (function (Actions) {
@@ -354,6 +352,7 @@ var Getters;
   Getters['GET_RAW'] = 'getRaw';
   Getters['FIND_BY_IDS'] = 'findByIds';
   Getters['ALL'] = 'all';
+  Getters['GET_INDEX'] = 'getIndex';
 })(Getters || (Getters = {}));
 
 /**
@@ -1299,7 +1298,6 @@ function createAccessor(target, key) {
   Object.defineProperty(target, key, {
     enumerable: load && isRelationship ? load.has(key) : true,
     get: function () {
-      var _this = this;
       if (target._connected) {
         if (load && isRelationship && !load.has(key)) return;
         var raw = _store.getters[path + '/' + Getters.GET_RAW](target._id, schema);
@@ -1310,14 +1308,10 @@ function createAccessor(target, key) {
           if (relationshipDef instanceof ListLike) {
             if (relationshipDef instanceof HasManyRelationship) {
               // Todo: index and Cache relationship keys
-              value = relationshipDef.schema
-                .all(opts)
-                .filter(function (item) {
-                  return item[relationshipDef.foreignKey] == _this._id;
-                })
-                .map(function (item) {
-                  return getIdValue(item, relationshipDef.schema);
-                });
+              value = schema.index.get(relationshipDef, this._id);
+              // .all(opts)
+              // .filter((item) => item[relationshipDef.foreignKey] == this._id)
+              // .map((item) => getIdValue(item, relationshipDef.schema));
             }
             if (value) {
               value = Related.findByIds(value, opts);
@@ -1651,21 +1645,24 @@ var Model = /** @class */ (function () {
   return Model;
 })();
 
-function createModule(store, schemas) {
+function createModule(store, schemas, index) {
   var _a, _b, _c;
   return {
     namespaced: true,
     state: function () {
-      return __spread(
-        new Set(
-          schemas.map(function (schema) {
-            return schema.entityName;
-          })
-        )
-      ).reduce(function (state, name) {
-        state[name] = {};
-        return state;
-      }, {});
+      return {
+        indices: index.toObject(),
+        data: __spread(
+          new Set(
+            schemas.map(function (schema) {
+              return schema.entityName;
+            })
+          )
+        ).reduce(function (state, name) {
+          state[name] = {};
+          return state;
+        }, {}),
+      };
     },
     mutations:
       ((_a = {}),
@@ -1673,14 +1670,14 @@ function createModule(store, schemas) {
         var items = _a.items,
           schema = _a.schema;
         var storeName = schema.entityName;
-        state[storeName] = __assign(
-          __assign({}, state[storeName]),
+        state.data[storeName] = __assign(
+          __assign({}, state.data[storeName]),
           Object.fromEntries(
             Object.entries(items).map(function (_a) {
               var _b = __read(_a, 2),
                 id = _b[0],
                 entity = _b[1];
-              return [id, __assign(__assign({}, state[storeName][id]), entity)];
+              return [id, __assign(__assign({}, state.data[storeName][id]), entity)];
             })
           )
         );
@@ -1690,10 +1687,15 @@ function createModule(store, schemas) {
           key = _a.key,
           value = _a.value,
           schema = _a.schema;
-        if (state[schema.entityName][id] == null) {
+        if (state.data[schema.entityName][id] == null) {
           throw new Error('Entity does not exist');
         }
-        Vue__default['default'].set(state[schema.entityName][id], key, value);
+        Vue__default['default'].set(state.data[schema.entityName][id], key, value);
+      }),
+      (_a[Mutations.SET_INDEX] = function (state, _a) {
+        var indexName = _a.indexName,
+          data = _a.data;
+        Vue__default['default'].set(state.indices, indexName, data);
       }),
       _a),
     actions:
@@ -1828,10 +1830,16 @@ function createModule(store, schemas) {
       ((_c = {}),
       (_c[Getters.GET_RAW] = function (state) {
         return function (id, schema) {
-          return state[schema.entityName][id];
+          return state.data[schema.entityName][id];
         };
       }),
-      (_c[Getters.FIND] = function (state, getters) {
+      (_c[Getters.GET_INDEX] = function (state) {
+        return function (schema, path, id) {
+          var _a;
+          return ((_a = state.indices[schema.entityName][path]) === null || _a === void 0 ? void 0 : _a[id]) || [];
+        };
+      }),
+      (_c[Getters.FIND] = function (_, getters) {
         return function (id, schema, opts) {
           if (opts === void 0) {
             opts = {};
@@ -1853,7 +1861,7 @@ function createModule(store, schemas) {
           return resolveModel(schema, data, { load: load, connected: true });
         };
       }),
-      (_c[Getters.FIND_BY_IDS] = function (state, getters) {
+      (_c[Getters.FIND_BY_IDS] = function (_, getters) {
         return function (ids, schema, opts) {
           if (ids === void 0) {
             ids = [];
@@ -1873,7 +1881,7 @@ function createModule(store, schemas) {
           if (opts === void 0) {
             opts = {};
           }
-          return getters[Getters.FIND_BY_IDS](Object.keys(state[schema.entityName]), schema, opts);
+          return getters[Getters.FIND_BY_IDS](Object.keys(state.data[schema.entityName]), schema, opts);
         };
       }),
       _c),
@@ -1954,6 +1962,177 @@ List.define = function (factory, parentFactory) {
   return new ListRelationship(factory);
 };
 
+var Watcher = /** @class */ (function () {
+  function Watcher(schema, store, namespace, name) {
+    this.schema = schema;
+    this.store = store;
+    this.namespace = namespace;
+    this.name = name;
+    this.interests = new Set();
+  }
+  Watcher.prototype.addRelationship = function (relationship) {
+    if (relationship.schema != this.schema) {
+      throw new Error('This relationship is not indexable on this watcher');
+    }
+    this.interests.add(relationship);
+  };
+  Watcher.prototype.registerWatcher = function () {
+    var _this = this;
+    this.unwatch && this.unwatch();
+    var concerns = __spread(this.interests.values()).map(function (rel) {
+      return [rel.parentSchema.entityName, rel.foreignKey];
+    });
+    this.unwatch = this.store.watch(
+      function (state) {
+        var e_1, _a, e_2, _b;
+        var index = concerns.reduce(function (obj, _a) {
+          var _b = __read(_a, 2),
+            entityName = _b[0],
+            foreignKey = _b[1];
+          obj[entityName] = { foreignKey: foreignKey, data: createObject() };
+          return obj;
+        }, createObject());
+        var entries = Object.entries(state[_this.namespace].data[_this.schema.entityName]);
+        try {
+          for (
+            var entries_1 = __values(entries), entries_1_1 = entries_1.next();
+            !entries_1_1.done;
+            entries_1_1 = entries_1.next()
+          ) {
+            var _c = __read(entries_1_1.value, 2),
+              relatedId = _c[0],
+              value = _c[1];
+            try {
+              for (
+                var concerns_1 = ((e_2 = void 0), __values(concerns)), concerns_1_1 = concerns_1.next();
+                !concerns_1_1.done;
+                concerns_1_1 = concerns_1.next()
+              ) {
+                var _d = __read(concerns_1_1.value, 2),
+                  entityName = _d[0],
+                  foreignKey = _d[1];
+                if (value[foreignKey] == null) continue;
+                if (!index[entityName].data[value[foreignKey]]) {
+                  index[entityName].data[value[foreignKey]] = [];
+                }
+                index[entityName].data[value[foreignKey]].push(relatedId);
+              }
+            } catch (e_2_1) {
+              e_2 = { error: e_2_1 };
+            } finally {
+              try {
+                if (concerns_1_1 && !concerns_1_1.done && (_b = concerns_1.return)) _b.call(concerns_1);
+              } finally {
+                if (e_2) throw e_2.error;
+              }
+            }
+          }
+        } catch (e_1_1) {
+          e_1 = { error: e_1_1 };
+        } finally {
+          try {
+            if (entries_1_1 && !entries_1_1.done && (_a = entries_1.return)) _a.call(entries_1);
+          } finally {
+            if (e_1) throw e_1.error;
+          }
+        }
+        return index;
+      },
+      function (rawIndex) {
+        _this.store.commit(_this.namespace + '/' + Mutations.SET_INDEX, {
+          indexName: _this.name,
+          data: Object.fromEntries(
+            Object.entries(rawIndex).map(function (_a) {
+              var _b = __read(_a, 2),
+                path = _b[0],
+                data = _b[1];
+              return [path, data.data];
+            })
+          ),
+        });
+      }
+    );
+  };
+  return Watcher;
+})();
+
+var Index = /** @class */ (function () {
+  function Index(store, namespace) {
+    this.store = store;
+    this.namespace = namespace;
+    this.map = new Map();
+  }
+  Index.prototype.addIndex = function (relationship) {
+    var watcher;
+    var schema = relationship.schema;
+    if (!this.map.has(schema)) {
+      watcher = new Watcher(schema, this.store, this.namespace, schema.entityName);
+      this.map.set(schema, watcher);
+    } else {
+      watcher = this.map.get(schema);
+    }
+    watcher.addRelationship(relationship);
+  };
+  Index.prototype.toObject = function () {
+    var e_1, _a, e_2, _b;
+    var result = createObject();
+    try {
+      for (var _c = __values(this.map), _d = _c.next(); !_d.done; _d = _c.next()) {
+        var _e = __read(_d.value, 2),
+          schema = _e[0],
+          watcher = _e[1];
+        result[schema.entityName] = createObject();
+        try {
+          for (var _f = ((e_2 = void 0), __values(watcher.interests)), _g = _f.next(); !_g.done; _g = _f.next()) {
+            var relationship = _g.value;
+            result[schema.entityName][relationship.parentSchema.entityName] = createObject();
+          }
+        } catch (e_2_1) {
+          e_2 = { error: e_2_1 };
+        } finally {
+          try {
+            if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
+          } finally {
+            if (e_2) throw e_2.error;
+          }
+        }
+      }
+    } catch (e_1_1) {
+      e_1 = { error: e_1_1 };
+    } finally {
+      try {
+        if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+      } finally {
+        if (e_1) throw e_1.error;
+      }
+    }
+    return result;
+  };
+  Index.prototype.init = function () {
+    var e_3, _a;
+    try {
+      for (var _b = __values(this.map.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
+        var watcher = _c.value;
+        watcher.registerWatcher();
+      }
+    } catch (e_3_1) {
+      e_3 = { error: e_3_1 };
+    } finally {
+      try {
+        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+      } finally {
+        if (e_3) throw e_3.error;
+      }
+    }
+  };
+  Index.prototype.get = function (_a, parentId) {
+    var schema = _a.schema,
+      parentSchema = _a.parentSchema;
+    return this.store.getters[this.namespace + '/' + Getters.GET_INDEX](schema, parentSchema.entityName, parentId);
+  };
+  return Index;
+})();
+
 var defaultPluginOptions = {
   schemas: [],
   namespace: 'database',
@@ -1963,10 +2142,18 @@ function generateDatabasePlugin(options) {
     schemas = _a.schemas,
     namespace = _a.namespace;
   return function (store) {
-    store.registerModule(namespace, createModule(store, schemas));
+    var index = new Index(store, namespace);
+    Object.defineProperty(Model, 'index', {
+      value: index,
+    });
     schemas.forEach(function (schema) {
       registerSchema(schema, store, namespace);
+      Object.values(schema._fields).forEach(function (definition) {
+        if (definition instanceof HasManyRelationship) index.addIndex(definition);
+      });
     });
+    store.registerModule(namespace, createModule(store, schemas, index));
+    index.init();
   };
 }
 

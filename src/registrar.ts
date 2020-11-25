@@ -4,16 +4,11 @@ import { Store } from 'vuex';
 import Vue from 'vue';
 import { Schema } from './types';
 
-export const nameModelMap: Map<string, Schema> = new Map();
-
 export function registerSchema(schema: Schema, store: Store<any>, namespace: string) {
   if (!schema._fields) {
     Object.defineProperty(schema, '_fields', {
       value: createObject({}),
     });
-  }
-  if (!store.state[namespace][schema.entityName]) {
-    Vue.set(store.state[namespace], schema.entityName, {});
   }
   if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
     schema._fields[schema.id] = new SimpleFieldDefinition();

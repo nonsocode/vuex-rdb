@@ -62,9 +62,6 @@ function registerSchema(schema, store, namespace) {
       value: createObject({}),
     });
   }
-  if (!store.state[namespace][schema.entityName]) {
-    Vue.set(store.state[namespace], schema.entityName, {});
-  }
   if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
     schema._fields[schema.id] = new SimpleFieldDefinition();
   }
@@ -83,6 +80,7 @@ var Mutations;
   Mutations['ADD_ALL'] = 'ADD_ALL';
   Mutations['PATCH_TEMPS'] = 'PATCH_TEMPS';
   Mutations['SET_PROP'] = 'SET_PROP';
+  Mutations['SET_INDEX'] = 'SET_INDEX';
 })(Mutations || (Mutations = {}));
 var Actions;
 (function (Actions) {
@@ -97,6 +95,7 @@ var Getters;
   Getters['GET_RAW'] = 'getRaw';
   Getters['FIND_BY_IDS'] = 'findByIds';
   Getters['ALL'] = 'all';
+  Getters['GET_INDEX'] = 'getIndex';
 })(Getters || (Getters = {}));
 
 /**
@@ -783,10 +782,10 @@ function createAccessor(target, key) {
           if (relationshipDef instanceof ListLike) {
             if (relationshipDef instanceof HasManyRelationship) {
               // Todo: index and Cache relationship keys
-              value = relationshipDef.schema
-                .all(opts)
-                .filter((item) => item[relationshipDef.foreignKey] == this._id)
-                .map((item) => getIdValue(item, relationshipDef.schema));
+              value = schema.index.get(relationshipDef, this._id);
+              // .all(opts)
+              // .filter((item) => item[relationshipDef.foreignKey] == this._id)
+              // .map((item) => getIdValue(item, relationshipDef.schema));
             }
             if (value) {
               value = Related.findByIds(value, opts);
@@ -1021,26 +1020,29 @@ class Model {
  */
 Model.id = 'id';
 
-function createModule(store, schemas) {
+function createModule(store, schemas, index) {
   return {
     namespaced: true,
     state: () => {
-      return [...new Set(schemas.map((schema) => schema.entityName))].reduce((state, name) => {
-        state[name] = {};
-        return state;
-      }, {});
+      return {
+        indices: index.toObject(),
+        data: [...new Set(schemas.map((schema) => schema.entityName))].reduce((state, name) => {
+          state[name] = {};
+          return state;
+        }, {}),
+      };
     },
     mutations: {
       [Mutations.ADD_ALL](state, { items, schema }) {
         const storeName = schema.entityName;
-        state[storeName] = {
-          ...state[storeName],
+        state.data[storeName] = {
+          ...state.data[storeName],
           ...Object.fromEntries(
             Object.entries(items).map(([id, entity]) => {
               return [
                 id,
                 {
-                  ...state[storeName][id],
+                  ...state.data[storeName][id],
                   ...entity,
                 },
               ];
@@ -1049,10 +1051,13 @@ function createModule(store, schemas) {
         };
       },
       [Mutations.SET_PROP](state, { id, key, value, schema }) {
-        if (state[schema.entityName][id] == null) {
+        if (state.data[schema.entityName][id] == null) {
           throw new Error('Entity does not exist');
         }
-        Vue.set(state[schema.entityName][id], key, value);
+        Vue.set(state.data[schema.entityName][id], key, value);
+      },
+      [Mutations.SET_INDEX](state, { indexName, data }) {
+        Vue.set(state.indices, indexName, data);
       },
     },
     actions: {
@@ -1150,8 +1155,12 @@ function createModule(store, schemas) {
       },
     },
     getters: {
-      [Getters.GET_RAW]: (state) => (id, schema) => state[schema.entityName][id],
-      [Getters.FIND]: (state, getters) => (id, schema, opts = {}) => {
+      [Getters.GET_RAW]: (state) => (id, schema) => state.data[schema.entityName][id],
+      [Getters.GET_INDEX]: (state) => (schema, path, id) => {
+        var _a;
+        return ((_a = state.indices[schema.entityName][path]) === null || _a === void 0 ? void 0 : _a[id]) || [];
+      },
+      [Getters.FIND]: (_, getters) => (id, schema, opts = {}) => {
         const data = getters[Getters.GET_RAW](id, schema);
         if (!data) {
           return;
@@ -1164,13 +1173,13 @@ function createModule(store, schemas) {
         }
         return resolveModel(schema, data, { load, connected: true });
       },
-      [Getters.FIND_BY_IDS]: (state, getters) => {
+      [Getters.FIND_BY_IDS]: (_, getters) => {
         return function (ids = [], schema, opts = {}) {
           return ids.map((id) => getters[Getters.FIND](id, schema, opts)).filter(identity);
         };
       },
       [Getters.ALL]: (state, getters) => (schema, opts = {}) => {
-        return getters[Getters.FIND_BY_IDS](Object.keys(state[schema.entityName]), schema, opts);
+        return getters[Getters.FIND_BY_IDS](Object.keys(state.data[schema.entityName]), schema, opts);
       },
     },
   };
@@ -1237,6 +1246,88 @@ List.define = function (factory, parentFactory) {
   return new ListRelationship(factory);
 };
 
+class Watcher {
+  constructor(schema, store, namespace, name) {
+    this.schema = schema;
+    this.store = store;
+    this.namespace = namespace;
+    this.name = name;
+    this.interests = new Set();
+  }
+  addRelationship(relationship) {
+    if (relationship.schema != this.schema) {
+      throw new Error('This relationship is not indexable on this watcher');
+    }
+    this.interests.add(relationship);
+  }
+  registerWatcher() {
+    this.unwatch && this.unwatch();
+    const concerns = [...this.interests.values()].map((rel) => [rel.parentSchema.entityName, rel.foreignKey]);
+    this.unwatch = this.store.watch(
+      (state) => {
+        const index = concerns.reduce((obj, [entityName, foreignKey]) => {
+          obj[entityName] = { foreignKey: foreignKey, data: createObject() };
+          return obj;
+        }, createObject());
+        const entries = Object.entries(state[this.namespace].data[this.schema.entityName]);
+        for (let [relatedId, value] of entries) {
+          for (let [entityName, foreignKey] of concerns) {
+            if (value[foreignKey] == null) continue;
+            if (!index[entityName].data[value[foreignKey]]) {
+              index[entityName].data[value[foreignKey]] = [];
+            }
+            index[entityName].data[value[foreignKey]].push(relatedId);
+          }
+        }
+        return index;
+      },
+      (rawIndex) => {
+        this.store.commit(`${this.namespace}/${Mutations.SET_INDEX}`, {
+          indexName: this.name,
+          data: Object.fromEntries(Object.entries(rawIndex).map(([path, data]) => [path, data.data])),
+        });
+      }
+    );
+  }
+}
+
+class Index {
+  constructor(store, namespace) {
+    this.store = store;
+    this.namespace = namespace;
+    this.map = new Map();
+  }
+  addIndex(relationship) {
+    let watcher;
+    let { schema } = relationship;
+    if (!this.map.has(schema)) {
+      watcher = new Watcher(schema, this.store, this.namespace, schema.entityName);
+      this.map.set(schema, watcher);
+    } else {
+      watcher = this.map.get(schema);
+    }
+    watcher.addRelationship(relationship);
+  }
+  toObject() {
+    const result = createObject();
+    for (let [schema, watcher] of this.map) {
+      result[schema.entityName] = createObject();
+      for (let relationship of watcher.interests) {
+        result[schema.entityName][relationship.parentSchema.entityName] = createObject();
+      }
+    }
+    return result;
+  }
+  init() {
+    for (let watcher of this.map.values()) {
+      watcher.registerWatcher();
+    }
+  }
+  get({ schema, parentSchema }, parentId) {
+    return this.store.getters[`${this.namespace}/${Getters.GET_INDEX}`](schema, parentSchema.entityName, parentId);
+  }
+}
+
 const defaultPluginOptions = {
   schemas: [],
   namespace: 'database',
@@ -1244,10 +1335,18 @@ const defaultPluginOptions = {
 function generateDatabasePlugin(options) {
   const { schemas, namespace } = { ...defaultPluginOptions, ...options };
   return (store) => {
-    store.registerModule(namespace, createModule(store, schemas));
+    const index = new Index(store, namespace);
+    Object.defineProperty(Model, 'index', {
+      value: index,
+    });
     schemas.forEach((schema) => {
       registerSchema(schema, store, namespace);
+      Object.values(schema._fields).forEach((definition) => {
+        if (definition instanceof HasManyRelationship) index.addIndex(definition);
+      });
     });
+    store.registerModule(namespace, createModule(store, schemas, index));
+    index.init();
   };
 }
 
