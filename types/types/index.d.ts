@@ -94,6 +94,11 @@ export interface WhereFunction<T> {
 export interface LoadWhereFunction extends WhereFunction<Load> {
   (query: LoadQuery): boolean | void;
 }
+export declare type OrderDirection = 'desc' | 'asc';
+export interface Order {
+  direction: OrderDirection;
+  key: string;
+}
 export declare type FieldDefinitionOptions =
   | {
       default?: Factory;
