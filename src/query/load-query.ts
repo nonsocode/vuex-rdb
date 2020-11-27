@@ -1,10 +1,12 @@
-import { LoadWhereFunction } from '../types';
+import { LoadWhereFunction, Order, OrderDirection } from '../types';
 import { ContextualQuery } from './contextual-query';
 import { Load } from './load';
+import { getSortComparator } from './query-utils';
 
 export class LoadQuery extends ContextualQuery<Load> {
   whereHasAnds: any[] = [];
   whereHasOrs: any[] = [];
+  orders: Order[] = [];
 
   constructor(protected load: Load) {
     super();
@@ -25,7 +27,38 @@ export class LoadQuery extends ContextualQuery<Load> {
   }
 
   get(): any {
-    throw new Error('Method not implemented.');
+    throw new Error('Method not allowed');
+  }
+
+  orderBy(orders: Order[]);
+  orderBy(key: string, direction: OrderDirection);
+  orderBy(...args) {
+    switch (args.length) {
+      case 2:
+        const [key, direction] = args;
+        this.orders.push({ key, direction });
+        break;
+      case 1:
+        this.orders.push(...args);
+        break;
+      default:
+        throw new Error('invalid OrderBy Arguments');
+    }
+    return this;
+  }
+
+  apply(items: any) {
+    if (Array.isArray(items)) {
+      return this._sort(this._filter(items));
+    } else if (this.matchesItem(items)) {
+      return items;
+    }
+  }
+
+  _sort(items: any[]): any[] {
+    if (!(this.orders.length && items.length)) return [...items];
+    const comparator = getSortComparator(this.orders);
+    return [...items].sort(comparator);
   }
 
   // whereHas(relationshipPath: string);

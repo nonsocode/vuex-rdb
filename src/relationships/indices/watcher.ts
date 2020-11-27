@@ -1,8 +1,7 @@
 import { HasManyRelationship } from '../HasMany';
-import { IdValue, Mutations, Schema } from '../../types';
+import { Mutations, Schema } from '../../types';
 import { Store } from 'vuex';
 import { createObject } from '../../utils';
-import Vue from 'vue';
 
 export class Watcher {
   interests: Set<HasManyRelationship<Schema>> = new Set();
@@ -23,8 +22,8 @@ export class Watcher {
 
     this.unwatch = this.store.watch(
       (state) => {
-        const index: object = concerns.reduce((obj, [entityName, foreignKey]) => {
-          obj[entityName] = { foreignKey: foreignKey, data: createObject() };
+        const index: object = concerns.reduce((obj, [entityName]) => {
+          obj[entityName] = createObject();
           return obj;
         }, createObject());
 
@@ -32,23 +31,15 @@ export class Watcher {
         for (let [relatedId, value] of entries) {
           for (let [entityName, foreignKey] of concerns) {
             if (value[foreignKey] == null) continue;
-            if (!index[entityName].data[value[foreignKey]]) {
-              index[entityName].data[value[foreignKey]] = [];
+            if (!index[entityName][value[foreignKey]]) {
+              index[entityName][value[foreignKey]] = [];
             }
-            index[entityName].data[value[foreignKey]].push(relatedId);
+            index[entityName][value[foreignKey]].push(relatedId);
           }
         }
         return index;
       },
-      (rawIndex) => {
-        this.store.commit(`${this.namespace}/${Mutations.SET_INDEX}`, {
-          indexName: this.name,
-          data: Object.fromEntries(Object.entries(rawIndex).map(([path, data]) => [path, data.data])),
-        });
-      }
-      // @ts-ignore
-
-      // { immediate: true, sync: true }
+      (data) => this.store.commit(`${this.namespace}/${Mutations.SET_INDEX}`, { indexName: this.name, data })
     );
   }
 }

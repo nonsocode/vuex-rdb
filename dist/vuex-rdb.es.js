@@ -479,7 +479,7 @@ class ContextualQuery extends Query {
     super();
     this.context = context;
   }
-  matchItem(item) {
+  matchesItem(item) {
     if (!this.whereAnds.length && !this.whereOrs.length) return true;
     const result = [];
     const comparator = getComparator(item);
@@ -487,8 +487,17 @@ class ContextualQuery extends Query {
     result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
     return result.some(identity);
   }
+  matchesSomeItems(items) {
+    return items.every((item) => this.matchesItem(item));
+  }
+  matchesAllItems(items) {
+    return items.some((item) => this.matchesItem(item));
+  }
+  _filter(items) {
+    return items.filter((item) => this.matchesItem(item));
+  }
   get() {
-    return this.matchItem(this.context);
+    return this.matchesItem(this.context);
   }
 }
 
@@ -529,6 +538,18 @@ const getComparator = (item) => (where) => {
     }
   }
 };
+const getSortComparator = (orders) => {
+  const l = orders.length;
+  const parsed = orders.map((order) => [order.key, order.direction == 'asc' ? 1 : -1]);
+  return (a, b) => {
+    for (let i = 0; i < l; i++) {
+      const [key, dir] = parsed[i];
+      if (a[key] < b[key]) return -1 * dir;
+      if (a[key] > b[key]) return dir;
+    }
+    return 0;
+  };
+};
 const addToLoads = (key, relationship, originalLoad, newLoads) => {
   if (originalLoad.has(key)) {
     newLoads.push(originalLoad.getLoad(key));
@@ -563,6 +584,7 @@ class LoadQuery extends ContextualQuery {
     this.load = load;
     this.whereHasAnds = [];
     this.whereHasOrs = [];
+    this.orders = [];
   }
   with(...args) {
     switch (args.length) {
@@ -576,7 +598,33 @@ class LoadQuery extends ContextualQuery {
     return this;
   }
   get() {
-    throw new Error('Method not implemented.');
+    throw new Error('Method not allowed');
+  }
+  orderBy(...args) {
+    switch (args.length) {
+      case 2:
+        const [key, direction] = args;
+        this.orders.push({ key, direction });
+        break;
+      case 1:
+        this.orders.push(...args);
+        break;
+      default:
+        throw new Error('invalid OrderBy Arguments');
+    }
+    return this;
+  }
+  apply(items) {
+    if (Array.isArray(items)) {
+      return this._sort(this._filter(items));
+    } else if (this.matchesItem(items)) {
+      return items;
+    }
+  }
+  _sort(items) {
+    if (!(this.orders.length && items.length)) return [...items];
+    const comparator = getSortComparator(this.orders);
+    return [...items].sort(comparator);
   }
 }
 
@@ -584,7 +632,6 @@ class Load {
   constructor(relationship) {
     this.relationship = relationship;
     this.loads = new Map();
-    this.conditions = new Set();
   }
   addLoad(name, load) {
     this.loads.set(name, load);
@@ -595,19 +642,9 @@ class Load {
   has(name) {
     return this.loads.has(name);
   }
-  addCondition(where) {
-    this.conditions.add(where);
-  }
   apply(data) {
-    if (this.conditions.size == 0 || data == null) return data;
-    const conditions = [...this.conditions];
-    if (this.relationship instanceof ListLike) {
-      return data.filter((item) => {
-        return conditions.some((condition) => condition.matchItem(item));
-      });
-    } else if (conditions.some((condition) => condition.matchItem(data))) {
-      return data;
-    }
+    if (!this.query || data == null) return data;
+    return this.query.apply(data);
   }
   getRelationship() {
     return this.relationship;
@@ -618,11 +655,10 @@ class Load {
       const segments = key.split('.');
       const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this]);
       loads.forEach((load) => {
-        if (isFunction(val)) {
-          const query = new LoadQuery(load);
-          val.call(null, query);
-          load.addCondition(query);
-        }
+        var _a;
+        if (!isFunction(val)) return;
+        (_a = load.query) !== null && _a !== void 0 ? _a : (load.query = new LoadQuery(load));
+        val.call(null, load.query);
       });
     });
     return this;
@@ -634,7 +670,7 @@ class Load {
       case 1:
         if (Array.isArray(firstArg)) {
           firstArg.forEach((item) => (rawLoads[item] = true));
-        } else if (isString) {
+        } else if (isString(firstArg)) {
           rawLoads[firstArg] = true;
         } else {
           rawLoads = createObject(firstArg);
@@ -657,30 +693,37 @@ class ModelQuery extends LoadQuery {
     this.withArgs = [];
   }
   with(...args) {
+    if (this.load) return super.with(args[0], args[1]);
     this.withArgs.push(args);
     return this;
   }
   initLoad() {
-    if (!this.load) {
+    if (!this.load && this.withArgs.length) {
       this.load = new Load(new ItemRelationship(() => this.schema));
+      this.withArgs.forEach(([first, second]) => {
+        super.with(first, second);
+      });
     }
     return this.load;
   }
   get() {
     let items = this.schema.all();
-    items = items.filter((item) => this.matchItem(item));
-    if (items.length) {
-      if (this.withArgs.length) {
-        this.initLoad();
-        this.withArgs.forEach(([first, second]) => {
-          super.with(first, second);
-        });
-      }
-      items = items.map((item) => {
+    items = this.apply(items);
+    if (this.initLoad()) {
+      return items.map((item) => {
         return this.schema.find(getIdValue(item, this.schema), { load: this.load });
       });
     }
     return items;
+  }
+  first() {
+    let items = this.schema.all();
+    const first = items.find((item) => this.matchesItem(item));
+    if (!first) return;
+    if (this.initLoad()) {
+      return this.schema.find(getIdValue(first, this.schema), { load: this.load });
+    }
+    return first;
   }
 }
 
@@ -1265,28 +1308,23 @@ class Watcher {
     const concerns = [...this.interests.values()].map((rel) => [rel.parentSchema.entityName, rel.foreignKey]);
     this.unwatch = this.store.watch(
       (state) => {
-        const index = concerns.reduce((obj, [entityName, foreignKey]) => {
-          obj[entityName] = { foreignKey: foreignKey, data: createObject() };
+        const index = concerns.reduce((obj, [entityName]) => {
+          obj[entityName] = createObject();
           return obj;
         }, createObject());
         const entries = Object.entries(state[this.namespace].data[this.schema.entityName]);
         for (let [relatedId, value] of entries) {
           for (let [entityName, foreignKey] of concerns) {
             if (value[foreignKey] == null) continue;
-            if (!index[entityName].data[value[foreignKey]]) {
-              index[entityName].data[value[foreignKey]] = [];
+            if (!index[entityName][value[foreignKey]]) {
+              index[entityName][value[foreignKey]] = [];
             }
-            index[entityName].data[value[foreignKey]].push(relatedId);
+            index[entityName][value[foreignKey]].push(relatedId);
           }
         }
         return index;
       },
-      (rawIndex) => {
-        this.store.commit(`${this.namespace}/${Mutations.SET_INDEX}`, {
-          indexName: this.name,
-          data: Object.fromEntries(Object.entries(rawIndex).map(([path, data]) => [path, data.data])),
-        });
-      }
+      (data) => this.store.commit(`${this.namespace}/${Mutations.SET_INDEX}`, { indexName: this.name, data })
     );
   }
 }

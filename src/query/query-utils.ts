@@ -1,6 +1,6 @@
 import { get, isBoolean, isFunction, isString } from '../utils';
 import { ContextualQuery } from './contextual-query';
-import { Where } from '../types';
+import { Order, Where } from '../types';
 import { Load } from './load';
 import { Relationship } from '../relationships/relationhsip';
 
@@ -43,6 +43,19 @@ export const getComparator = <T>(item) => (where: Where<T>) => {
   }
 };
 
+export const getSortComparator = (orders: Order[]) => {
+  const l = orders.length;
+  const parsed: [string, number][] = orders.map((order) => [order.key, order.direction == 'asc' ? 1 : -1]);
+
+  return (a, b) => {
+    for (let i = 0; i < l; i++) {
+      const [key, dir] = parsed[i];
+      if (a[key] < b[key]) return -1 * dir;
+      if (a[key] > b[key]) return dir;
+    }
+    return 0;
+  };
+};
 const addToLoads = (key: string, relationship: Relationship, originalLoad: Load, newLoads: Load[]) => {
   if (originalLoad.has(key)) {
     newLoads.push(originalLoad.getLoad(key));

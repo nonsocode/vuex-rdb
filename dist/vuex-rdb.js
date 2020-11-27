@@ -894,7 +894,7 @@ var ContextualQuery = /** @class */ (function (_super) {
     _this.context = context;
     return _this;
   }
-  ContextualQuery.prototype.matchItem = function (item) {
+  ContextualQuery.prototype.matchesItem = function (item) {
     if (!this.whereAnds.length && !this.whereOrs.length) return true;
     var result = [];
     var comparator = getComparator(item);
@@ -902,8 +902,26 @@ var ContextualQuery = /** @class */ (function (_super) {
     result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
     return result.some(identity);
   };
+  ContextualQuery.prototype.matchesSomeItems = function (items) {
+    var _this = this;
+    return items.every(function (item) {
+      return _this.matchesItem(item);
+    });
+  };
+  ContextualQuery.prototype.matchesAllItems = function (items) {
+    var _this = this;
+    return items.some(function (item) {
+      return _this.matchesItem(item);
+    });
+  };
+  ContextualQuery.prototype._filter = function (items) {
+    var _this = this;
+    return items.filter(function (item) {
+      return _this.matchesItem(item);
+    });
+  };
   ContextualQuery.prototype.get = function () {
-    return this.matchItem(this.context);
+    return this.matchesItem(this.context);
   };
   return ContextualQuery;
 })(Query);
@@ -945,6 +963,22 @@ var getComparator = function (item) {
           return resolved == where.value;
       }
     }
+  };
+};
+var getSortComparator = function (orders) {
+  var l = orders.length;
+  var parsed = orders.map(function (order) {
+    return [order.key, order.direction == 'asc' ? 1 : -1];
+  });
+  return function (a, b) {
+    for (var i = 0; i < l; i++) {
+      var _a = __read(parsed[i], 2),
+        key = _a[0],
+        dir = _a[1];
+      if (a[key] < b[key]) return -1 * dir;
+      if (a[key] > b[key]) return dir;
+    }
+    return 0;
   };
 };
 var addToLoads = function (key, relationship, originalLoad, newLoads) {
@@ -1004,6 +1038,7 @@ var LoadQuery = /** @class */ (function (_super) {
     _this.load = load;
     _this.whereHasAnds = [];
     _this.whereHasOrs = [];
+    _this.orders = [];
     return _this;
   }
   LoadQuery.prototype.with = function () {
@@ -1022,7 +1057,40 @@ var LoadQuery = /** @class */ (function (_super) {
     return this;
   };
   LoadQuery.prototype.get = function () {
-    throw new Error('Method not implemented.');
+    throw new Error('Method not allowed');
+  };
+  LoadQuery.prototype.orderBy = function () {
+    var _a;
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+      args[_i] = arguments[_i];
+    }
+    switch (args.length) {
+      case 2:
+        var _b = __read(args, 2),
+          key = _b[0],
+          direction = _b[1];
+        this.orders.push({ key: key, direction: direction });
+        break;
+      case 1:
+        (_a = this.orders).push.apply(_a, __spread(args));
+        break;
+      default:
+        throw new Error('invalid OrderBy Arguments');
+    }
+    return this;
+  };
+  LoadQuery.prototype.apply = function (items) {
+    if (Array.isArray(items)) {
+      return this._sort(this._filter(items));
+    } else if (this.matchesItem(items)) {
+      return items;
+    }
+  };
+  LoadQuery.prototype._sort = function (items) {
+    if (!(this.orders.length && items.length)) return __spread(items);
+    var comparator = getSortComparator(this.orders);
+    return __spread(items).sort(comparator);
   };
   return LoadQuery;
 })(ContextualQuery);
@@ -1031,7 +1099,6 @@ var Load = /** @class */ (function () {
   function Load(relationship) {
     this.relationship = relationship;
     this.loads = new Map();
-    this.conditions = new Set();
   }
   Load.prototype.addLoad = function (name, load) {
     this.loads.set(name, load);
@@ -1042,25 +1109,9 @@ var Load = /** @class */ (function () {
   Load.prototype.has = function (name) {
     return this.loads.has(name);
   };
-  Load.prototype.addCondition = function (where) {
-    this.conditions.add(where);
-  };
   Load.prototype.apply = function (data) {
-    if (this.conditions.size == 0 || data == null) return data;
-    var conditions = __spread(this.conditions);
-    if (this.relationship instanceof ListLike) {
-      return data.filter(function (item) {
-        return conditions.some(function (condition) {
-          return condition.matchItem(item);
-        });
-      });
-    } else if (
-      conditions.some(function (condition) {
-        return condition.matchItem(data);
-      })
-    ) {
-      return data;
-    }
+    if (!this.query || data == null) return data;
+    return this.query.apply(data);
   };
   Load.prototype.getRelationship = function () {
     return this.relationship;
@@ -1084,11 +1135,10 @@ var Load = /** @class */ (function () {
         [_this]
       );
       loads.forEach(function (load) {
-        if (isFunction(val)) {
-          var query = new LoadQuery(load);
-          val.call(null, query);
-          load.addCondition(query);
-        }
+        var _a;
+        if (!isFunction(val)) return;
+        (_a = load.query) !== null && _a !== void 0 ? _a : (load.query = new LoadQuery(load));
+        val.call(null, load.query);
       });
     });
     return this;
@@ -1108,7 +1158,7 @@ var Load = /** @class */ (function () {
           firstArg.forEach(function (item) {
             return (rawLoads[item] = true);
           });
-        } else if (isString) {
+        } else if (isString(firstArg)) {
           rawLoads[firstArg] = true;
         } else {
           rawLoads = createObject(firstArg);
@@ -1138,41 +1188,49 @@ var ModelQuery = /** @class */ (function (_super) {
     for (var _i = 0; _i < arguments.length; _i++) {
       args[_i] = arguments[_i];
     }
+    if (this.load) return _super.prototype.with.call(this, args[0], args[1]);
     this.withArgs.push(args);
     return this;
   };
   ModelQuery.prototype.initLoad = function () {
     var _this = this;
-    if (!this.load) {
+    if (!this.load && this.withArgs.length) {
       this.load = new Load(
         new ItemRelationship(function () {
           return _this.schema;
         })
       );
+      this.withArgs.forEach(function (_a) {
+        var _b = __read(_a, 2),
+          first = _b[0],
+          second = _b[1];
+        _super.prototype.with.call(_this, first, second);
+      });
     }
     return this.load;
   };
   ModelQuery.prototype.get = function () {
     var _this = this;
     var items = this.schema.all();
-    items = items.filter(function (item) {
-      return _this.matchItem(item);
-    });
-    if (items.length) {
-      if (this.withArgs.length) {
-        this.initLoad();
-        this.withArgs.forEach(function (_a) {
-          var _b = __read(_a, 2),
-            first = _b[0],
-            second = _b[1];
-          _super.prototype.with.call(_this, first, second);
-        });
-      }
-      items = items.map(function (item) {
+    items = this.apply(items);
+    if (this.initLoad()) {
+      return items.map(function (item) {
         return _this.schema.find(getIdValue(item, _this.schema), { load: _this.load });
       });
     }
     return items;
+  };
+  ModelQuery.prototype.first = function () {
+    var _this = this;
+    var items = this.schema.all();
+    var first = items.find(function (item) {
+      return _this.matchesItem(item);
+    });
+    if (!first) return;
+    if (this.initLoad()) {
+      return this.schema.find(getIdValue(first, this.schema), { load: this.load });
+    }
+    return first;
   };
   return ModelQuery;
 })(LoadQuery);
@@ -1978,10 +2036,9 @@ var Watcher = /** @class */ (function () {
       function (state) {
         var e_1, _a, e_2, _b;
         var index = concerns.reduce(function (obj, _a) {
-          var _b = __read(_a, 2),
-            entityName = _b[0],
-            foreignKey = _b[1];
-          obj[entityName] = { foreignKey: foreignKey, data: createObject() };
+          var _b = __read(_a, 1),
+            entityName = _b[0];
+          obj[entityName] = createObject();
           return obj;
         }, createObject());
         var entries = Object.entries(state[_this.namespace].data[_this.schema.entityName]);
@@ -2004,10 +2061,10 @@ var Watcher = /** @class */ (function () {
                   entityName = _d[0],
                   foreignKey = _d[1];
                 if (value[foreignKey] == null) continue;
-                if (!index[entityName].data[value[foreignKey]]) {
-                  index[entityName].data[value[foreignKey]] = [];
+                if (!index[entityName][value[foreignKey]]) {
+                  index[entityName][value[foreignKey]] = [];
                 }
-                index[entityName].data[value[foreignKey]].push(relatedId);
+                index[entityName][value[foreignKey]].push(relatedId);
               }
             } catch (e_2_1) {
               e_2 = { error: e_2_1 };
@@ -2030,18 +2087,8 @@ var Watcher = /** @class */ (function () {
         }
         return index;
       },
-      function (rawIndex) {
-        _this.store.commit(_this.namespace + '/' + Mutations.SET_INDEX, {
-          indexName: _this.name,
-          data: Object.fromEntries(
-            Object.entries(rawIndex).map(function (_a) {
-              var _b = __read(_a, 2),
-                path = _b[0],
-                data = _b[1];
-              return [path, data.data];
-            })
-          ),
-        });
+      function (data) {
+        return _this.store.commit(_this.namespace + '/' + Mutations.SET_INDEX, { indexName: _this.name, data: data });
       }
     );
   };

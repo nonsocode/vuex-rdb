@@ -110,6 +110,13 @@ export interface LoadWhereFunction extends WhereFunction<Load> {
   (query: LoadQuery): boolean | void;
 }
 
+export type OrderDirection = 'desc' | 'asc';
+
+export interface Order {
+  direction: OrderDirection;
+  key: string;
+}
+
 export type FieldDefinitionOptions =
   | {
       default?: Factory;

@@ -9,7 +9,7 @@ export class ContextualQuery<T, P extends any = any> extends Query<T> {
     this.context = context;
   }
 
-  matchItem(item: any): boolean {
+  matchesItem(item: any): boolean {
     if (!this.whereAnds.length && !this.whereOrs.length) return true;
     const result: boolean[] = [];
     const comparator = getComparator(item);
@@ -18,7 +18,19 @@ export class ContextualQuery<T, P extends any = any> extends Query<T> {
     return result.some(identity);
   }
 
+  matchesSomeItems(items: any[]): boolean {
+    return items.every((item) => this.matchesItem(item));
+  }
+
+  matchesAllItems(items: any[]): boolean {
+    return items.some((item) => this.matchesItem(item));
+  }
+
+  _filter<R>(items: R[]): R[] {
+    return items.filter((item) => this.matchesItem(item));
+  }
+
   get(): P {
-    return this.matchItem(this.context) as any;
+    return this.matchesItem(this.context) as any;
   }
 }

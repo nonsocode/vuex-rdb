@@ -7,7 +7,7 @@ import { ListLike, Relationship } from '../relationships/relationhsip';
 
 export class Load<S extends Schema = Schema, T extends Relationship<S> = Relationship<S>> {
   loads: Map<string, Load> = new Map();
-  conditions: Set<ContextualQuery<T>> = new Set();
+  public query: LoadQuery;
 
   constructor(protected relationship: T) {}
 
@@ -23,20 +23,9 @@ export class Load<S extends Schema = Schema, T extends Relationship<S> = Relatio
     return this.loads.has(name);
   }
 
-  addCondition<P extends ContextualQuery<T>>(where: P) {
-    this.conditions.add(where);
-  }
-
   apply(data: RelationshipModel<T>): RelationshipModel<T> {
-    if (this.conditions.size == 0 || data == null) return data;
-    const conditions = [...this.conditions];
-    if (this.relationship instanceof ListLike) {
-      return (data as RelationshipModel<T>[]).filter((item) => {
-        return conditions.some((condition) => condition.matchItem(item));
-      }) as RelationshipModel<T>;
-    } else if (conditions.some((condition) => condition.matchItem(data))) {
-      return data;
-    }
+    if (!this.query || data == null) return data;
+    return this.query.apply(data as RelationshipModel<T>[]) as RelationshipModel<T>;
   }
 
   getRelationship(): T {
@@ -53,11 +42,9 @@ export class Load<S extends Schema = Schema, T extends Relationship<S> = Relatio
 
       const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this as Load]);
       loads.forEach((load) => {
-        if (isFunction(val)) {
-          const query = new LoadQuery(load);
-          val.call(null, query);
-          load.addCondition(query);
-        }
+        if (!isFunction(val)) return;
+        load.query ??= new LoadQuery(load);
+        val.call(null, load.query);
       });
     });
     return this;
@@ -70,7 +57,7 @@ export class Load<S extends Schema = Schema, T extends Relationship<S> = Relatio
       case 1:
         if (Array.isArray(firstArg)) {
           firstArg.forEach((item) => (rawLoads[item] = true));
-        } else if (isString) {
+        } else if (isString(firstArg)) {
           rawLoads[firstArg] = true;
         } else {
           rawLoads = createObject(firstArg);
