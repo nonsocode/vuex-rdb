@@ -1,6 +1,6 @@
 {
   "name": "vuex-rdb",
-  "version": "0.25.2",
+  "version": "0.25.3",
   "description": "An Active record database for vuex",
   "main": "dist/vuex-rdb.cjs.js",
   "typings": "types/index.d.ts",
