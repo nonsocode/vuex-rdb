@@ -1,15 +1,6 @@
 import Vue from 'vue';
 
 const identity = (k) => k;
-function mergeUnique(items, key) {
-  const keyFunction = isFunction(key) ? key : (item) => item[key];
-  const map = new Map();
-  items.forEach((item) => {
-    const key = keyFunction.call(null, item);
-    map.set(key, map.has(key) ? { ...map.get(key), ...item } : item);
-  });
-  return [...map.values()];
-}
 function isFunction(fn) {
   return fn instanceof Function;
 }
@@ -98,6 +89,82 @@ var Getters;
   Getters['GET_INDEX'] = 'getIndex';
 })(Getters || (Getters = {}));
 
+class Query {
+  constructor() {
+    this.whereAnds = [];
+    this.whereOrs = [];
+  }
+  where(...args) {
+    this.addWhere('and', ...args);
+    return this;
+  }
+  orWhere(...args) {
+    this.addWhere('or', ...args);
+    return this;
+  }
+  addWhere(type, ...args) {
+    const wheres = type == 'and' ? this.whereAnds : this.whereOrs;
+    switch (args.length) {
+      case 1:
+        if (!isFunction(args[0]) && !isBoolean(args[0])) {
+          throw new Error('Argument should be a function or boolean');
+        }
+        if (isBoolean(args[0])) {
+          wheres.push({
+            operand: args[0],
+          });
+        } else {
+          wheres.push({
+            key: args[0],
+          });
+        }
+        break;
+      case 2:
+        wheres.push({
+          key: args[0],
+          value: args[1],
+        });
+        break;
+      case 3:
+        wheres.push({
+          key: args[0],
+          operand: args[1],
+          value: args[2],
+        });
+        break;
+      default:
+        throw new Error('Illegal arguments supplied');
+    }
+  }
+}
+
+class ContextualQuery extends Query {
+  constructor(context) {
+    super();
+    this.context = context;
+  }
+  matchesItem(item) {
+    if (!this.whereAnds.length && !this.whereOrs.length) return true;
+    const result = [];
+    const comparator = getComparator(item);
+    result.push(!!(this.whereAnds.length && this.whereAnds.every(comparator)));
+    result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
+    return result.some(identity);
+  }
+  matchesSomeItems(items) {
+    return items.every((item) => this.matchesItem(item));
+  }
+  matchesAllItems(items) {
+    return items.some((item) => this.matchesItem(item));
+  }
+  _filter(items) {
+    return items.filter((item) => this.matchesItem(item));
+  }
+  get() {
+    return this.matchesItem(this.context);
+  }
+}
+
 /**
  * The idea is to have more definitive types of relationships
  *
@@ -130,9 +197,233 @@ class Relationship extends FieldDefinition {
 }
 class ListLike extends Relationship {}
 
+const getComparator = (item) => (where) => {
+  if (isFunction(where.key)) {
+    const query = new ContextualQuery(item);
+    let result = where.key.call(null, query, item);
+    if (typeof result == 'boolean') {
+      return result;
+    }
+    return query.get();
+  } else if (isString(where.key) && isFunction(where.value)) {
+    const value = get(where.key, item);
+    return !!where.value.call(null, value);
+  } else if (isBoolean(where.operand)) {
+    return where.operand;
+  } else if (isString(where.key) && !isFunction(where.value)) {
+    let resolved = get(where.key, item);
+    const isArray = Array.isArray(resolved);
+    resolved = isArray && where.operand != 'in' ? resolved.length : resolved;
+    switch (where.operand) {
+      case '!=':
+        return resolved != where.value;
+      case '>':
+        return resolved > where.value;
+      case '>=':
+        return resolved >= where.value;
+      case '<':
+        return resolved < where.value;
+      case '<=':
+        return resolved <= where.value;
+      case 'in':
+        return where.value.includes(resolved);
+      case '=':
+      default:
+        return resolved == where.value;
+    }
+  }
+};
+const getSortComparator = (orders) => {
+  const l = orders.length;
+  const parsed = orders.map((order) => [order.key, order.direction == 'asc' ? 1 : -1]);
+  return (a, b) => {
+    for (let i = 0; i < l; i++) {
+      const [key, dir] = parsed[i];
+      if (a[key] < b[key]) return -1 * dir;
+      if (a[key] > b[key]) return dir;
+    }
+    return 0;
+  };
+};
+const addToLoads = (key, relationship, originalLoad, newLoads) => {
+  if (originalLoad.has(key)) {
+    newLoads.push(originalLoad.getLoad(key));
+  } else {
+    const newLoad = new Load(relationship);
+    originalLoad.addLoad(key, newLoad);
+    newLoads.push(newLoad);
+  }
+};
+function getLoads(loads, key) {
+  const newLoads = [];
+  for (const load of loads) {
+    const schema = load.getRelationship().schema;
+    if (key === '*') {
+      Object.entries(schema._fields)
+        .filter(([, fieldDef]) => fieldDef instanceof Relationship)
+        .forEach(([key, value]) => {
+          addToLoads(key, value, load, newLoads);
+        });
+    } else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
+      const message = `[${key}] is not a relationship on ${schema.name}`;
+      console.warn(message);
+    } else {
+      addToLoads(key, schema._fields[key], load, newLoads);
+    }
+  }
+  return newLoads;
+}
+
+class LoadQuery extends ContextualQuery {
+  constructor(load) {
+    super();
+    this.load = load;
+    this.whereHasAnds = [];
+    this.whereHasOrs = [];
+    this.orders = [];
+  }
+  with(...args) {
+    switch (args.length) {
+      case 1:
+      case 2:
+        this.load.parse(args[0], args[1]);
+        break;
+      default:
+        throw new Error('Invalid arguments supplied');
+    }
+    return this;
+  }
+  get() {
+    throw new Error('Method not allowed');
+  }
+  orderBy(...args) {
+    switch (args.length) {
+      case 2:
+        const [key, direction] = args;
+        this.orders.push({ key, direction });
+        break;
+      case 1:
+        this.orders.push(...args);
+        break;
+      default:
+        throw new Error('invalid OrderBy Arguments');
+    }
+    return this;
+  }
+  apply(items) {
+    if (Array.isArray(items)) {
+      return this._sort(this._filter(items));
+    } else if (this.matchesItem(items)) {
+      return items;
+    }
+  }
+  _sort(items) {
+    if (!(this.orders.length && items.length)) return [...items];
+    const comparator = getSortComparator(this.orders);
+    return [...items].sort(comparator);
+  }
+}
+
+class Load {
+  constructor(relationship) {
+    this.relationship = relationship;
+    this.loads = new Map();
+  }
+  addLoad(name, load) {
+    this.loads.set(name, load);
+  }
+  getLoad(name) {
+    return this.loads.get(name);
+  }
+  has(name) {
+    return this.loads.has(name);
+  }
+  apply(data) {
+    if (!this.query || data == null) return data;
+    return this.query.apply(data);
+  }
+  getRelationship() {
+    return this.relationship;
+  }
+  parse(...args) {
+    const rawLoads = this.parseRawLoadArgs(...args);
+    Object.entries(rawLoads).forEach(([key, val]) => {
+      const segments = key.split('.');
+      const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this]);
+      loads.forEach((load) => {
+        var _a;
+        if (!isFunction(val)) return;
+        (_a = load.query) !== null && _a !== void 0 ? _a : (load.query = new LoadQuery(load));
+        val.call(null, load.query);
+      });
+    });
+    return this;
+  }
+  parseRawLoadArgs(...args) {
+    let rawLoads = createObject();
+    const [firstArg, secondArg] = args;
+    switch (args.length) {
+      case 1:
+        if (Array.isArray(firstArg)) {
+          firstArg.forEach((item) => (rawLoads[item] = true));
+        } else if (isString(firstArg)) {
+          rawLoads[firstArg] = true;
+        } else {
+          rawLoads = createObject(firstArg);
+        }
+        break;
+      case 2:
+        rawLoads[firstArg] = secondArg;
+        break;
+      default:
+        throw new Error('Invalid arguments supplied');
+    }
+    return rawLoads;
+  }
+}
+
 class ItemRelationship extends Relationship {}
 
-class ListRelationship extends ListLike {}
+class ModelQuery extends LoadQuery {
+  constructor(schema) {
+    super(null);
+    this.schema = schema;
+    this.withArgs = [];
+  }
+  with(...args) {
+    if (this.load) return super.with(args[0], args[1]);
+    this.withArgs.push(args);
+    return this;
+  }
+  initLoad() {
+    if (!this.load && this.withArgs.length) {
+      this.load = new Load(new ItemRelationship(() => this.schema));
+      this.withArgs.forEach(([first, second]) => {
+        super.with(first, second);
+      });
+    }
+    return this.load;
+  }
+  get() {
+    let items = this.schema.all();
+    items = this.apply(items);
+    if (this.initLoad()) {
+      return items.map((item) => {
+        return this.schema.find(item._id, { load: this.load });
+      });
+    }
+    return items;
+  }
+  first() {
+    let items = this.schema.all();
+    const first = items.find((item) => this.matchesItem(item));
+    if (!first) return;
+    if (this.initLoad()) {
+      return this.schema.find(first._id, { load: this.load });
+    }
+    return first;
+  }
+}
 
 class BelongsToRelationship extends Relationship {
   constructor(schemaFactory, parentSchemaFactory, foreignKey) {
@@ -141,12 +432,244 @@ class BelongsToRelationship extends Relationship {
   }
 }
 
+function BelongsTo(factory, foreignKey) {
+  return (target, propName) => {
+    const constructor = target.constructor;
+    if (constructor._fields == null) {
+      constructor._fields = createObject();
+    }
+    if (propName in constructor._fields) {
+      return;
+    }
+    constructor._fields[propName] = BelongsTo.define(factory, () => constructor, foreignKey);
+  };
+}
+BelongsTo.define = function (factory, parentFactory, foreignKey) {
+  return new BelongsToRelationship(factory, parentFactory, foreignKey);
+};
+
 class HasManyRelationship extends ListLike {
   constructor(schemaFactory, parentSchemaFactory, foreignKey) {
     super(schemaFactory, parentSchemaFactory);
     this.foreignKey = foreignKey;
   }
 }
+
+function HasMany(factory, foreignKey) {
+  return (target, propName) => {
+    const constructor = target.constructor;
+    if (constructor._fields == null) {
+      constructor._fields = createObject();
+    }
+    if (propName in constructor._fields) {
+      return;
+    }
+    constructor._fields[propName] = HasMany.define(factory, () => constructor, foreignKey);
+  };
+}
+HasMany.define = function (factory, parentFactory, foreignKey) {
+  return new HasManyRelationship(factory, parentFactory, foreignKey);
+};
+
+class Model {
+  constructor(data, opts) {
+    /**
+     * Indicates wether this model is connected to the store
+     */
+    this._connected = false;
+    Object.defineProperties(this, {
+      _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
+      _connected: {
+        value: !!(opts === null || opts === void 0 ? void 0 : opts.connected),
+        enumerable: false,
+        configurable: true,
+      },
+      _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
+    });
+    const { _fields } = getConstructor(this);
+    Object.keys(_fields).forEach((key) => {
+      createAccessor(this, key);
+    });
+    if (!this._connected) {
+      cacheDefaults(this, data || {});
+      Vue.observable(this._caches);
+    }
+    // No need for proxy
+    // return new Proxy<Model>(this, {
+    // set: proxySetter
+    // });
+  }
+  get _id() {
+    return getIdValue(this, getConstructor(this));
+  }
+  /**
+   * Convert to JSON
+   * @internal
+   */
+  toJSON(parentkey, parentNode) {
+    const constructor = getConstructor(this);
+    const json = {};
+    for (let [key, val] of Object.entries(this)) {
+      if (key in constructor._fields) {
+        if (constructor._fields[key] instanceof Relationship) {
+          const node = { item: this, parentNode };
+          if (val == null) {
+            json[key] = val;
+          } else if (Array.isArray(val)) {
+            let items = [];
+            for (let item of val) {
+              items.push(
+                item.toJSON ? (hasSeen(item, node) ? getRecursionMessage(item) : item.toJSON(key, node)) : item
+              );
+            }
+            json[key] = items;
+          } else {
+            json[key] = val.toJSON ? (hasSeen(val, node) ? getRecursionMessage(val) : val.toJSON(key, node)) : val;
+          }
+        } else {
+          json[key] = val;
+        }
+      }
+    }
+    return json;
+  }
+  /**
+   * Converts the model to a plain javascript object.
+   */
+  $toObject(allProps = false) {
+    return modelToObject(this, getConstructor(this), allProps);
+  }
+  /**
+   * Update the properties of the model with the given data. You don't need to pass the full model.
+   * You can pass only the props you want to update, You can also pass related models or model-like data
+   */
+  async $update(data = {}) {
+    const constructor = getConstructor(this);
+    return constructor._store
+      .dispatch(`${constructor._namespace}/update`, {
+        id: this._id,
+        data,
+        schema: constructor,
+      })
+      .then((id) => {
+        this._connected = true;
+        return id;
+      });
+  }
+  /**
+   * Useful when a model is created using `new Model()`.
+   * You can assign properties to the model like you would any other javascript
+   * object but the new values won't be saved to the vuex store until this method is called;
+   *
+   * If none model-like data has been assigned to the relationships on `this` model, calling save would
+   * transform them to actual models
+   */
+  async $save() {
+    return new Promise((resolve) => {
+      const constructor = getConstructor(this);
+      if (this._connected) {
+        console.warn('No need calling $save. This entity is already connected to the Vuex store');
+      } else {
+        const item = cacheNames.reduce((acc, name) => {
+          return { ...acc, ...this._caches[name] };
+        }, {});
+        resolve(
+          constructor._store
+            .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
+            .then((res) => {
+              this._connected = true;
+              return res;
+            })
+        );
+      }
+    });
+  }
+  /**
+   * This is an alternative to the `Field(), List(), Item(), BelongsTo() and HasMany()` decorators.
+   *
+   * Specify the different fields of the class
+   * in an object that contains the field names as it's keys
+   * e.g
+   * ```javascript
+   * class User extends model {
+   *   static get fields() {
+   *     return {
+   *       id: this.$field(),
+   *       name: this.$field(),
+   *       posts: this.$hasMany(() => Post)
+   *     }
+   *   }
+   * }
+   * ```
+   * @deprecated
+   */
+  static get fields() {
+    return {};
+  }
+  /**
+   * Find a model by the specified identifier
+   */
+  static find(id, opts = {}) {
+    return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
+  }
+  /**
+   * Find all items that match the specified ids
+   *
+   */
+  static findByIds(ids, opts = {}) {
+    return this._store.getters[`${this._namespace}/${Getters.FIND_BY_IDS}`](ids, this, opts);
+  }
+  /**
+   * Get all items of this type from the Database
+   */
+  static all(opts = {}) {
+    return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
+  }
+  /**
+   * Add the passed item to the database. It should match this model's schema.
+   *
+   * It returns a promise of the inserted entity's id
+   */
+  static add(item) {
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items: item, schema: this });
+  }
+  /**
+   * Add the passed items to the database. It should match this model's schema.
+   *
+   * It returns a promise of an array of ids for the inserted entities.
+   */
+  static addAll(items) {
+    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
+  }
+  static $item(factory) {
+    return Item.define(factory, () => this);
+  }
+  static $list(factory) {
+    return List.define(factory, () => this);
+  }
+  static $field(options = {}) {
+    return Field.define(options);
+  }
+  static $belongsTo(factory, foreignKey) {
+    return BelongsTo.define(factory, () => this, foreignKey);
+  }
+  static $hasMany(factory, foreignKey) {
+    return HasMany.define(factory, () => this, foreignKey);
+  }
+  static query(fn) {
+    const query = new ModelQuery(this);
+    fn && fn(query);
+    return query;
+  }
+}
+/**
+ * The identifier for the model. It also accepts an id resolver function that
+ * receives a model-like param as input and returns the id;
+ * @default 'id'
+ */
+Model.id = 'id';
+
+class ListRelationship extends ListLike {}
 
 const listLike = (entityDef) => Array.isArray(entityDef) || entityDef instanceof ListLike;
 const getRelationshipSchema = (entityDef) =>
@@ -228,50 +751,6 @@ function normalize(raw, entityDef, visited = new Map(), entities = new Map(), de
     result,
     entities,
   };
-}
-
-function getConstructor(model) {
-  return model.constructor;
-}
-function validateEntry(data, relationship) {
-  const schema = relationship.schema;
-  return relationship instanceof ListLike
-    ? data.every((item) => getIdValue(item, schema) != null)
-    : getIdValue(data, schema) != null;
-}
-function normalizeAndStore(store, data, entityDef) {
-  const { entities, result } = normalize(data, entityDef);
-  for (const [schema, items] of entities.entries()) {
-    store.commit(`${schema._namespace}/${Mutations.ADD_ALL}`, { schema, items }, { root: true });
-  }
-  return result;
-}
-function modelToObject(model, schema, allProps, seen = new Map()) {
-  const object = {};
-  seen.set(model, object);
-  Object.entries(model).reduce((acc, [key, value]) => {
-    if (key in schema._fields) {
-      const fieldDef = schema._fields[key];
-      if (fieldDef instanceof Relationship) {
-        const relatedSchema = fieldDef.schema;
-        if (value == null) {
-          acc[key] = null;
-        } else if (Array.isArray(value) && fieldDef instanceof ListLike) {
-          let items = [];
-          for (const item of value) {
-            items.push(seen.has(item) ? seen.get(item) : modelToObject(item, relatedSchema, allProps, seen));
-          }
-          acc[key] = items;
-        } else {
-          acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedSchema, allProps, seen);
-        }
-      } else {
-        acc[key] = value;
-      }
-    }
-    return acc;
-  }, object);
-  return object;
 }
 
 /*! *****************************************************************************
@@ -429,339 +908,9 @@ __decorate([validate()], ModelArray.prototype, 'unshift', null);
 __decorate([validateSplice()], ModelArray.prototype, 'splice', null);
 window.ModelArray = ModelArray;
 
-class Query {
-  constructor() {
-    this.whereAnds = [];
-    this.whereOrs = [];
-  }
-  where(...args) {
-    this.addWhere('and', ...args);
-    return this;
-  }
-  orWhere(...args) {
-    this.addWhere('or', ...args);
-    return this;
-  }
-  addWhere(type, ...args) {
-    const wheres = type == 'and' ? this.whereAnds : this.whereOrs;
-    switch (args.length) {
-      case 1:
-        if (!isFunction(args[0]) && !isBoolean(args[0])) {
-          throw new Error('Argument should be a function or boolean');
-        }
-        if (isBoolean(args[0])) {
-          wheres.push({
-            operand: args[0],
-          });
-        } else {
-          wheres.push({
-            key: args[0],
-          });
-        }
-        break;
-      case 2:
-        wheres.push({
-          key: args[0],
-          value: args[1],
-        });
-        break;
-      case 3:
-        wheres.push({
-          key: args[0],
-          operand: args[1],
-          value: args[2],
-        });
-        break;
-      default:
-        throw new Error('Illegal arguments supplied');
-    }
-  }
+function getConstructor(model) {
+  return model.constructor;
 }
-
-class ContextualQuery extends Query {
-  constructor(context) {
-    super();
-    this.context = context;
-  }
-  matchesItem(item) {
-    if (!this.whereAnds.length && !this.whereOrs.length) return true;
-    const result = [];
-    const comparator = getComparator(item);
-    result.push(!!(this.whereAnds.length && this.whereAnds.every(comparator)));
-    result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
-    return result.some(identity);
-  }
-  matchesSomeItems(items) {
-    return items.every((item) => this.matchesItem(item));
-  }
-  matchesAllItems(items) {
-    return items.some((item) => this.matchesItem(item));
-  }
-  _filter(items) {
-    return items.filter((item) => this.matchesItem(item));
-  }
-  get() {
-    return this.matchesItem(this.context);
-  }
-}
-
-const getComparator = (item) => (where) => {
-  if (isFunction(where.key)) {
-    const query = new ContextualQuery(item);
-    let result = where.key.call(null, query, item);
-    if (typeof result == 'boolean') {
-      return result;
-    }
-    return query.get();
-  } else if (isString(where.key) && isFunction(where.value)) {
-    const value = get(where.key, item);
-    return !!where.value.call(null, value);
-  } else if (isBoolean(where.operand)) {
-    return where.operand;
-  } else if (isString(where.key) && !isFunction(where.value)) {
-    let resolved = get(where.key, item);
-    const isArray = Array.isArray(resolved);
-    resolved = isArray && where.operand != 'in' ? resolved.length : resolved;
-    switch (where.operand) {
-      case '!=':
-        return resolved != where.value;
-      case '>':
-        return resolved > where.value;
-      case '>=':
-        return resolved >= where.value;
-      case '<':
-        return resolved < where.value;
-      case '<=':
-        return resolved <= where.value;
-      case 'in':
-        return where.value.includes(resolved);
-      case '=':
-      default:
-        return resolved == where.value;
-    }
-  }
-};
-const getSortComparator = (orders) => {
-  const l = orders.length;
-  const parsed = orders.map((order) => [order.key, order.direction == 'asc' ? 1 : -1]);
-  return (a, b) => {
-    for (let i = 0; i < l; i++) {
-      const [key, dir] = parsed[i];
-      if (a[key] < b[key]) return -1 * dir;
-      if (a[key] > b[key]) return dir;
-    }
-    return 0;
-  };
-};
-const addToLoads = (key, relationship, originalLoad, newLoads) => {
-  if (originalLoad.has(key)) {
-    newLoads.push(originalLoad.getLoad(key));
-  } else {
-    const newLoad = new Load(relationship);
-    originalLoad.addLoad(key, newLoad);
-    newLoads.push(newLoad);
-  }
-};
-function getLoads(loads, key) {
-  const newLoads = [];
-  for (const load of loads) {
-    const schema = load.getRelationship().schema;
-    if (key === '*') {
-      Object.entries(schema._fields)
-        .filter(([, fieldDef]) => fieldDef instanceof Relationship)
-        .forEach(([key, value]) => {
-          addToLoads(key, value, load, newLoads);
-        });
-    } else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
-      console.warn(`[${key}] is not a relationship`);
-    } else {
-      addToLoads(key, schema._fields[key], load, newLoads);
-    }
-  }
-  return newLoads;
-}
-
-class LoadQuery extends ContextualQuery {
-  constructor(load) {
-    super();
-    this.load = load;
-    this.whereHasAnds = [];
-    this.whereHasOrs = [];
-    this.orders = [];
-  }
-  with(...args) {
-    switch (args.length) {
-      case 1:
-      case 2:
-        this.load.parse(args[0], args[1]);
-        break;
-      default:
-        throw new Error('Invalid arguments supplied');
-    }
-    return this;
-  }
-  get() {
-    throw new Error('Method not allowed');
-  }
-  orderBy(...args) {
-    switch (args.length) {
-      case 2:
-        const [key, direction] = args;
-        this.orders.push({ key, direction });
-        break;
-      case 1:
-        this.orders.push(...args);
-        break;
-      default:
-        throw new Error('invalid OrderBy Arguments');
-    }
-    return this;
-  }
-  apply(items) {
-    if (Array.isArray(items)) {
-      return this._sort(this._filter(items));
-    } else if (this.matchesItem(items)) {
-      return items;
-    }
-  }
-  _sort(items) {
-    if (!(this.orders.length && items.length)) return [...items];
-    const comparator = getSortComparator(this.orders);
-    return [...items].sort(comparator);
-  }
-}
-
-class Load {
-  constructor(relationship) {
-    this.relationship = relationship;
-    this.loads = new Map();
-  }
-  addLoad(name, load) {
-    this.loads.set(name, load);
-  }
-  getLoad(name) {
-    return this.loads.get(name);
-  }
-  has(name) {
-    return this.loads.has(name);
-  }
-  apply(data) {
-    if (!this.query || data == null) return data;
-    return this.query.apply(data);
-  }
-  getRelationship() {
-    return this.relationship;
-  }
-  parse(...args) {
-    const rawLoads = this.parseRawLoadArgs(...args);
-    Object.entries(rawLoads).forEach(([key, val]) => {
-      const segments = key.split('.');
-      const loads = segments.reduce((loads, segment) => getLoads(loads, segment), [this]);
-      loads.forEach((load) => {
-        var _a;
-        if (!isFunction(val)) return;
-        (_a = load.query) !== null && _a !== void 0 ? _a : (load.query = new LoadQuery(load));
-        val.call(null, load.query);
-      });
-    });
-    return this;
-  }
-  parseRawLoadArgs(...args) {
-    let rawLoads = createObject();
-    const [firstArg, secondArg] = args;
-    switch (args.length) {
-      case 1:
-        if (Array.isArray(firstArg)) {
-          firstArg.forEach((item) => (rawLoads[item] = true));
-        } else if (isString(firstArg)) {
-          rawLoads[firstArg] = true;
-        } else {
-          rawLoads = createObject(firstArg);
-        }
-        break;
-      case 2:
-        rawLoads[firstArg] = secondArg;
-        break;
-      default:
-        throw new Error('Invalid arguments supplied');
-    }
-    return rawLoads;
-  }
-}
-
-class ModelQuery extends LoadQuery {
-  constructor(schema) {
-    super(null);
-    this.schema = schema;
-    this.withArgs = [];
-  }
-  with(...args) {
-    if (this.load) return super.with(args[0], args[1]);
-    this.withArgs.push(args);
-    return this;
-  }
-  initLoad() {
-    if (!this.load && this.withArgs.length) {
-      this.load = new Load(new ItemRelationship(() => this.schema));
-      this.withArgs.forEach(([first, second]) => {
-        super.with(first, second);
-      });
-    }
-    return this.load;
-  }
-  get() {
-    let items = this.schema.all();
-    items = this.apply(items);
-    if (this.initLoad()) {
-      return items.map((item) => {
-        return this.schema.find(getIdValue(item, this.schema), { load: this.load });
-      });
-    }
-    return items;
-  }
-  first() {
-    let items = this.schema.all();
-    const first = items.find((item) => this.matchesItem(item));
-    if (!first) return;
-    if (this.initLoad()) {
-      return this.schema.find(getIdValue(first, this.schema), { load: this.load });
-    }
-    return first;
-  }
-}
-
-function BelongsTo(factory, foreignKey) {
-  return (target, propName) => {
-    const constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = BelongsTo.define(factory, () => constructor, foreignKey);
-  };
-}
-BelongsTo.define = function (factory, parentFactory, foreignKey) {
-  return new BelongsToRelationship(factory, parentFactory, foreignKey);
-};
-
-function HasMany(factory, foreignKey) {
-  return (target, propName) => {
-    const constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = HasMany.define(factory, () => constructor, foreignKey);
-  };
-}
-HasMany.define = function (factory, parentFactory, foreignKey) {
-  return new HasManyRelationship(factory, parentFactory, foreignKey);
-};
-
 const cacheNames = ['data', 'relationship'];
 const getCacheName = (isRelationship) => cacheNames[isRelationship ? 1 : 0];
 const parseIfLiteral = (id, schema) => {
@@ -863,208 +1012,53 @@ function createAccessor(target, key) {
 function getIdValue(model, schema) {
   return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
-class Model {
-  constructor(data, opts) {
-    /**
-     * Indicates wether this model is connected to the store
-     */
-    this._connected = false;
-    const id = data ? getIdValue(data, getConstructor(this)) : null;
-    Object.defineProperties(this, {
-      _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
-      _connected: {
-        value: !!(opts === null || opts === void 0 ? void 0 : opts.connected),
-        enumerable: false,
-        configurable: true,
-      },
-      _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
-      _id: { value: id, enumerable: false, configurable: false, writable: true },
-    });
-    const { _fields } = getConstructor(this);
-    Object.keys(_fields).forEach((key) => {
-      createAccessor(this, key);
-    });
-    if (!this._connected) {
-      cacheDefaults(this, data || {});
-      Vue.observable(this._caches);
-    }
-    // No need for proxy
-    // return new Proxy<Model>(this, {
-    // set: proxySetter
-    // });
-  }
-  /**
-   * Convert to JSON
-   * @internal
-   */
-  toJSON(parentkey, parentNode) {
-    const constructor = getConstructor(this);
-    return Object.entries(this).reduce((acc, [key, val]) => {
-      if (key in constructor._fields) {
-        if (constructor._fields[key] instanceof Relationship) {
-          const node = { item: this, parentNode };
-          if (val == null) {
-            acc[key] = val;
-          } else if (Array.isArray(val)) {
-            let items = [];
-            for (let item of val) {
-              items.push(
-                item.toJSON ? (hasSeen(item, node) ? '>>> Recursive item <<<' : item.toJSON(key, node)) : item
-              );
-            }
-            acc[key] = items;
-          } else {
-            acc[key] = val.toJSON ? (hasSeen(val, node) ? '>>> Recursive item <<<' : val.toJSON(key, node)) : val;
-          }
-        } else {
-          acc[key] = val;
-        }
-      }
-      return acc;
-    }, {});
-  }
-  /**
-   * Converts the model to a plain javascript object.
-   */
-  $toObject(allProps = false) {
-    return modelToObject(this, getConstructor(this), allProps);
-  }
-  /**
-   * Update the properties of the model with the given data. You don't need to pass the full model.
-   * You can pass only the props you want to update, You can also pass related models or model-like data
-   */
-  async $update(data = {}) {
-    const constructor = getConstructor(this);
-    return constructor._store
-      .dispatch(`${constructor._namespace}/update`, {
-        id: this._id,
-        data,
-        schema: constructor,
-      })
-      .then((id) => {
-        this._connected = true;
-        return id;
-      });
-  }
-  /**
-   * Useful when a model is created using `new Model()`.
-   * You can assign properties to the model like you would any other javascript
-   * object but the new values won't be saved to the vuex store until this method is called;
-   *
-   * If none model-like data has been assigned to the relationships on `this` model, calling save would
-   * transform them to actual models
-   */
-  async $save() {
-    return new Promise((resolve) => {
-      const constructor = getConstructor(this);
-      if (this._connected) {
-        console.warn('No need calling $save');
-      } else {
-        const item = cacheNames.reduce((acc, name) => {
-          return { ...acc, ...this._caches[name] };
-        }, {});
-        resolve(
-          constructor._store
-            .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
-            .then((res) => {
-              this._id = res;
-              this._connected = true;
-              return res;
-            })
-        );
-      }
-    });
-  }
-  async $addRelated(related, data) {
-    const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD_RELATED}`, {
-      id: this._id,
-      related,
-      data,
-      schema: constructor,
-    });
-  }
-  async $removeRelated(related, relatedId) {
-    const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._namespace}/${Actions.REMOVE_RELATED}`, {
-      id: this._id,
-      related,
-      relatedId,
-      schema: constructor,
-    });
-  }
-  /**
-   * This is an alternative to the `Field()` decorator.
-   *
-   * Specify the different fields of the class
-   * in an array or an object that contains the field names as it's keys
-   * @deprecated
-   */
-  static get fields() {
-    return {};
-  }
-  /**
-   * Find a model by the specified identifier
-   */
-  static find(id, opts = {}) {
-    return this._store.getters[`${this._namespace}/${Getters.FIND}`](id, this, opts);
-  }
-  /**
-   * Find all items that match the specified ids
-   *
-   */
-  static findByIds(ids, opts = {}) {
-    return this._store.getters[`${this._namespace}/${Getters.FIND_BY_IDS}`](ids, this, opts);
-  }
-  /**
-   * Get all items of this type from the Database
-   */
-  static all(opts = {}) {
-    return this._store.getters[`${this._namespace}/${Getters.ALL}`](this, opts);
-  }
-  /**
-   * Add the passed item to the database. It should match this model's schema.
-   *
-   * It returns a promise of the inserted entity's id
-   */
-  static add(item) {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items: item, schema: this });
-  }
-  /**
-   * Add the passed items to the database. It should match this model's schema.
-   *
-   * It returns a promise of an array of ids for the inserted entities.
-   */
-  static addAll(items) {
-    return this._store.dispatch(`${this._namespace}/${Actions.ADD}`, { items, schema: [this] });
-  }
-  static $item(factory) {
-    return Item.define(factory, () => this);
-  }
-  static $list(factory) {
-    return List.define(factory, () => this);
-  }
-  static $field(options = {}) {
-    return Field.define(options);
-  }
-  static $belongsTo(factory, foreignKey) {
-    return BelongsTo.define(factory, () => this, foreignKey);
-  }
-  static $hasMany(factory, foreignKey) {
-    return HasMany.define(factory, () => this, foreignKey);
-  }
-  static query(fn) {
-    const query = new ModelQuery(this);
-    fn && fn(query);
-    return query;
-  }
+function validateEntry(data, relationship) {
+  const schema = relationship.schema;
+  return relationship instanceof ListLike
+    ? data.every((item) => getIdValue(item, schema) != null)
+    : getIdValue(data, schema) != null;
 }
-/**
- * The identifier for the model. It also accepts an id resolver function that
- * receives a model-like param as input and returns the id;
- * @default 'id'
- */
-Model.id = 'id';
+function normalizeAndStore(store, data, entityDef) {
+  const { entities, result } = normalize(data, entityDef);
+  for (const [schema, items] of entities.entries()) {
+    store.commit(`${schema._namespace}/${Mutations.ADD_ALL}`, { schema, items }, { root: true });
+  }
+  return result;
+}
+function modelToObject(model, schema, allProps, seen = new Map()) {
+  const object = {};
+  seen.set(model, object);
+  Object.entries(model).reduce((acc, [key, value]) => {
+    if (key in schema._fields) {
+      const fieldDef = schema._fields[key];
+      if (fieldDef instanceof Relationship) {
+        const relatedSchema = fieldDef.schema;
+        if (value == null) {
+          acc[key] = null;
+        } else if (Array.isArray(value) && fieldDef instanceof ListLike) {
+          let items = [];
+          for (const item of value) {
+            items.push(seen.has(item) ? seen.get(item) : modelToObject(item, relatedSchema, allProps, seen));
+          }
+          acc[key] = items;
+        } else {
+          acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedSchema, allProps, seen);
+        }
+      } else {
+        acc[key] = value;
+      }
+    }
+    return acc;
+  }, object);
+  return object;
+}
+function getRecursionMessage(item) {
+  let message = '>>> Recursive item ';
+  if (item instanceof Model) {
+    message += `[${item.constructor.name}: ${item._id}] `;
+  }
+  return (message += '<<<');
+}
 
 function createModule(store, schemas, index) {
   return {
@@ -1109,64 +1103,6 @@ function createModule(store, schemas, index) {
     actions: {
       [Actions.ADD](ctx, { items, schema }) {
         return normalizeAndStore(store, items, schema);
-      },
-      [Actions.ADD_RELATED]({ dispatch, getters }, { id, related, data, schema }) {
-        if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
-          throw new Error(`Unknown Relationship: [${related}]`);
-        }
-        const item = getters[Getters.FIND](id, schema);
-        if (!item) {
-          throw new Error("The item doesn't exist");
-        }
-        const relationshipDef = schema._fields[related];
-        if (relationshipDef instanceof ListLike) {
-          const items = (Array.isArray(data) ? data : [data]).filter(identity);
-          data = item[related] || [];
-          data = mergeUnique(data.concat(items), (item) => getIdValue(item, relationshipDef.schema));
-        }
-        return dispatch(Actions.UPDATE, {
-          id,
-          data: {
-            [related]: data,
-          },
-          schema,
-        });
-      },
-      [Actions.REMOVE_RELATED]({ dispatch, getters }, { id, related, relatedId, schema }) {
-        if (!(related in schema._fields && schema._fields[related] instanceof Relationship)) {
-          throw new Error(`Unknown Relationship: [${related}]`);
-        }
-        const ids = Array.isArray(id) ? id : [id];
-        const items = getters[Getters.FIND_BY_IDS](ids, schema);
-        if (items.length === 0) {
-          console.warn('Invalid id Provided');
-          return;
-        }
-        const relationshipDef = schema._fields[related];
-        const relatedSchema = relationshipDef.schema;
-        if (relationshipDef instanceof ListLike) {
-          const relatedIds = relatedId ? (Array.isArray(relatedId) ? relatedId : [relatedId]) : [];
-          return Promise.all(
-            items.map((item) => {
-              const relatedItems = relatedIds.length ? item[related] || [] : [];
-              return dispatch(Actions.UPDATE, {
-                id,
-                data: {
-                  [related]: relatedItems.filter((item) => !relatedIds.includes(getIdValue(item, relatedSchema))),
-                },
-                schema,
-              });
-            })
-          );
-        } else {
-          return dispatch(Actions.UPDATE, {
-            id,
-            data: {
-              [related]: null,
-            },
-            schema,
-          });
-        }
       },
       [Actions.UPDATE]({ getters, dispatch }, { id, data, schema }) {
         if (id === null || id === undefined) {

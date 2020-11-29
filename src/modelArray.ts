@@ -1,5 +1,5 @@
-import { getIdValue, Model } from './model';
-import { getConstructor, normalizeAndStore } from './modelUtils';
+import { Model } from './model';
+import { getConstructor, getIdValue, normalizeAndStore } from './modelUtils';
 import { Getters, Mutations, Schema } from './types';
 import { Store } from 'vuex';
 import { Relationship } from './relationships/relationhsip';

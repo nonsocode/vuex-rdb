@@ -8,7 +8,6 @@ import { ItemRelationship } from './relationships/item';
 import { BelongsToRelationship } from './relationships/belongs-to';
 import { HasManyRelationship } from './relationships/HasMany';
 import { Index } from './relationships/indices';
-export declare function getIdValue<T>(model: T, schema: Schema): IdValue;
 export declare class Model<T extends any = any> {
   /**
    * The namespace in the vuex store
@@ -55,11 +54,6 @@ export declare class Model<T extends any = any> {
    * Indicates wether this model is connected to the store
    */
   _connected: boolean;
-  /**
-   * The resolved id of this model
-   * @internal
-   */
-  _id: any;
   constructor(
     data?: Partial<T>,
     opts?: {
@@ -67,6 +61,7 @@ export declare class Model<T extends any = any> {
       connected?: boolean;
     }
   );
+  get _id(): IdValue;
   /**
    * Convert to JSON
    * @internal
@@ -91,30 +86,22 @@ export declare class Model<T extends any = any> {
    */
   $save(): Promise<number | string>;
   /**
-   * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
-   * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
-   * `this` model
-   *
-   * @deprecated
-   */
-  $addRelated(related: string, data: Object): Promise<IdValue>;
-  $addRelated(related: string, items: any[]): Promise<IdValue>;
-  /**
-   * Remove the specified entity as a relationship of `this` model
-   *
-   * if the `related` is a non list relationship, it's deleted from `this` model.
-   *
-   * if it's a list relationship, you can specify an identifier or a list of identifiers of the related
-   * entities to remove as a second parameter or leave blank to remove all items
-   * @deprecated
-   */
-  $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
-  $removeRelated(related: string, ids?: IdValue[]): Promise<IdValue>;
-  /**
-   * This is an alternative to the `Field()` decorator.
+   * This is an alternative to the `Field(), List(), Item(), BelongsTo() and HasMany()` decorators.
    *
    * Specify the different fields of the class
-   * in an array or an object that contains the field names as it's keys
+   * in an object that contains the field names as it's keys
+   * e.g
+   * ```javascript
+   * class User extends model {
+   *   static get fields() {
+   *     return {
+   *       id: this.$field(),
+   *       name: this.$field(),
+   *       posts: this.$hasMany(() => Post)
+   *     }
+   *   }
+   * }
+   * ```
    * @deprecated
    */
   static get fields(): Record<string, FieldDefinition>;

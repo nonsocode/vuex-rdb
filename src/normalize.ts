@@ -1,5 +1,4 @@
 import { Model } from 'src';
-import { getIdValue } from './model';
 import { IdValue, MixedDefinition, Normalized, Schema } from './types';
 import { createObject } from './utils';
 import { ListLike, Relationship } from './relationships/relationhsip';
@@ -7,6 +6,7 @@ import { ItemRelationship } from './relationships/item';
 import { ListRelationship } from './relationships/list';
 import { BelongsToRelationship } from './relationships/belongs-to';
 import { HasManyRelationship } from './relationships/HasMany';
+import { getIdValue } from './modelUtils';
 
 const listLike = (entityDef: MixedDefinition) => Array.isArray(entityDef) || entityDef instanceof ListLike;
 const getRelationshipSchema = (entityDef: MixedDefinition): Schema =>

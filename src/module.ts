@@ -1,10 +1,10 @@
 import Vue from 'vue';
 import { createObject, identity, isFunction, mergeUnique } from './utils';
-import { getIdValue, Model } from './model';
+import { Model } from './model';
 import { ModelState, Mutations, Actions, Getters, Cache, Schema, FindOptions, IdValue, Indices } from './types';
 import { Module, Store } from 'vuex';
 
-import { normalizeAndStore } from './modelUtils';
+import { getIdValue, normalizeAndStore } from './modelUtils';
 import { Load } from './query/load';
 import { ItemRelationship } from './relationships/item';
 import { ListLike, Relationship } from './relationships/relationhsip';
