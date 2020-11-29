@@ -8,7 +8,7 @@ export abstract class Query<T> {
   protected constructor() {}
 
   where(key: string, operand: WhereOperand, value: WhereValue): this;
-  where(key: string, value: WhereValue | UniFunction<any, boolean>): this;
+  where(key: string, value: UniFunction<any, boolean> | WhereValue): this;
   where(key: WhereFunction<T>): this;
   where(key: boolean): this;
   where(...args) {
@@ -17,7 +17,7 @@ export abstract class Query<T> {
   }
 
   orWhere(key: string, operand: WhereOperand, value: WhereValue): this;
-  orWhere(key: string, value: WhereValue | UniFunction<any, boolean>): this;
+  orWhere(key: string, value: UniFunction<any, boolean> | WhereValue): this;
   orWhere(key: WhereFunction<T>): this;
   orWhere(key: boolean): this;
   orWhere(...args) {

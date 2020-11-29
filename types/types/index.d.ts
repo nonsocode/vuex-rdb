@@ -78,19 +78,19 @@ export declare type NodeTree = {
   parentNode?: NodeTree;
   item: any;
 };
-export declare type WhereValue = string | number | boolean | object | any[];
+export declare type WhereValue = string | number | boolean | any[];
 export declare type WhereKey<T> = string | WhereFunction<T>;
 export declare type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean | 'in';
 export declare type WhereType = 'and' | 'or';
 export interface Where<T> {
   key?: WhereKey<T>;
   operand?: WhereOperand;
-  value?: WhereFunction<T> | WhereValue | UniFunction<any, boolean>;
+  value?: WhereFunction<T> | UniFunction<any, boolean> | WhereValue;
 }
 export interface WhereFunction<T> {
   (query: Query<T>, item?: any): boolean | void;
 }
-export interface LoadWhereFunction extends WhereFunction<Load> {
+export interface LoadWhereFunction {
   (query: LoadQuery): boolean | void;
 }
 export declare type OrderDirection = 'desc' | 'asc';

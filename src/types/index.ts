@@ -91,7 +91,7 @@ export type NodeTree = {
   parentNode?: NodeTree;
   item: any;
 };
-export type WhereValue = string | number | boolean | object | any[];
+export type WhereValue = string | number | boolean | any[];
 export type WhereKey<T> = string | WhereFunction<T>;
 export type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean | 'in';
 export type WhereType = 'and' | 'or';
@@ -99,14 +99,14 @@ export type WhereType = 'and' | 'or';
 export interface Where<T> {
   key?: WhereKey<T>;
   operand?: WhereOperand;
-  value?: WhereFunction<T> | WhereValue | UniFunction<any, boolean>;
+  value?: WhereFunction<T> | UniFunction<any, boolean> | WhereValue;
 }
 
 export interface WhereFunction<T> {
   (query: Query<T>, item?: any): boolean | void;
 }
 
-export interface LoadWhereFunction extends WhereFunction<Load> {
+export interface LoadWhereFunction {
   (query: LoadQuery): boolean | void;
 }
 
