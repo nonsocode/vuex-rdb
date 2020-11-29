@@ -76,7 +76,8 @@ export function getLoads(loads: Load[], key: string) {
           addToLoads(key, <Relationship>value, load, newLoads);
         });
     } else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
-      console.warn(`[${key}] is not a relationship`);
+      const message = `[${key}] is not a relationship on ${schema.name}`;
+      console.warn(message);
     } else {
       addToLoads(key, <Relationship>schema._fields[key], load, newLoads);
     }

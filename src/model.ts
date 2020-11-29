@@ -286,7 +286,7 @@ export class Model<T extends any = any> {
     return new Promise((resolve) => {
       const constructor = getConstructor(this);
       if (this._connected) {
-        console.warn('No need calling $save');
+        console.warn('No need calling $save. This entity is already connected to the Vuex store');
       } else {
         const item = cacheNames.reduce((acc, name) => {
           return { ...acc, ...this._caches[name] };
@@ -305,50 +305,22 @@ export class Model<T extends any = any> {
   }
 
   /**
-   * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
-   * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
-   * `this` model
-   *
-   * @deprecated
-   */
-  $addRelated(related: string, data: Object): Promise<IdValue>;
-  $addRelated(related: string, items: any[]): Promise<IdValue>;
-  async $addRelated(related, data): Promise<IdValue> {
-    const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._namespace}/${Actions.ADD_RELATED}`, {
-      id: this._id,
-      related,
-      data,
-      schema: constructor,
-    });
-  }
-
-  /**
-   * Remove the specified entity as a relationship of `this` model
-   *
-   * if the `related` is a non list relationship, it's deleted from `this` model.
-   *
-   * if it's a list relationship, you can specify an identifier or a list of identifiers of the related
-   * entities to remove as a second parameter or leave blank to remove all items
-   * @deprecated
-   */
-  $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
-  $removeRelated(related: string, ids?: IdValue[]): Promise<IdValue>;
-  async $removeRelated(related, relatedId): Promise<IdValue> {
-    const constructor = getConstructor(this);
-    return constructor._store.dispatch(`${constructor._namespace}/${Actions.REMOVE_RELATED}`, {
-      id: this._id,
-      related,
-      relatedId,
-      schema: constructor,
-    });
-  }
-
-  /**
-   * This is an alternative to the `Field()` decorator.
+   * This is an alternative to the `Field(), List(), Item(), BelongsTo() and HasMany()` decorators.
    *
    * Specify the different fields of the class
-   * in an array or an object that contains the field names as it's keys
+   * in an object that contains the field names as it's keys
+   * e.g
+   * ```javascript
+   * class User extends model {
+   *   static get fields() {
+   *     return {
+   *       id: this.$field(),
+   *       name: this.$field(),
+   *       posts: this.$hasMany(() => Post)
+   *     }
+   *   }
+   * }
+   * ```
    * @deprecated
    */
   static get fields(): Record<string, FieldDefinition> {
