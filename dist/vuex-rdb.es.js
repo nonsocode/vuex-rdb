@@ -185,35 +185,39 @@ function normalize(raw, entityDef, visited = new Map(), entities = new Map(), de
       }
       let normalized = entities.get(schema)[result];
       let relEntries = [];
+      let fieldEntries = [];
+      let relatedResults = [];
       for (let [key, value] of Object.entries(raw)) {
         if (!(key in fields)) continue;
-        if (!(fields[key] instanceof Relationship)) {
-          normalized[key] = value;
-          continue;
-        }
-        relEntries.push([key, value]);
+        (fields[key] instanceof Relationship ? relEntries : fieldEntries).push([key, value]);
       }
       for (let [key, value] of relEntries) {
-        const fieldDefinition = fields[key];
-        const { result: relatedResult } = normalize(value, fields[key], visited, entities, depth + 1);
+        const relationship = fields[key];
+        const { result: relatedResult } = normalize(value, relationship, visited, entities, depth + 1);
+        relatedResults.push({ key, value: relatedResult, relationship });
+      }
+      for (let [key, value] of fieldEntries) {
+        normalized[key] = value;
+      }
+      for (let { key, value, relationship } of relatedResults) {
         switch (true) {
-          case fieldDefinition instanceof ItemRelationship:
-          case fieldDefinition instanceof ListRelationship: {
-            normalized[key] = relatedResult;
+          case relationship instanceof ItemRelationship:
+          case relationship instanceof ListRelationship: {
+            normalized[key] = value;
             break;
           }
-          case fieldDefinition instanceof HasManyRelationship: {
-            const { schema, foreignKey } = fieldDefinition;
-            (_a = relatedResult) === null || _a === void 0
+          case relationship instanceof HasManyRelationship: {
+            const { schema, foreignKey } = relationship;
+            (_a = value) === null || _a === void 0
               ? void 0
               : _a.forEach((id) => {
                   entities.get(schema)[id][foreignKey] = result;
                 });
             break;
           }
-          case fieldDefinition instanceof BelongsToRelationship: {
-            const { foreignKey } = fieldDefinition;
-            normalized[foreignKey] = relatedResult;
+          case relationship instanceof BelongsToRelationship: {
+            const { foreignKey } = relationship;
+            normalized[foreignKey] = value;
             break;
           }
         }

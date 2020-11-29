@@ -51,33 +51,37 @@ export function normalize(
       }
       let normalized = entities.get(schema)[result];
       let relEntries: [string, any][] = [];
+      let fieldEntries: [string, any][] = [];
+      let relatedResults: { key: string; value: IdValue | IdValue[]; relationship: Relationship }[] = [];
       for (let [key, value] of Object.entries(raw)) {
         if (!(key in fields)) continue;
-        if (!(fields[key] instanceof Relationship)) {
-          normalized[key] = value;
-          continue;
-        }
-        relEntries.push([key, value]);
+        (fields[key] instanceof Relationship ? relEntries : fieldEntries).push([key, value]);
       }
       for (let [key, value] of relEntries) {
-        const fieldDefinition = fields[key];
-        const { result: relatedResult } = normalize(value, <Relationship>fields[key], visited, entities, depth + 1);
+        const relationship: Relationship = <Relationship>fields[key];
+        const { result: relatedResult } = normalize(value, relationship, visited, entities, depth + 1);
+        relatedResults.push({ key, value: relatedResult, relationship });
+      }
+      for (let [key, value] of fieldEntries) {
+        normalized[key] = value;
+      }
+      for (let { key, value, relationship } of relatedResults) {
         switch (true) {
-          case fieldDefinition instanceof ItemRelationship:
-          case fieldDefinition instanceof ListRelationship: {
-            normalized[key] = relatedResult;
+          case relationship instanceof ItemRelationship:
+          case relationship instanceof ListRelationship: {
+            normalized[key] = value;
             break;
           }
-          case fieldDefinition instanceof HasManyRelationship: {
-            const { schema, foreignKey } = <HasManyRelationship<Schema>>fieldDefinition;
-            (<IdValue[]>relatedResult)?.forEach((id) => {
+          case relationship instanceof HasManyRelationship: {
+            const { schema, foreignKey } = <HasManyRelationship<Schema>>relationship;
+            (<IdValue[]>value)?.forEach((id) => {
               entities.get(schema)[id][foreignKey] = result;
             });
             break;
           }
-          case fieldDefinition instanceof BelongsToRelationship: {
-            const { foreignKey } = <BelongsToRelationship<Schema>>fieldDefinition;
-            normalized[foreignKey] = relatedResult;
+          case relationship instanceof BelongsToRelationship: {
+            const { foreignKey } = <BelongsToRelationship<Schema>>relationship;
+            normalized[foreignKey] = value;
             break;
           }
         }

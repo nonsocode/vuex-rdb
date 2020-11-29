@@ -453,13 +453,16 @@ var getRelationshipSchema = function (entityDef) {
     : null;
 };
 function normalize(raw, entityDef, visited, entities, depth) {
-  var e_1, _a, e_2, _b;
-  var _c;
+  var e_1, _a, e_2, _b, e_3, _c, e_4, _d;
+  var _e;
   if (visited === void 0) {
     visited = new Map();
   }
   if (entities === void 0) {
     entities = new Map();
+  }
+  if (depth === void 0) {
+    depth = 0;
   }
   var schema = getRelationshipSchema(entityDef);
   var fields = schema._fields;
@@ -469,7 +472,7 @@ function normalize(raw, entityDef, visited, entities, depth) {
   } else if (Array.isArray(raw) && listLike(entityDef)) {
     result = raw
       .map(function (r) {
-        var result = normalize(r, schema, visited, entities).result;
+        var result = normalize(r, schema, visited, entities, depth + 1).result;
         return result;
       })
       .filter(function (id) {
@@ -489,64 +492,37 @@ function normalize(raw, entityDef, visited, entities, depth) {
       }
       var normalized = entities.get(schema)[result];
       var relEntries = [];
+      var fieldEntries = [];
+      var relatedResults = [];
       try {
-        for (var _d = __values(Object.entries(raw)), _e = _d.next(); !_e.done; _e = _d.next()) {
-          var _f = __read(_e.value, 2),
-            key = _f[0],
-            value = _f[1];
+        for (var _f = __values(Object.entries(raw)), _g = _f.next(); !_g.done; _g = _f.next()) {
+          var _h = __read(_g.value, 2),
+            key = _h[0],
+            value = _h[1];
           if (!(key in fields)) continue;
-          if (!(fields[key] instanceof Relationship)) {
-            normalized[key] = value;
-            continue;
-          }
-          relEntries.push([key, value]);
+          (fields[key] instanceof Relationship ? relEntries : fieldEntries).push([key, value]);
         }
       } catch (e_1_1) {
         e_1 = { error: e_1_1 };
       } finally {
         try {
-          if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
+          if (_g && !_g.done && (_a = _f.return)) _a.call(_f);
         } finally {
           if (e_1) throw e_1.error;
         }
       }
-      var _loop_1 = function (key, value) {
-        var fieldDefinition = fields[key];
-        var relatedResult = normalize(value, fields[key], visited, entities).result;
-        switch (true) {
-          case fieldDefinition instanceof ItemRelationship:
-          case fieldDefinition instanceof ListRelationship: {
-            normalized[key] = relatedResult;
-            break;
-          }
-          case fieldDefinition instanceof HasManyRelationship: {
-            var _a = fieldDefinition,
-              schema_1 = _a.schema,
-              foreignKey_1 = _a.foreignKey;
-            (_c = relatedResult) === null || _c === void 0
-              ? void 0
-              : _c.forEach(function (id) {
-                  entities.get(schema_1)[id][foreignKey_1] = result;
-                });
-            break;
-          }
-          case fieldDefinition instanceof BelongsToRelationship: {
-            var foreignKey = fieldDefinition.foreignKey;
-            normalized[foreignKey] = relatedResult;
-            break;
-          }
-        }
-      };
       try {
         for (
           var relEntries_1 = __values(relEntries), relEntries_1_1 = relEntries_1.next();
           !relEntries_1_1.done;
           relEntries_1_1 = relEntries_1.next()
         ) {
-          var _g = __read(relEntries_1_1.value, 2),
-            key = _g[0],
-            value = _g[1];
-          _loop_1(key, value);
+          var _j = __read(relEntries_1_1.value, 2),
+            key = _j[0],
+            value = _j[1];
+          var relationship = fields[key];
+          var relatedResult = normalize(value, relationship, visited, entities, depth + 1).result;
+          relatedResults.push({ key: key, value: relatedResult, relationship: relationship });
         }
       } catch (e_2_1) {
         e_2 = { error: e_2_1 };
@@ -555,6 +531,73 @@ function normalize(raw, entityDef, visited, entities, depth) {
           if (relEntries_1_1 && !relEntries_1_1.done && (_b = relEntries_1.return)) _b.call(relEntries_1);
         } finally {
           if (e_2) throw e_2.error;
+        }
+      }
+      try {
+        for (
+          var fieldEntries_1 = __values(fieldEntries), fieldEntries_1_1 = fieldEntries_1.next();
+          !fieldEntries_1_1.done;
+          fieldEntries_1_1 = fieldEntries_1.next()
+        ) {
+          var _k = __read(fieldEntries_1_1.value, 2),
+            key = _k[0],
+            value = _k[1];
+          normalized[key] = value;
+        }
+      } catch (e_3_1) {
+        e_3 = { error: e_3_1 };
+      } finally {
+        try {
+          if (fieldEntries_1_1 && !fieldEntries_1_1.done && (_c = fieldEntries_1.return)) _c.call(fieldEntries_1);
+        } finally {
+          if (e_3) throw e_3.error;
+        }
+      }
+      var _loop_1 = function (key, value, relationship) {
+        switch (true) {
+          case relationship instanceof ItemRelationship:
+          case relationship instanceof ListRelationship: {
+            normalized[key] = value;
+            break;
+          }
+          case relationship instanceof HasManyRelationship: {
+            var _a = relationship,
+              schema_1 = _a.schema,
+              foreignKey_1 = _a.foreignKey;
+            (_e = value) === null || _e === void 0
+              ? void 0
+              : _e.forEach(function (id) {
+                  entities.get(schema_1)[id][foreignKey_1] = result;
+                });
+            break;
+          }
+          case relationship instanceof BelongsToRelationship: {
+            var foreignKey = relationship.foreignKey;
+            normalized[foreignKey] = value;
+            break;
+          }
+        }
+      };
+      try {
+        for (
+          var relatedResults_1 = __values(relatedResults), relatedResults_1_1 = relatedResults_1.next();
+          !relatedResults_1_1.done;
+          relatedResults_1_1 = relatedResults_1.next()
+        ) {
+          var _l = relatedResults_1_1.value,
+            key = _l.key,
+            value = _l.value,
+            relationship = _l.relationship;
+          _loop_1(key, value, relationship);
+        }
+      } catch (e_4_1) {
+        e_4 = { error: e_4_1 };
+      } finally {
+        try {
+          if (relatedResults_1_1 && !relatedResults_1_1.done && (_d = relatedResults_1.return))
+            _d.call(relatedResults_1);
+        } finally {
+          if (e_4) throw e_4.error;
         }
       }
     }

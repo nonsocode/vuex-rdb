@@ -55,7 +55,7 @@ export class LoadQuery extends ContextualQuery<Load> {
     }
   }
 
-  _sort(items: any[]): any[] {
+  private _sort(items: any[]): any[] {
     if (!(this.orders.length && items.length)) return [...items];
     const comparator = getSortComparator(this.orders);
     return [...items].sort(comparator);

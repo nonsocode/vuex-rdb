@@ -308,6 +308,8 @@ export class Model<T extends any = any> {
    * Add the given data as a relative of this entity. If the related entity is supposed to be an array,
    * and you pass a non array, it'll be auto converted to an array and appended to the existing related entities for
    * `this` model
+   *
+   * @deprecated
    */
   $addRelated(related: string, data: Object): Promise<IdValue>;
   $addRelated(related: string, items: any[]): Promise<IdValue>;
@@ -328,6 +330,7 @@ export class Model<T extends any = any> {
    *
    * if it's a list relationship, you can specify an identifier or a list of identifiers of the related
    * entities to remove as a second parameter or leave blank to remove all items
+   * @deprecated
    */
   $removeRelated(related: string, id?: IdValue): Promise<IdValue>;
   $removeRelated(related: string, ids?: IdValue[]): Promise<IdValue>;

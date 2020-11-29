@@ -13,5 +13,5 @@ export declare class LoadQuery extends ContextualQuery<Load> {
   orderBy(orders: Order[]): any;
   orderBy(key: string, direction: OrderDirection): any;
   apply(items: any): any;
-  _sort(items: any[]): any[];
+  private _sort;
 }
