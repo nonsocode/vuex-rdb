@@ -1,5 +1,5 @@
 import { isBoolean, isFunction } from '../utils';
-import { Where, WhereFunction, WhereKey, WhereOperand, WhereType, WhereValue } from '../types';
+import { UniFunction, Where, WhereFunction, WhereKey, WhereOperand, WhereType, WhereValue } from '../types';
 
 export abstract class Query<T> {
   protected whereAnds: Where<T>[] = [];
@@ -8,7 +8,7 @@ export abstract class Query<T> {
   protected constructor() {}
 
   where(key: string, operand: WhereOperand, value: WhereValue): this;
-  where(key: string, value: WhereValue | WhereFunction<T>): this;
+  where(key: string, value: WhereValue | UniFunction<any, boolean>): this;
   where(key: WhereFunction<T>): this;
   where(key: boolean): this;
   where(...args) {
@@ -17,7 +17,7 @@ export abstract class Query<T> {
   }
 
   orWhere(key: string, operand: WhereOperand, value: WhereValue): this;
-  orWhere(key: string, value: WhereValue | WhereFunction<T>): this;
+  orWhere(key: string, value: WhereValue | UniFunction<any, boolean>): this;
   orWhere(key: WhereFunction<T>): this;
   orWhere(key: boolean): this;
   orWhere(...args) {
@@ -45,7 +45,7 @@ export abstract class Query<T> {
       case 2:
         wheres.push({
           key: args[0] as string,
-          value: args[1] as WhereValue | WhereFunction<T>,
+          value: args[1] as WhereValue | UniFunction<any, boolean>,
         });
         break;
       case 3:

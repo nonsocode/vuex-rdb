@@ -511,16 +511,13 @@ const getComparator = (item) => (where) => {
     return query.get();
   } else if (isString(where.key) && isFunction(where.value)) {
     const value = get(where.key, item);
-    const query = new ContextualQuery(value);
-    const result = where.value.call(null, query, value);
-    if (typeof result == 'boolean') return result;
-    return query.get();
+    return !!where.value.call(null, value);
   } else if (isBoolean(where.operand)) {
     return where.operand;
   } else if (isString(where.key) && !isFunction(where.value)) {
     let resolved = get(where.key, item);
     const isArray = Array.isArray(resolved);
-    resolved = isArray ? resolved.length : resolved;
+    resolved = isArray && where.operand != 'in' ? resolved.length : resolved;
     switch (where.operand) {
       case '!=':
         return resolved != where.value;
@@ -532,6 +529,8 @@ const getComparator = (item) => (where) => {
         return resolved < where.value;
       case '<=':
         return resolved <= where.value;
+      case 'in':
+        return where.value.includes(resolved);
       case '=':
       default:
         return resolved == where.value;

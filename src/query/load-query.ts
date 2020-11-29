@@ -4,9 +4,9 @@ import { Load } from './load';
 import { getSortComparator } from './query-utils';
 
 export class LoadQuery extends ContextualQuery<Load> {
-  whereHasAnds: any[] = [];
-  whereHasOrs: any[] = [];
-  orders: Order[] = [];
+  protected whereHasAnds: any[] = [];
+  protected whereHasOrs: any[] = [];
+  protected orders: Order[] = [];
 
   constructor(protected load: Load) {
     super();

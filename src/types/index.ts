@@ -85,7 +85,7 @@ export interface FindOptions {
 
 export type MixedDefinition = Schema | Schema[] | Relationship;
 
-export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
+export type UniFunction<T, U> = (arg: T) => U;
 
 export type NodeTree = {
   parentNode?: NodeTree;
@@ -93,13 +93,13 @@ export type NodeTree = {
 };
 export type WhereValue = string | number | boolean | object | any[];
 export type WhereKey<T> = string | WhereFunction<T>;
-export type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean;
+export type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean | 'in';
 export type WhereType = 'and' | 'or';
 
 export interface Where<T> {
   key?: WhereKey<T>;
   operand?: WhereOperand;
-  value?: WhereFunction<T> | WhereValue;
+  value?: WhereFunction<T> | WhereValue | UniFunction<any, boolean>;
 }
 
 export interface WhereFunction<T> {

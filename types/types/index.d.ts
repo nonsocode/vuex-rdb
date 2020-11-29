@@ -1,4 +1,3 @@
-import { Store } from 'vuex';
 import { Model } from '../model';
 import { Load } from '../query/load';
 import { LoadQuery } from '../query/load-query';
@@ -74,19 +73,19 @@ export interface FindOptions {
   load?: string[] | string | Load | Record<string, LoadWhereFunction | true>;
 }
 export declare type MixedDefinition = Schema | Schema[] | Relationship;
-export declare function generateDatabasePlugin<T>(options: PluginOptions): (store: Store<any>) => any;
+export declare type UniFunction<T, U> = (arg: T) => U;
 export declare type NodeTree = {
   parentNode?: NodeTree;
   item: any;
 };
 export declare type WhereValue = string | number | boolean | object | any[];
 export declare type WhereKey<T> = string | WhereFunction<T>;
-export declare type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean;
+export declare type WhereOperand = '=' | '!=' | '>' | '<' | '>=' | '<=' | boolean | 'in';
 export declare type WhereType = 'and' | 'or';
 export interface Where<T> {
   key?: WhereKey<T>;
   operand?: WhereOperand;
-  value?: WhereFunction<T> | WhereValue;
+  value?: WhereFunction<T> | WhereValue | UniFunction<any, boolean>;
 }
 export interface WhereFunction<T> {
   (query: Query<T>, item?: any): boolean | void;
