@@ -188,19 +188,11 @@ export class Model<T extends any = any> {
    */
   _connected = false;
 
-  /**
-   * The resolved id of this model
-   * @internal
-   */
-  _id;
-
   constructor(data?: Partial<T>, opts?: { load?: Load; connected?: boolean }) {
-    const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
       _connected: { value: !!opts?.connected, enumerable: false, configurable: true },
       _load: { value: opts?.load, enumerable: false, configurable: true },
-      _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
 
     const { _fields } = getConstructor(this);
@@ -216,6 +208,10 @@ export class Model<T extends any = any> {
     // return new Proxy<Model>(this, {
     // set: proxySetter
     // });
+  }
+
+  _id(): IdValue {
+    return getIdValue(this, getConstructor(this));
   }
 
   /**
