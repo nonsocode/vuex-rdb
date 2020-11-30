@@ -409,7 +409,7 @@ class ModelQuery extends LoadQuery {
     items = this.apply(items);
     if (this.initLoad()) {
       return items.map((item) => {
-        return this.schema.find(item._id, { load: this.load });
+        return this.schema.find(getIdValue(item, this.schema), { load: this.load });
       });
     }
     return items;
@@ -419,7 +419,7 @@ class ModelQuery extends LoadQuery {
     const first = items.find((item) => this.matchesItem(item));
     if (!first) return;
     if (this.initLoad()) {
-      return this.schema.find(first._id, { load: this.load });
+      return this.schema.find(getIdValue(first, this.schema), { load: this.load });
     }
     return first;
   }
@@ -477,6 +477,7 @@ class Model {
      * Indicates wether this model is connected to the store
      */
     this._connected = false;
+    const id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: { value: Object.fromEntries(cacheNames.map((name) => [name, {}])) },
       _connected: {
@@ -485,6 +486,7 @@ class Model {
         configurable: true,
       },
       _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
+      _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
     const { _fields } = getConstructor(this);
     Object.keys(_fields).forEach((key) => {
@@ -498,9 +500,6 @@ class Model {
     // return new Proxy<Model>(this, {
     // set: proxySetter
     // });
-  }
-  get _id() {
-    return getIdValue(this, getConstructor(this));
   }
   /**
    * Convert to JSON
@@ -577,6 +576,7 @@ class Model {
           constructor._store
             .dispatch(`${constructor._namespace}/${Actions.ADD}`, { items: item, schema: constructor })
             .then((res) => {
+              this._id = res;
               this._connected = true;
               return res;
             })
@@ -1057,7 +1057,7 @@ function getRecursionMessage(item) {
   if (item instanceof Model) {
     message += `[${item.constructor.name}: ${item._id}] `;
   }
-  return (message += '<<<');
+  return message + '<<<';
 }
 
 function createModule(store, schemas, index) {

@@ -789,7 +789,7 @@ var ModelQuery = /** @class */ (function (_super) {
     items = this.apply(items);
     if (this.initLoad()) {
       return items.map(function (item) {
-        return _this.schema.find(item._id, { load: _this.load });
+        return _this.schema.find(getIdValue(item, _this.schema), { load: _this.load });
       });
     }
     return items;
@@ -802,7 +802,7 @@ var ModelQuery = /** @class */ (function (_super) {
     });
     if (!first) return;
     if (this.initLoad()) {
-      return this.schema.find(first._id, { load: this.load });
+      return this.schema.find(getIdValue(first, this.schema), { load: this.load });
     }
     return first;
   };
@@ -880,6 +880,7 @@ var Model = /** @class */ (function () {
      * Indicates wether this model is connected to the store
      */
     this._connected = false;
+    var id = data ? getIdValue(data, getConstructor(this)) : null;
     Object.defineProperties(this, {
       _caches: {
         value: Object.fromEntries(
@@ -894,6 +895,7 @@ var Model = /** @class */ (function () {
         configurable: true,
       },
       _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
+      _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
     var _fields = getConstructor(this)._fields;
     Object.keys(_fields).forEach(function (key) {
@@ -908,13 +910,6 @@ var Model = /** @class */ (function () {
     // set: proxySetter
     // });
   }
-  Object.defineProperty(Model.prototype, '_id', {
-    get: function () {
-      return getIdValue(this, getConstructor(this));
-    },
-    enumerable: false,
-    configurable: true,
-  });
   /**
    * Convert to JSON
    * @internal
@@ -1035,6 +1030,7 @@ var Model = /** @class */ (function () {
                 constructor._store
                   .dispatch(constructor._namespace + '/' + Actions.ADD, { items: item, schema: constructor })
                   .then(function (res) {
+                    _this._id = res;
                     _this._connected = true;
                     return res;
                   })
@@ -1729,7 +1725,7 @@ function getRecursionMessage(item) {
   if (item instanceof Model) {
     message += '[' + item.constructor.name + ': ' + item._id + '] ';
   }
-  return (message += '<<<');
+  return message + '<<<';
 }
 
 function createModule(store, schemas, index) {

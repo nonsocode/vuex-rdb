@@ -54,6 +54,11 @@ export declare class Model<T extends any = any> {
    * Indicates wether this model is connected to the store
    */
   _connected: boolean;
+  /**
+   * The resolved id of this model
+   * @internal
+   */
+  _id: any;
   constructor(
     data?: Partial<T>,
     opts?: {
@@ -61,7 +66,6 @@ export declare class Model<T extends any = any> {
       connected?: boolean;
     }
   );
-  get _id(): IdValue;
   /**
    * Convert to JSON
    * @internal
