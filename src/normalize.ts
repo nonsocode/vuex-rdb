@@ -75,7 +75,7 @@ export function normalize(
           case relationship instanceof HasManyRelationship: {
             if (value == null) continue;
             const { schema, foreignKey } = <HasManyRelationship<Schema>>relationship;
-            for (let id of value) {
+            for (let id of <IdValue[]>value) {
               entities.get(schema)[id][foreignKey] = result;
             }
             break;

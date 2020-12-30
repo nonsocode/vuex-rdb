@@ -12,11 +12,7 @@ function isString(string) {
 }
 function createObject(object) {
   const o = Object.create(null);
-  object &&
-    Object.entries(object).forEach(([key, value]) => {
-      o[key] = value;
-    });
-  return o;
+  return object ? Object.assign(o, object) : o;
 }
 const get = (path, obj, defaultVal = undefined) => {
   const returnable = path.split('.').reduce((acc, i) => {
@@ -293,7 +289,7 @@ class LoadQuery extends ContextualQuery {
     }
     return this;
   }
-  withNone() {
+  withoutRelationships() {
     if (this.load) {
       this.load.clear();
     }
@@ -404,10 +400,10 @@ class ModelQuery extends LoadQuery {
     this.withArgs.push(args);
     return this;
   }
-  withNone() {
+  withoutRelationships() {
     this.withArgs = [];
     this.load = new Load(new ItemRelationship(() => this.schema));
-    return super.withNone();
+    return super.withoutRelationships();
   }
   initLoad() {
     if (!this.load && this.withArgs.length) {
@@ -503,9 +499,9 @@ class Model {
       _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
     const { _fields } = getConstructor(this);
-    Object.keys(_fields).forEach((key) => {
+    for (let key of Object.keys(_fields)) {
       createAccessor(this, key);
-    });
+    }
     if (!this._connected) {
       cacheDefaults(this, data || {});
       Vue.observable(this._caches);
@@ -695,7 +691,6 @@ const getRelationshipSchema = (entityDef) =>
     ? entityDef.schema
     : null;
 function normalize(raw, entityDef, visited = new Map(), entities = new Map(), depth = 0) {
-  var _a;
   const schema = getRelationshipSchema(entityDef);
   const fields = schema._fields;
   let result;
@@ -744,12 +739,11 @@ function normalize(raw, entityDef, visited = new Map(), entities = new Map(), de
             break;
           }
           case relationship instanceof HasManyRelationship: {
+            if (value == null) continue;
             const { schema, foreignKey } = relationship;
-            (_a = value) === null || _a === void 0
-              ? void 0
-              : _a.forEach((id) => {
-                  entities.get(schema)[id][foreignKey] = result;
-                });
+            for (let id of value) {
+              entities.get(schema)[id][foreignKey] = result;
+            }
             break;
           }
           case relationship instanceof BelongsToRelationship: {

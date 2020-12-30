@@ -238,14 +238,7 @@ function isString(string) {
 }
 function createObject(object) {
   var o = Object.create(null);
-  object &&
-    Object.entries(object).forEach(function (_a) {
-      var _b = __read(_a, 2),
-        key = _b[0],
-        value = _b[1];
-      o[key] = value;
-    });
-  return o;
+  return object ? Object.assign(o, object) : o;
 }
 var get = function (path, obj, defaultVal) {
   if (defaultVal === void 0) {
@@ -614,7 +607,7 @@ var LoadQuery = /** @class */ (function (_super) {
     }
     return this;
   };
-  LoadQuery.prototype.withNone = function () {
+  LoadQuery.prototype.withoutRelationships = function () {
     if (this.load) {
       this.load.clear();
     }
@@ -767,7 +760,7 @@ var ModelQuery = /** @class */ (function (_super) {
     this.withArgs.push(args);
     return this;
   };
-  ModelQuery.prototype.withNone = function () {
+  ModelQuery.prototype.withoutRelationships = function () {
     var _this = this;
     this.withArgs = [];
     this.load = new Load(
@@ -775,7 +768,7 @@ var ModelQuery = /** @class */ (function (_super) {
         return _this.schema;
       })
     );
-    return _super.prototype.withNone.call(this);
+    return _super.prototype.withoutRelationships.call(this);
   };
   ModelQuery.prototype.initLoad = function () {
     var _this = this;
@@ -886,7 +879,7 @@ HasMany.define = function (factory, parentFactory, foreignKey) {
 
 var Model = /** @class */ (function () {
   function Model(data, opts) {
-    var _this = this;
+    var e_1, _a;
     /**
      * Indicates wether this model is connected to the store
      */
@@ -909,9 +902,20 @@ var Model = /** @class */ (function () {
       _id: { value: id, enumerable: false, configurable: false, writable: true },
     });
     var _fields = getConstructor(this)._fields;
-    Object.keys(_fields).forEach(function (key) {
-      createAccessor(_this, key);
-    });
+    try {
+      for (var _b = __values(Object.keys(_fields)), _c = _b.next(); !_c.done; _c = _b.next()) {
+        var key = _c.value;
+        createAccessor(this, key);
+      }
+    } catch (e_1_1) {
+      e_1 = { error: e_1_1 };
+    } finally {
+      try {
+        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+      } finally {
+        if (e_1) throw e_1.error;
+      }
+    }
     if (!this._connected) {
       cacheDefaults(this, data || {});
       Vue.observable(this._caches);
@@ -926,7 +930,7 @@ var Model = /** @class */ (function () {
    * @internal
    */
   Model.prototype.toJSON = function (parentkey, parentNode) {
-    var e_1, _a, e_2, _b;
+    var e_2, _a, e_3, _b;
     var constructor = getConstructor(this);
     var json = {};
     try {
@@ -942,19 +946,19 @@ var Model = /** @class */ (function () {
             } else if (Array.isArray(val)) {
               var items = [];
               try {
-                for (var _f = ((e_2 = void 0), __values(val)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                for (var _f = ((e_3 = void 0), __values(val)), _g = _f.next(); !_g.done; _g = _f.next()) {
                   var item = _g.value;
                   items.push(
                     item.toJSON ? (hasSeen(item, node) ? getRecursionMessage(item) : item.toJSON(key, node)) : item
                   );
                 }
-              } catch (e_2_1) {
-                e_2 = { error: e_2_1 };
+              } catch (e_3_1) {
+                e_3 = { error: e_3_1 };
               } finally {
                 try {
                   if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
                 } finally {
-                  if (e_2) throw e_2.error;
+                  if (e_3) throw e_3.error;
                 }
               }
               json[key] = items;
@@ -966,13 +970,13 @@ var Model = /** @class */ (function () {
           }
         }
       }
-    } catch (e_1_1) {
-      e_1 = { error: e_1_1 };
+    } catch (e_2_1) {
+      e_2 = { error: e_2_1 };
     } finally {
       try {
         if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
       } finally {
-        if (e_1) throw e_1.error;
+        if (e_2) throw e_2.error;
       }
     }
     return json;
@@ -1195,8 +1199,7 @@ var getRelationshipSchema = function (entityDef) {
     : null;
 };
 function normalize(raw, entityDef, visited, entities, depth) {
-  var e_1, _a, e_2, _b, e_3, _c, e_4, _d;
-  var _e;
+  var e_1, _a, e_2, _b, e_3, _c, e_4, _d, e_5, _e;
   if (visited === void 0) {
     visited = new Map();
   }
@@ -1295,31 +1298,6 @@ function normalize(raw, entityDef, visited, entities, depth) {
           if (e_3) throw e_3.error;
         }
       }
-      var _loop_1 = function (key, value, relationship) {
-        switch (true) {
-          case relationship instanceof ItemRelationship:
-          case relationship instanceof ListRelationship: {
-            normalized[key] = value;
-            break;
-          }
-          case relationship instanceof HasManyRelationship: {
-            var _a = relationship,
-              schema_1 = _a.schema,
-              foreignKey_1 = _a.foreignKey;
-            (_e = value) === null || _e === void 0
-              ? void 0
-              : _e.forEach(function (id) {
-                  entities.get(schema_1)[id][foreignKey_1] = result;
-                });
-            break;
-          }
-          case relationship instanceof BelongsToRelationship: {
-            var foreignKey = relationship.foreignKey;
-            normalized[foreignKey] = value;
-            break;
-          }
-        }
-      };
       try {
         for (
           var relatedResults_1 = __values(relatedResults), relatedResults_1_1 = relatedResults_1.next();
@@ -1330,7 +1308,39 @@ function normalize(raw, entityDef, visited, entities, depth) {
             key = _l.key,
             value = _l.value,
             relationship = _l.relationship;
-          _loop_1(key, value, relationship);
+          switch (true) {
+            case relationship instanceof ItemRelationship:
+            case relationship instanceof ListRelationship: {
+              normalized[key] = value;
+              break;
+            }
+            case relationship instanceof HasManyRelationship: {
+              if (value == null) continue;
+              var _m = relationship,
+                schema_1 = _m.schema,
+                foreignKey = _m.foreignKey;
+              try {
+                for (var _o = ((e_5 = void 0), __values(value)), _p = _o.next(); !_p.done; _p = _o.next()) {
+                  var id = _p.value;
+                  entities.get(schema_1)[id][foreignKey] = result;
+                }
+              } catch (e_5_1) {
+                e_5 = { error: e_5_1 };
+              } finally {
+                try {
+                  if (_p && !_p.done && (_e = _o.return)) _e.call(_o);
+                } finally {
+                  if (e_5) throw e_5.error;
+                }
+              }
+              break;
+            }
+            case relationship instanceof BelongsToRelationship: {
+              var foreignKey = relationship.foreignKey;
+              normalized[foreignKey] = value;
+              break;
+            }
+          }
         }
       } catch (e_4_1) {
         e_4 = { error: e_4_1 };
