@@ -293,6 +293,12 @@ class LoadQuery extends ContextualQuery {
     }
     return this;
   }
+  withNone() {
+    if (this.load) {
+      this.load.clear();
+    }
+    return this;
+  }
   get() {
     throw new Error('Method not allowed');
   }
@@ -334,6 +340,9 @@ class Load {
   }
   getLoad(name) {
     return this.loads.get(name);
+  }
+  clear() {
+    this.loads.clear();
   }
   has(name) {
     return this.loads.has(name);
@@ -394,6 +403,11 @@ class ModelQuery extends LoadQuery {
     if (this.load) return super.with(args[0], args[1]);
     this.withArgs.push(args);
     return this;
+  }
+  withNone() {
+    this.withArgs = [];
+    this.load = new Load(new ItemRelationship(() => this.schema));
+    return super.withNone();
   }
   initLoad() {
     if (!this.load && this.withArgs.length) {

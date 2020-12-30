@@ -26,6 +26,13 @@ export class LoadQuery extends ContextualQuery<Load> {
     return this;
   }
 
+  withoutRelationships() {
+    if (this.load) {
+      this.load.clear();
+    }
+    return this;
+  }
+
   get(): any {
     throw new Error('Method not allowed');
   }

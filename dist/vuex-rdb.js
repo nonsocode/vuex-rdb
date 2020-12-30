@@ -614,6 +614,12 @@ var LoadQuery = /** @class */ (function (_super) {
     }
     return this;
   };
+  LoadQuery.prototype.withNone = function () {
+    if (this.load) {
+      this.load.clear();
+    }
+    return this;
+  };
   LoadQuery.prototype.get = function () {
     throw new Error('Method not allowed');
   };
@@ -663,6 +669,9 @@ var Load = /** @class */ (function () {
   };
   Load.prototype.getLoad = function (name) {
     return this.loads.get(name);
+  };
+  Load.prototype.clear = function () {
+    this.loads.clear();
   };
   Load.prototype.has = function (name) {
     return this.loads.has(name);
@@ -757,6 +766,16 @@ var ModelQuery = /** @class */ (function (_super) {
     if (this.load) return _super.prototype.with.call(this, args[0], args[1]);
     this.withArgs.push(args);
     return this;
+  };
+  ModelQuery.prototype.withNone = function () {
+    var _this = this;
+    this.withArgs = [];
+    this.load = new Load(
+      new ItemRelationship(function () {
+        return _this.schema;
+      })
+    );
+    return _super.prototype.withNone.call(this);
   };
   ModelQuery.prototype.initLoad = function () {
     var _this = this;

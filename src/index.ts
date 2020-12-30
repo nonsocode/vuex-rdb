@@ -9,13 +9,14 @@ import { BelongsTo } from './annotations/belongs-to';
 import { HasMany } from './annotations/has-many';
 import { Index } from './relationships/indices';
 import { HasManyRelationship } from './relationships/HasMany';
+import { Plugin } from 'vuex';
 
 const defaultPluginOptions = {
   schemas: [],
   namespace: 'database',
 };
 
-function generateDatabasePlugin(options: PluginOptions) {
+function generateDatabasePlugin(options: PluginOptions): Plugin<any> {
   const { schemas, namespace } = { ...defaultPluginOptions, ...options };
   return (store) => {
     const index = new Index(store, namespace);

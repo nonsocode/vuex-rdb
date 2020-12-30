@@ -5,5 +5,6 @@ import { Item } from './annotations/item';
 import { List } from './annotations/list';
 import { BelongsTo } from './annotations/belongs-to';
 import { HasMany } from './annotations/has-many';
-declare function generateDatabasePlugin(options: PluginOptions): (store: any) => void;
+import { Plugin } from 'vuex';
+declare function generateDatabasePlugin(options: PluginOptions): Plugin<any>;
 export { Model, Field, Item, List, BelongsTo, HasMany, generateDatabasePlugin };

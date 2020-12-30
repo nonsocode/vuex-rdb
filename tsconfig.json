@@ -14,9 +14,7 @@
     "strictNullChecks": false,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": [
-      "jest", "node"
-    ],
+    "types": ["jest", "node"],
     "plugins": [
       {
         "transform": "typescript-transform-paths"
@@ -27,15 +25,12 @@
       }
     ],
     "paths": {
-
+      "@/*": ["src/*"],
+      "test/*": ["test/*"]
     },
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
+
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

@@ -6,6 +6,7 @@ export declare class ModelQuery<T extends Schema> extends LoadQuery {
   constructor(schema: T);
   with(relationshipName: string, queryFunction?: LoadWhereFunction): this;
   with(record: string[] | Record<string, LoadWhereFunction | boolean>): this;
+  withNone(): this;
   private initLoad;
   get(): InstanceType<T>[];
   first(): InstanceType<T>;

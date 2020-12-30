@@ -1,4 +1,4 @@
-import { Model } from 'src';
+import { Model } from './model';
 import { IdValue, MixedDefinition, Normalized, Schema } from './types';
 import { createObject } from './utils';
 import { ListLike, Relationship } from './relationships/relationhsip';
@@ -73,10 +73,11 @@ export function normalize(
             break;
           }
           case relationship instanceof HasManyRelationship: {
+            if (value == null) continue;
             const { schema, foreignKey } = <HasManyRelationship<Schema>>relationship;
-            (<IdValue[]>value)?.forEach((id) => {
+            for (let id of value) {
               entities.get(schema)[id][foreignKey] = result;
-            });
+            }
             break;
           }
           case relationship instanceof BelongsToRelationship: {

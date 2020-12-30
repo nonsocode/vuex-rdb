@@ -9,6 +9,7 @@ export declare class LoadQuery extends ContextualQuery<Load> {
   constructor(load: Load);
   with(relationshipName: string, queryFunction?: LoadWhereFunction): this;
   with(record: string | string[] | Record<string, LoadWhereFunction | boolean>): this;
+  withNone(): this;
   get(): any;
   orderBy(orders: Order[]): any;
   orderBy(key: string, direction: OrderDirection): any;

@@ -19,6 +19,12 @@ export class ModelQuery<T extends Schema> extends LoadQuery {
     return this;
   }
 
+  withoutRelationships(): this {
+    this.withArgs = [];
+    this.load = new Load(new ItemRelationship(() => this.schema));
+    return super.withoutRelationships();
+  }
+
   private initLoad(): Load {
     if (!this.load && this.withArgs.length) {
       this.load = new Load(new ItemRelationship(() => this.schema));

@@ -1,4 +1,4 @@
-import { isFunction } from 'src/utils';
+import { isFunction } from '../utils';
 import { FieldDefinitionOptions, Factory } from '../types';
 
 export abstract class FieldDefinition {

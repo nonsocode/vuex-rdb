@@ -96,9 +96,9 @@ export class Model<T extends any = any> {
     });
 
     const { _fields } = getConstructor(this);
-    Object.keys(_fields).forEach((key) => {
+    for (let key of Object.keys(_fields)) {
       createAccessor(this, key);
-    });
+    }
     if (!this._connected) {
       cacheDefaults(this, data || {});
       Vue.observable(this._caches);

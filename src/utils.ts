@@ -26,11 +26,7 @@ export function isString(string: any): string is string {
 
 export function createObject<T extends object>(object?: T): T {
   const o = Object.create(null);
-  object &&
-    Object.entries(object).forEach(([key, value]) => {
-      o[key] = value;
-    });
-  return o;
+  return object ? Object.assign(o, object) : o;
 }
 
 export function ucFirst(str: string) {

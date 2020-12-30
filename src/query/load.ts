@@ -19,6 +19,10 @@ export class Load<S extends Schema = Schema, T extends Relationship<S> = Relatio
     return this.loads.get(name);
   }
 
+  clear() {
+    this.loads.clear();
+  }
+
   has(name: string): boolean {
     return this.loads.has(name);
   }

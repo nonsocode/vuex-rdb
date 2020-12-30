@@ -10,6 +10,7 @@ export declare class Load<S extends Schema = Schema, T extends Relationship<S> =
   getLoad(
     name: any
   ): Load<typeof import('..').Model, Relationship<typeof import('..').Model, typeof import('..').Model>>;
+  clear(): void;
   has(name: string): boolean;
   apply(data: RelationshipModel<T>): RelationshipModel<T>;
   getRelationship(): T;
