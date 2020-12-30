@@ -16,417 +16,303 @@ PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 /* global Reflect, Promise */
 
-var extendStatics = function (d, b) {
-  extendStatics =
-    Object.setPrototypeOf ||
-    ({ __proto__: [] } instanceof Array &&
-      function (d, b) {
-        d.__proto__ = b;
-      }) ||
-    function (d, b) {
-      for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p];
-    };
-  return extendStatics(d, b);
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+    return extendStatics(d, b);
 };
 
 function __extends(d, b) {
-  extendStatics(d, b);
-  function __() {
-    this.constructor = d;
-  }
-  d.prototype = b === null ? Object.create(b) : ((__.prototype = b.prototype), new __());
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 }
 
-var __assign = function () {
-  __assign =
-    Object.assign ||
-    function __assign(t) {
-      for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-      }
-      return t;
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
     };
-  return __assign.apply(this, arguments);
+    return __assign.apply(this, arguments);
 };
 
 function __decorate(decorators, target, key, desc) {
-  var c = arguments.length,
-    r = c < 3 ? target : desc === null ? (desc = Object.getOwnPropertyDescriptor(target, key)) : desc,
-    d;
-  if (typeof Reflect === 'object' && typeof Reflect.decorate === 'function')
-    r = Reflect.decorate(decorators, target, key, desc);
-  else
-    for (var i = decorators.length - 1; i >= 0; i--)
-      if ((d = decorators[i])) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-  return c > 3 && r && Object.defineProperty(target, key, r), r;
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
 
 function __awaiter(thisArg, _arguments, P, generator) {
-  function adopt(value) {
-    return value instanceof P
-      ? value
-      : new P(function (resolve) {
-          resolve(value);
-        });
-  }
-  return new (P || (P = Promise))(function (resolve, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function rejected(value) {
-      try {
-        step(generator['throw'](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function step(result) {
-      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-    }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 }
 
 function __generator(thisArg, body) {
-  var _ = {
-      label: 0,
-      sent: function () {
-        if (t[0] & 1) throw t[1];
-        return t[1];
-      },
-      trys: [],
-      ops: [],
-    },
-    f,
-    y,
-    t,
-    g;
-  return (
-    (g = { next: verb(0), throw: verb(1), return: verb(2) }),
-    typeof Symbol === 'function' &&
-      (g[Symbol.iterator] = function () {
-        return this;
-      }),
-    g
-  );
-  function verb(n) {
-    return function (v) {
-      return step([n, v]);
-    };
-  }
-  function step(op) {
-    if (f) throw new TypeError('Generator is already executing.');
-    while (_)
-      try {
-        if (
-          ((f = 1),
-          y &&
-            (t = op[0] & 2 ? y['return'] : op[0] ? y['throw'] || ((t = y['return']) && t.call(y), 0) : y.next) &&
-            !(t = t.call(y, op[1])).done)
-        )
-          return t;
-        if (((y = 0), t)) op = [op[0] & 2, t.value];
-        switch (op[0]) {
-          case 0:
-          case 1:
-            t = op;
-            break;
-          case 4:
-            _.label++;
-            return { value: op[1], done: false };
-          case 5:
-            _.label++;
-            y = op[1];
-            op = [0];
-            continue;
-          case 7:
-            op = _.ops.pop();
-            _.trys.pop();
-            continue;
-          default:
-            if (!((t = _.trys), (t = t.length > 0 && t[t.length - 1])) && (op[0] === 6 || op[0] === 2)) {
-              _ = 0;
-              continue;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
-            if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) {
-              _.label = op[1];
-              break;
-            }
-            if (op[0] === 6 && _.label < t[1]) {
-              _.label = t[1];
-              t = op;
-              break;
-            }
-            if (t && _.label < t[2]) {
-              _.label = t[2];
-              _.ops.push(op);
-              break;
-            }
-            if (t[2]) _.ops.pop();
-            _.trys.pop();
-            continue;
-        }
-        op = body.call(thisArg, _);
-      } catch (e) {
-        op = [6, e];
-        y = 0;
-      } finally {
-        f = t = 0;
-      }
-    if (op[0] & 5) throw op[1];
-    return { value: op[0] ? op[1] : void 0, done: true };
-  }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
 }
 
 function __values(o) {
-  var s = typeof Symbol === 'function' && Symbol.iterator,
-    m = s && o[s],
-    i = 0;
-  if (m) return m.call(o);
-  if (o && typeof o.length === 'number')
-    return {
-      next: function () {
-        if (o && i >= o.length) o = void 0;
-        return { value: o && o[i++], done: !o };
-      },
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
     };
-  throw new TypeError(s ? 'Object is not iterable.' : 'Symbol.iterator is not defined.');
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 }
 
 function __read(o, n) {
-  var m = typeof Symbol === 'function' && o[Symbol.iterator];
-  if (!m) return o;
-  var i = m.call(o),
-    r,
-    ar = [],
-    e;
-  try {
-    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-  } catch (error) {
-    e = { error: error };
-  } finally {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
     try {
-      if (r && !r.done && (m = i['return'])) m.call(i);
-    } finally {
-      if (e) throw e.error;
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
     }
-  }
-  return ar;
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
 }
 
 function __spread() {
-  for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
-  return ar;
+    for (var ar = [], i = 0; i < arguments.length; i++)
+        ar = ar.concat(__read(arguments[i]));
+    return ar;
 }
 
-var identity = function (k) {
-  return k;
-};
+var identity = function (k) { return k; };
 function isFunction(fn) {
-  return fn instanceof Function;
+    return fn instanceof Function;
 }
 function isBoolean(arg) {
-  return arg === true || arg === false;
+    return arg === true || arg === false;
 }
 function isString(string) {
-  return typeof string === 'string';
+    return typeof string === 'string';
 }
 function createObject(object) {
-  var o = Object.create(null);
-  return object ? Object.assign(o, object) : o;
+    var o = Object.create(null);
+    return object ? Object.assign(o, object) : o;
 }
 var get = function (path, obj, defaultVal) {
-  if (defaultVal === void 0) {
-    defaultVal = undefined;
-  }
-  var returnable = path.split('.').reduce(function (acc, i) {
-    return acc === null ? undefined : acc && acc[i];
-  }, obj || createObject());
-  return returnable === undefined ? defaultVal : returnable;
+    if (defaultVal === void 0) { defaultVal = undefined; }
+    var returnable = path.split('.').reduce(function (acc, i) {
+        return acc === null ? undefined : acc && acc[i];
+    }, obj || createObject());
+    return returnable === undefined ? defaultVal : returnable;
 };
 function hasSeen(item, nodeTree) {
-  if (!nodeTree) return false;
-  while (nodeTree) {
-    if (nodeTree.item == item) return true;
-    nodeTree = nodeTree.parentNode;
-  }
-  return false;
+    if (!nodeTree)
+        return false;
+    while (nodeTree) {
+        if (nodeTree.item == item)
+            return true;
+        nodeTree = nodeTree.parentNode;
+    }
+    return false;
 }
 
 var FieldDefinition = /** @class */ (function () {
-  function FieldDefinition(options) {
-    if (options === void 0) {
-      options = {};
+    function FieldDefinition(options) {
+        if (options === void 0) { options = {}; }
+        this._default = isFunction(options) ? options() : options.default;
     }
-    this._default = isFunction(options) ? options() : options.default;
-  }
-  Object.defineProperty(FieldDefinition.prototype, 'default', {
-    get: function () {
-      return isFunction(this._default) ? this._default() : this._default;
-    },
-    enumerable: false,
-    configurable: true,
-  });
-  return FieldDefinition;
-})();
+    Object.defineProperty(FieldDefinition.prototype, "default", {
+        get: function () {
+            return isFunction(this._default) ? this._default() : this._default;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    return FieldDefinition;
+}());
 var SimpleFieldDefinition = /** @class */ (function (_super) {
-  __extends(SimpleFieldDefinition, _super);
-  function SimpleFieldDefinition(options) {
-    if (options === void 0) {
-      options = {};
+    __extends(SimpleFieldDefinition, _super);
+    function SimpleFieldDefinition(options) {
+        if (options === void 0) { options = {}; }
+        return _super.call(this, options) || this;
     }
-    return _super.call(this, options) || this;
-  }
-  return SimpleFieldDefinition;
-})(FieldDefinition);
+    return SimpleFieldDefinition;
+}(FieldDefinition));
 
 function registerSchema(schema, store, namespace) {
-  if (!schema._fields) {
-    Object.defineProperty(schema, '_fields', {
-      value: createObject({}),
+    if (!schema._fields) {
+        Object.defineProperty(schema, '_fields', {
+            value: createObject({}),
+        });
+    }
+    if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
+        schema._fields[schema.id] = new SimpleFieldDefinition();
+    }
+    if (schema.fields) {
+        Object.assign(schema._fields, schema.fields);
+    }
+    Object.defineProperties(schema, {
+        _namespace: { value: namespace },
+        _store: { value: store },
     });
-  }
-  if (typeof schema.id == 'string' && !(schema.id in schema._fields)) {
-    schema._fields[schema.id] = new SimpleFieldDefinition();
-  }
-  if (schema.fields) {
-    Object.assign(schema._fields, schema.fields);
-  }
-  Object.defineProperties(schema, {
-    _namespace: { value: namespace },
-    _store: { value: store },
-  });
-  Object.freeze(schema);
+    Object.freeze(schema);
 }
 
 var Mutations;
 (function (Mutations) {
-  Mutations['ADD_ALL'] = 'ADD_ALL';
-  Mutations['PATCH_TEMPS'] = 'PATCH_TEMPS';
-  Mutations['SET_PROP'] = 'SET_PROP';
-  Mutations['SET_INDEX'] = 'SET_INDEX';
+    Mutations["ADD_ALL"] = "ADD_ALL";
+    Mutations["PATCH_TEMPS"] = "PATCH_TEMPS";
+    Mutations["SET_PROP"] = "SET_PROP";
+    Mutations["SET_INDEX"] = "SET_INDEX";
 })(Mutations || (Mutations = {}));
 var Actions;
 (function (Actions) {
-  Actions['ADD'] = 'add';
-  Actions['ADD_RELATED'] = 'addRelated';
-  Actions['REMOVE_RELATED'] = 'removeRelated';
-  Actions['UPDATE'] = 'update';
+    Actions["ADD"] = "add";
+    Actions["ADD_RELATED"] = "addRelated";
+    Actions["REMOVE_RELATED"] = "removeRelated";
+    Actions["UPDATE"] = "update";
 })(Actions || (Actions = {}));
 var Getters;
 (function (Getters) {
-  Getters['FIND'] = 'find';
-  Getters['GET_RAW'] = 'getRaw';
-  Getters['FIND_BY_IDS'] = 'findByIds';
-  Getters['ALL'] = 'all';
-  Getters['GET_INDEX'] = 'getIndex';
+    Getters["FIND"] = "find";
+    Getters["GET_RAW"] = "getRaw";
+    Getters["FIND_BY_IDS"] = "findByIds";
+    Getters["ALL"] = "all";
+    Getters["GET_INDEX"] = "getIndex";
 })(Getters || (Getters = {}));
 
 var Query = /** @class */ (function () {
-  function Query() {
-    this.whereAnds = [];
-    this.whereOrs = [];
-  }
-  Query.prototype.where = function () {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
+    function Query() {
+        this.whereAnds = [];
+        this.whereOrs = [];
     }
-    this.addWhere.apply(this, __spread(['and'], args));
-    return this;
-  };
-  Query.prototype.orWhere = function () {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
-    }
-    this.addWhere.apply(this, __spread(['or'], args));
-    return this;
-  };
-  Query.prototype.addWhere = function (type) {
-    var args = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-      args[_i - 1] = arguments[_i];
-    }
-    var wheres = type == 'and' ? this.whereAnds : this.whereOrs;
-    switch (args.length) {
-      case 1:
-        if (!isFunction(args[0]) && !isBoolean(args[0])) {
-          throw new Error('Argument should be a function or boolean');
+    Query.prototype.where = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
         }
-        if (isBoolean(args[0])) {
-          wheres.push({
-            operand: args[0],
-          });
-        } else {
-          wheres.push({
-            key: args[0],
-          });
+        this.addWhere.apply(this, __spread(['and'], args));
+        return this;
+    };
+    Query.prototype.orWhere = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
         }
-        break;
-      case 2:
-        wheres.push({
-          key: args[0],
-          value: args[1],
-        });
-        break;
-      case 3:
-        wheres.push({
-          key: args[0],
-          operand: args[1],
-          value: args[2],
-        });
-        break;
-      default:
-        throw new Error('Illegal arguments supplied');
-    }
-  };
-  return Query;
-})();
+        this.addWhere.apply(this, __spread(['or'], args));
+        return this;
+    };
+    Query.prototype.addWhere = function (type) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        var wheres = type == 'and' ? this.whereAnds : this.whereOrs;
+        switch (args.length) {
+            case 1:
+                if (!isFunction(args[0]) && !isBoolean(args[0])) {
+                    throw new Error('Argument should be a function or boolean');
+                }
+                if (isBoolean(args[0])) {
+                    wheres.push({
+                        operand: args[0],
+                    });
+                }
+                else {
+                    wheres.push({
+                        key: args[0],
+                    });
+                }
+                break;
+            case 2:
+                wheres.push({
+                    key: args[0],
+                    value: args[1],
+                });
+                break;
+            case 3:
+                wheres.push({
+                    key: args[0],
+                    operand: args[1],
+                    value: args[2],
+                });
+                break;
+            default:
+                throw new Error('Illegal arguments supplied');
+        }
+    };
+    return Query;
+}());
 
 var ContextualQuery = /** @class */ (function (_super) {
-  __extends(ContextualQuery, _super);
-  function ContextualQuery(context) {
-    var _this = _super.call(this) || this;
-    _this.context = context;
-    return _this;
-  }
-  ContextualQuery.prototype.matchesItem = function (item) {
-    if (!this.whereAnds.length && !this.whereOrs.length) return true;
-    var result = [];
-    var comparator = getComparator(item);
-    result.push(!!(this.whereAnds.length && this.whereAnds.every(comparator)));
-    result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
-    return result.some(identity);
-  };
-  ContextualQuery.prototype.matchesSomeItems = function (items) {
-    var _this = this;
-    return items.every(function (item) {
-      return _this.matchesItem(item);
-    });
-  };
-  ContextualQuery.prototype.matchesAllItems = function (items) {
-    var _this = this;
-    return items.some(function (item) {
-      return _this.matchesItem(item);
-    });
-  };
-  ContextualQuery.prototype._filter = function (items) {
-    var _this = this;
-    return items.filter(function (item) {
-      return _this.matchesItem(item);
-    });
-  };
-  ContextualQuery.prototype.get = function () {
-    return this.matchesItem(this.context);
-  };
-  return ContextualQuery;
-})(Query);
+    __extends(ContextualQuery, _super);
+    function ContextualQuery(context) {
+        var _this = _super.call(this) || this;
+        _this.context = context;
+        return _this;
+    }
+    ContextualQuery.prototype.matchesItem = function (item) {
+        if (!this.whereAnds.length && !this.whereOrs.length)
+            return true;
+        var result = [];
+        var comparator = getComparator(item);
+        result.push(!!(this.whereAnds.length && this.whereAnds.every(comparator)));
+        result.push(!!(this.whereOrs.length && this.whereOrs.some(comparator)));
+        return result.some(identity);
+    };
+    ContextualQuery.prototype.matchesSomeItems = function (items) {
+        var _this = this;
+        return items.every(function (item) { return _this.matchesItem(item); });
+    };
+    ContextualQuery.prototype.matchesAllItems = function (items) {
+        var _this = this;
+        return items.some(function (item) { return _this.matchesItem(item); });
+    };
+    ContextualQuery.prototype._filter = function (items) {
+        var _this = this;
+        return items.filter(function (item) { return _this.matchesItem(item); });
+    };
+    ContextualQuery.prototype.get = function () {
+        return this.matchesItem(this.context);
+    };
+    return ContextualQuery;
+}(Query));
 
 /**
  * The idea is to have more definitive types of relationships
@@ -445,1735 +331,1481 @@ var ContextualQuery = /** @class */ (function (_super) {
  *
  */
 var Relationship = /** @class */ (function (_super) {
-  __extends(Relationship, _super);
-  function Relationship(factory, parentFactory) {
-    var _this = _super.call(this) || this;
-    _this.factory = factory;
-    _this.parentFactory = parentFactory;
-    return _this;
-  }
-  Object.defineProperty(Relationship.prototype, 'schema', {
-    get: function () {
-      return this.factory();
-    },
-    enumerable: false,
-    configurable: true,
-  });
-  Object.defineProperty(Relationship.prototype, 'parentSchema', {
-    get: function () {
-      var _a;
-      return (_a = this.parentFactory) === null || _a === void 0 ? void 0 : _a.call(this);
-    },
-    enumerable: false,
-    configurable: true,
-  });
-  return Relationship;
-})(FieldDefinition);
+    __extends(Relationship, _super);
+    function Relationship(factory, parentFactory) {
+        var _this = _super.call(this) || this;
+        _this.factory = factory;
+        _this.parentFactory = parentFactory;
+        return _this;
+    }
+    Object.defineProperty(Relationship.prototype, "schema", {
+        get: function () {
+            return this.factory();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Relationship.prototype, "parentSchema", {
+        get: function () {
+            var _a;
+            return (_a = this.parentFactory) === null || _a === void 0 ? void 0 : _a.call(this);
+        },
+        enumerable: false,
+        configurable: true
+    });
+    return Relationship;
+}(FieldDefinition));
 var ListLike = /** @class */ (function (_super) {
-  __extends(ListLike, _super);
-  function ListLike() {
-    return (_super !== null && _super.apply(this, arguments)) || this;
-  }
-  return ListLike;
-})(Relationship);
+    __extends(ListLike, _super);
+    function ListLike() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ListLike;
+}(Relationship));
 
-var getComparator = function (item) {
-  return function (where) {
+var getComparator = function (item) { return function (where) {
     if (isFunction(where.key)) {
-      var query = new ContextualQuery(item);
-      var result = where.key.call(null, query, item);
-      if (typeof result == 'boolean') {
-        return result;
-      }
-      return query.get();
-    } else if (isString(where.key) && isFunction(where.value)) {
-      var value = get(where.key, item);
-      return !!where.value.call(null, value);
-    } else if (isBoolean(where.operand)) {
-      return where.operand;
-    } else if (isString(where.key) && !isFunction(where.value)) {
-      var resolved = get(where.key, item);
-      var isArray = Array.isArray(resolved);
-      resolved = isArray && where.operand != 'in' ? resolved.length : resolved;
-      switch (where.operand) {
-        case '!=':
-          return resolved != where.value;
-        case '>':
-          return resolved > where.value;
-        case '>=':
-          return resolved >= where.value;
-        case '<':
-          return resolved < where.value;
-        case '<=':
-          return resolved <= where.value;
-        case 'in':
-          return where.value.includes(resolved);
-        case '=':
-        default:
-          return resolved == where.value;
-      }
+        var query = new ContextualQuery(item);
+        var result = where.key.call(null, query, item);
+        if (typeof result == 'boolean') {
+            return result;
+        }
+        return query.get();
     }
-  };
-};
+    else if (isString(where.key) && isFunction(where.value)) {
+        var value = get(where.key, item);
+        return !!where.value.call(null, value);
+    }
+    else if (isBoolean(where.operand)) {
+        return where.operand;
+    }
+    else if (isString(where.key) && !isFunction(where.value)) {
+        var resolved = get(where.key, item);
+        var isArray = Array.isArray(resolved);
+        resolved = isArray && where.operand != 'in' ? resolved.length : resolved;
+        switch (where.operand) {
+            case '!=':
+                return resolved != where.value;
+            case '>':
+                return resolved > where.value;
+            case '>=':
+                return resolved >= where.value;
+            case '<':
+                return resolved < where.value;
+            case '<=':
+                return resolved <= where.value;
+            case 'in':
+                return where.value.includes(resolved);
+            case '=':
+            default:
+                return resolved == where.value;
+        }
+    }
+}; };
 var getSortComparator = function (orders) {
-  var l = orders.length;
-  var parsed = orders.map(function (order) {
-    return [order.key, order.direction == 'asc' ? 1 : -1];
-  });
-  return function (a, b) {
-    for (var i = 0; i < l; i++) {
-      var _a = __read(parsed[i], 2),
-        key = _a[0],
-        dir = _a[1];
-      if (a[key] < b[key]) return -1 * dir;
-      if (a[key] > b[key]) return dir;
-    }
-    return 0;
-  };
+    var l = orders.length;
+    var parsed = orders.map(function (order) { return [order.key, order.direction == 'asc' ? 1 : -1]; });
+    return function (a, b) {
+        for (var i = 0; i < l; i++) {
+            var _a = __read(parsed[i], 2), key = _a[0], dir = _a[1];
+            if (a[key] < b[key])
+                return -1 * dir;
+            if (a[key] > b[key])
+                return dir;
+        }
+        return 0;
+    };
 };
 var addToLoads = function (key, relationship, originalLoad, newLoads) {
-  if (originalLoad.has(key)) {
-    newLoads.push(originalLoad.getLoad(key));
-  } else {
-    var newLoad = new Load(relationship);
-    originalLoad.addLoad(key, newLoad);
-    newLoads.push(newLoad);
-  }
+    if (originalLoad.has(key)) {
+        newLoads.push(originalLoad.getLoad(key));
+    }
+    else {
+        var newLoad = new Load(relationship);
+        originalLoad.addLoad(key, newLoad);
+        newLoads.push(newLoad);
+    }
 };
 function getLoads(loads, key) {
-  var e_1, _a;
-  var newLoads = [];
-  var _loop_1 = function (load) {
-    var schema = load.getRelationship().schema;
-    if (key === '*') {
-      Object.entries(schema._fields)
-        .filter(function (_a) {
-          var _b = __read(_a, 2),
-            fieldDef = _b[1];
-          return fieldDef instanceof Relationship;
-        })
-        .forEach(function (_a) {
-          var _b = __read(_a, 2),
-            key = _b[0],
-            value = _b[1];
-          addToLoads(key, value, load, newLoads);
-        });
-    } else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
-      var message = '[' + key + '] is not a relationship on ' + schema.name;
-      console.warn(message);
-    } else {
-      addToLoads(key, schema._fields[key], load, newLoads);
-    }
-  };
-  try {
-    for (var loads_1 = __values(loads), loads_1_1 = loads_1.next(); !loads_1_1.done; loads_1_1 = loads_1.next()) {
-      var load = loads_1_1.value;
-      _loop_1(load);
-    }
-  } catch (e_1_1) {
-    e_1 = { error: e_1_1 };
-  } finally {
+    var e_1, _a;
+    var newLoads = [];
+    var _loop_1 = function (load) {
+        var schema = load.getRelationship().schema;
+        if (key === '*') {
+            Object.entries(schema._fields)
+                .filter(function (_a) {
+                var _b = __read(_a, 2), fieldDef = _b[1];
+                return fieldDef instanceof Relationship;
+            })
+                .forEach(function (_a) {
+                var _b = __read(_a, 2), key = _b[0], value = _b[1];
+                addToLoads(key, value, load, newLoads);
+            });
+        }
+        else if (!schema._fields[key] || !(schema._fields[key] instanceof Relationship)) {
+            var message = "[" + key + "] is not a relationship on " + schema.name;
+            console.warn(message);
+        }
+        else {
+            addToLoads(key, schema._fields[key], load, newLoads);
+        }
+    };
     try {
-      if (loads_1_1 && !loads_1_1.done && (_a = loads_1.return)) _a.call(loads_1);
-    } finally {
-      if (e_1) throw e_1.error;
+        for (var loads_1 = __values(loads), loads_1_1 = loads_1.next(); !loads_1_1.done; loads_1_1 = loads_1.next()) {
+            var load = loads_1_1.value;
+            _loop_1(load);
+        }
     }
-  }
-  return newLoads;
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (loads_1_1 && !loads_1_1.done && (_a = loads_1.return)) _a.call(loads_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    return newLoads;
 }
 
 var LoadQuery = /** @class */ (function (_super) {
-  __extends(LoadQuery, _super);
-  function LoadQuery(load) {
-    var _this = _super.call(this) || this;
-    _this.load = load;
-    _this.whereHasAnds = [];
-    _this.whereHasOrs = [];
-    _this.orders = [];
-    return _this;
-  }
-  LoadQuery.prototype.with = function () {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
+    __extends(LoadQuery, _super);
+    function LoadQuery(load) {
+        var _this = _super.call(this) || this;
+        _this.load = load;
+        _this.whereHasAnds = [];
+        _this.whereHasOrs = [];
+        _this.orders = [];
+        return _this;
     }
-    switch (args.length) {
-      case 1:
-      case 2:
-        this.load.parse(args[0], args[1]);
-        break;
-      default:
-        throw new Error('Invalid arguments supplied');
-    }
-    return this;
-  };
-  LoadQuery.prototype.withoutRelationships = function () {
-    if (this.load) {
-      this.load.clear();
-    }
-    return this;
-  };
-  LoadQuery.prototype.get = function () {
-    throw new Error('Method not allowed');
-  };
-  LoadQuery.prototype.orderBy = function () {
-    var _a;
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
-    }
-    switch (args.length) {
-      case 2:
-        var _b = __read(args, 2),
-          key = _b[0],
-          direction = _b[1];
-        this.orders.push({ key: key, direction: direction });
-        break;
-      case 1:
-        (_a = this.orders).push.apply(_a, __spread(args));
-        break;
-      default:
-        throw new Error('invalid OrderBy Arguments');
-    }
-    return this;
-  };
-  LoadQuery.prototype.apply = function (items) {
-    if (Array.isArray(items)) {
-      return this._sort(this._filter(items));
-    } else if (this.matchesItem(items)) {
-      return items;
-    }
-  };
-  LoadQuery.prototype._sort = function (items) {
-    if (!(this.orders.length && items.length)) return __spread(items);
-    var comparator = getSortComparator(this.orders);
-    return __spread(items).sort(comparator);
-  };
-  return LoadQuery;
-})(ContextualQuery);
+    LoadQuery.prototype.with = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        switch (args.length) {
+            case 1:
+            case 2:
+                this.load.parse(args[0], args[1]);
+                break;
+            default:
+                throw new Error('Invalid arguments supplied');
+        }
+        return this;
+    };
+    LoadQuery.prototype.withoutRelationships = function () {
+        if (this.load) {
+            this.load.clear();
+        }
+        return this;
+    };
+    LoadQuery.prototype.get = function () {
+        throw new Error('Method not allowed');
+    };
+    LoadQuery.prototype.orderBy = function () {
+        var _a;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        switch (args.length) {
+            case 2:
+                var _b = __read(args, 2), key = _b[0], direction = _b[1];
+                this.orders.push({ key: key, direction: direction });
+                break;
+            case 1:
+                (_a = this.orders).push.apply(_a, __spread(args));
+                break;
+            default:
+                throw new Error('invalid OrderBy Arguments');
+        }
+        return this;
+    };
+    LoadQuery.prototype.apply = function (items) {
+        if (Array.isArray(items)) {
+            return this._sort(this._filter(items));
+        }
+        else if (this.matchesItem(items)) {
+            return items;
+        }
+    };
+    LoadQuery.prototype._sort = function (items) {
+        if (!(this.orders.length && items.length))
+            return __spread(items);
+        var comparator = getSortComparator(this.orders);
+        return __spread(items).sort(comparator);
+    };
+    return LoadQuery;
+}(ContextualQuery));
 
 var Load = /** @class */ (function () {
-  function Load(relationship) {
-    this.relationship = relationship;
-    this.loads = new Map();
-  }
-  Load.prototype.addLoad = function (name, load) {
-    this.loads.set(name, load);
-  };
-  Load.prototype.getLoad = function (name) {
-    return this.loads.get(name);
-  };
-  Load.prototype.clear = function () {
-    this.loads.clear();
-  };
-  Load.prototype.has = function (name) {
-    return this.loads.has(name);
-  };
-  Load.prototype.apply = function (data) {
-    if (!this.query || data == null) return data;
-    return this.query.apply(data);
-  };
-  Load.prototype.getRelationship = function () {
-    return this.relationship;
-  };
-  Load.prototype.parse = function () {
-    var _this = this;
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
+    function Load(relationship) {
+        this.relationship = relationship;
+        this.loads = new Map();
     }
-    var rawLoads = this.parseRawLoadArgs.apply(this, __spread(args));
-    Object.entries(rawLoads).forEach(function (_a) {
-      var _b = __read(_a, 2),
-        key = _b[0],
-        val = _b[1];
-      var segments = key.split('.');
-      var loads = segments.reduce(
-        function (loads, segment) {
-          return getLoads(loads, segment);
-        },
-        [_this]
-      );
-      loads.forEach(function (load) {
-        var _a;
-        if (!isFunction(val)) return;
-        (_a = load.query) !== null && _a !== void 0 ? _a : (load.query = new LoadQuery(load));
-        val.call(null, load.query);
-      });
-    });
-    return this;
-  };
-  Load.prototype.parseRawLoadArgs = function () {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
-    }
-    var rawLoads = createObject();
-    var _a = __read(args, 2),
-      firstArg = _a[0],
-      secondArg = _a[1];
-    switch (args.length) {
-      case 1:
-        if (Array.isArray(firstArg)) {
-          firstArg.forEach(function (item) {
-            return (rawLoads[item] = true);
-          });
-        } else if (isString(firstArg)) {
-          rawLoads[firstArg] = true;
-        } else {
-          rawLoads = createObject(firstArg);
+    Load.prototype.addLoad = function (name, load) {
+        this.loads.set(name, load);
+    };
+    Load.prototype.getLoad = function (name) {
+        return this.loads.get(name);
+    };
+    Load.prototype.clear = function () {
+        this.loads.clear();
+    };
+    Load.prototype.has = function (name) {
+        return this.loads.has(name);
+    };
+    Load.prototype.apply = function (data) {
+        if (!this.query || data == null)
+            return data;
+        return this.query.apply(data);
+    };
+    Load.prototype.getRelationship = function () {
+        return this.relationship;
+    };
+    Load.prototype.parse = function () {
+        var _this = this;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
         }
-        break;
-      case 2:
-        rawLoads[firstArg] = secondArg;
-        break;
-      default:
-        throw new Error('Invalid arguments supplied');
-    }
-    return rawLoads;
-  };
-  return Load;
-})();
+        var rawLoads = this.parseRawLoadArgs.apply(this, __spread(args));
+        Object.entries(rawLoads).forEach(function (_a) {
+            var _b = __read(_a, 2), key = _b[0], val = _b[1];
+            var segments = key.split('.');
+            var loads = segments.reduce(function (loads, segment) { return getLoads(loads, segment); }, [_this]);
+            loads.forEach(function (load) {
+                var _a;
+                if (!isFunction(val))
+                    return;
+                (_a = load.query) !== null && _a !== void 0 ? _a : (load.query = new LoadQuery(load));
+                val.call(null, load.query);
+            });
+        });
+        return this;
+    };
+    Load.prototype.parseRawLoadArgs = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var rawLoads = createObject();
+        var _a = __read(args, 2), firstArg = _a[0], secondArg = _a[1];
+        switch (args.length) {
+            case 1:
+                if (Array.isArray(firstArg)) {
+                    firstArg.forEach(function (item) { return (rawLoads[item] = true); });
+                }
+                else if (isString(firstArg)) {
+                    rawLoads[firstArg] = true;
+                }
+                else {
+                    rawLoads = createObject(firstArg);
+                }
+                break;
+            case 2:
+                rawLoads[firstArg] = secondArg;
+                break;
+            default:
+                throw new Error('Invalid arguments supplied');
+        }
+        return rawLoads;
+    };
+    return Load;
+}());
 
 var ItemRelationship = /** @class */ (function (_super) {
-  __extends(ItemRelationship, _super);
-  function ItemRelationship() {
-    return (_super !== null && _super.apply(this, arguments)) || this;
-  }
-  return ItemRelationship;
-})(Relationship);
+    __extends(ItemRelationship, _super);
+    function ItemRelationship() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ItemRelationship;
+}(Relationship));
 
 var ModelQuery = /** @class */ (function (_super) {
-  __extends(ModelQuery, _super);
-  function ModelQuery(schema) {
-    var _this = _super.call(this, null) || this;
-    _this.schema = schema;
-    _this.withArgs = [];
-    return _this;
-  }
-  ModelQuery.prototype.with = function () {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
+    __extends(ModelQuery, _super);
+    function ModelQuery(schema) {
+        var _this = _super.call(this, null) || this;
+        _this.schema = schema;
+        _this.withArgs = [];
+        return _this;
     }
-    if (this.load) return _super.prototype.with.call(this, args[0], args[1]);
-    this.withArgs.push(args);
-    return this;
-  };
-  ModelQuery.prototype.withoutRelationships = function () {
-    var _this = this;
-    this.withArgs = [];
-    this.load = new Load(
-      new ItemRelationship(function () {
-        return _this.schema;
-      })
-    );
-    return _super.prototype.withoutRelationships.call(this);
-  };
-  ModelQuery.prototype.initLoad = function () {
-    var _this = this;
-    if (!this.load && this.withArgs.length) {
-      this.load = new Load(
-        new ItemRelationship(function () {
-          return _this.schema;
-        })
-      );
-      this.withArgs.forEach(function (_a) {
-        var _b = __read(_a, 2),
-          first = _b[0],
-          second = _b[1];
-        _super.prototype.with.call(_this, first, second);
-      });
-    }
-    return this.load;
-  };
-  ModelQuery.prototype.get = function () {
-    var _this = this;
-    var items = this.schema.all();
-    items = this.apply(items);
-    if (this.initLoad()) {
-      return items.map(function (item) {
-        return _this.schema.find(getIdValue(item, _this.schema), { load: _this.load });
-      });
-    }
-    return items;
-  };
-  ModelQuery.prototype.first = function () {
-    var _this = this;
-    var items = this.schema.all();
-    var first = items.find(function (item) {
-      return _this.matchesItem(item);
-    });
-    if (!first) return;
-    if (this.initLoad()) {
-      return this.schema.find(getIdValue(first, this.schema), { load: this.load });
-    }
-    return first;
-  };
-  return ModelQuery;
-})(LoadQuery);
+    ModelQuery.prototype.with = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        if (this.load)
+            return _super.prototype.with.call(this, args[0], args[1]);
+        this.withArgs.push(args);
+        return this;
+    };
+    ModelQuery.prototype.withoutRelationships = function () {
+        var _this = this;
+        this.withArgs = [];
+        this.load = new Load(new ItemRelationship(function () { return _this.schema; }));
+        return _super.prototype.withoutRelationships.call(this);
+    };
+    ModelQuery.prototype.initLoad = function () {
+        var _this = this;
+        if (!this.load && this.withArgs.length) {
+            this.load = new Load(new ItemRelationship(function () { return _this.schema; }));
+            this.withArgs.forEach(function (_a) {
+                var _b = __read(_a, 2), first = _b[0], second = _b[1];
+                _super.prototype.with.call(_this, first, second);
+            });
+        }
+        return this.load;
+    };
+    ModelQuery.prototype.get = function () {
+        var _this = this;
+        var items = this.schema.all();
+        items = this.apply(items);
+        if (this.initLoad()) {
+            return items.map(function (item) {
+                return _this.schema.find(getIdValue(item, _this.schema), { load: _this.load });
+            });
+        }
+        return items;
+    };
+    ModelQuery.prototype.first = function () {
+        var _this = this;
+        var items = this.schema.all();
+        var first = items.find(function (item) { return _this.matchesItem(item); });
+        if (!first)
+            return;
+        if (this.initLoad()) {
+            return this.schema.find(getIdValue(first, this.schema), { load: this.load });
+        }
+        return first;
+    };
+    return ModelQuery;
+}(LoadQuery));
 
 var BelongsToRelationship = /** @class */ (function (_super) {
-  __extends(BelongsToRelationship, _super);
-  function BelongsToRelationship(schemaFactory, parentSchemaFactory, foreignKey) {
-    var _this = _super.call(this, schemaFactory, parentSchemaFactory) || this;
-    _this.foreignKey = foreignKey;
-    return _this;
-  }
-  return BelongsToRelationship;
-})(Relationship);
+    __extends(BelongsToRelationship, _super);
+    function BelongsToRelationship(schemaFactory, parentSchemaFactory, foreignKey) {
+        var _this = _super.call(this, schemaFactory, parentSchemaFactory) || this;
+        _this.foreignKey = foreignKey;
+        return _this;
+    }
+    return BelongsToRelationship;
+}(Relationship));
 
 function BelongsTo(factory, foreignKey) {
-  return function (target, propName) {
-    var constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = BelongsTo.define(
-      factory,
-      function () {
-        return constructor;
-      },
-      foreignKey
-    );
-  };
+    return function (target, propName) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = BelongsTo.define(factory, function () { return constructor; }, foreignKey);
+    };
 }
 BelongsTo.define = function (factory, parentFactory, foreignKey) {
-  return new BelongsToRelationship(factory, parentFactory, foreignKey);
+    return new BelongsToRelationship(factory, parentFactory, foreignKey);
 };
 
 var HasManyRelationship = /** @class */ (function (_super) {
-  __extends(HasManyRelationship, _super);
-  function HasManyRelationship(schemaFactory, parentSchemaFactory, foreignKey) {
-    var _this = _super.call(this, schemaFactory, parentSchemaFactory) || this;
-    _this.foreignKey = foreignKey;
-    return _this;
-  }
-  return HasManyRelationship;
-})(ListLike);
+    __extends(HasManyRelationship, _super);
+    function HasManyRelationship(schemaFactory, parentSchemaFactory, foreignKey) {
+        var _this = _super.call(this, schemaFactory, parentSchemaFactory) || this;
+        _this.foreignKey = foreignKey;
+        return _this;
+    }
+    return HasManyRelationship;
+}(ListLike));
 
 function HasMany(factory, foreignKey) {
-  return function (target, propName) {
-    var constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = HasMany.define(
-      factory,
-      function () {
-        return constructor;
-      },
-      foreignKey
-    );
-  };
+    return function (target, propName) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = HasMany.define(factory, function () { return constructor; }, foreignKey);
+    };
 }
 HasMany.define = function (factory, parentFactory, foreignKey) {
-  return new HasManyRelationship(factory, parentFactory, foreignKey);
+    return new HasManyRelationship(factory, parentFactory, foreignKey);
 };
 
 var Model = /** @class */ (function () {
-  function Model(data, opts) {
-    var e_1, _a;
-    /**
-     * Indicates wether this model is connected to the store
-     */
-    this._connected = false;
-    var id = data ? getIdValue(data, getConstructor(this)) : null;
-    Object.defineProperties(this, {
-      _caches: {
-        value: Object.fromEntries(
-          cacheNames.map(function (name) {
-            return [name, {}];
-          })
-        ),
-      },
-      _connected: {
-        value: !!(opts === null || opts === void 0 ? void 0 : opts.connected),
-        enumerable: false,
-        configurable: true,
-      },
-      _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
-      _id: { value: id, enumerable: false, configurable: false, writable: true },
-    });
-    var _fields = getConstructor(this)._fields;
-    try {
-      for (var _b = __values(Object.keys(_fields)), _c = _b.next(); !_c.done; _c = _b.next()) {
-        var key = _c.value;
-        createAccessor(this, key);
-      }
-    } catch (e_1_1) {
-      e_1 = { error: e_1_1 };
-    } finally {
-      try {
-        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-      } finally {
-        if (e_1) throw e_1.error;
-      }
-    }
-    if (!this._connected) {
-      cacheDefaults(this, data || {});
-      Vue.observable(this._caches);
-    }
-    // No need for proxy
-    // return new Proxy<Model>(this, {
-    // set: proxySetter
-    // });
-  }
-  /**
-   * Convert to JSON
-   * @internal
-   */
-  Model.prototype.toJSON = function (parentkey, parentNode) {
-    var e_2, _a, e_3, _b;
-    var constructor = getConstructor(this);
-    var json = {};
-    try {
-      for (var _c = __values(Object.entries(this)), _d = _c.next(); !_d.done; _d = _c.next()) {
-        var _e = __read(_d.value, 2),
-          key = _e[0],
-          val = _e[1];
-        if (key in constructor._fields) {
-          if (constructor._fields[key] instanceof Relationship) {
-            var node = { item: this, parentNode: parentNode };
-            if (val == null) {
-              json[key] = val;
-            } else if (Array.isArray(val)) {
-              var items = [];
-              try {
-                for (var _f = ((e_3 = void 0), __values(val)), _g = _f.next(); !_g.done; _g = _f.next()) {
-                  var item = _g.value;
-                  items.push(
-                    item.toJSON ? (hasSeen(item, node) ? getRecursionMessage(item) : item.toJSON(key, node)) : item
-                  );
-                }
-              } catch (e_3_1) {
-                e_3 = { error: e_3_1 };
-              } finally {
-                try {
-                  if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
-                } finally {
-                  if (e_3) throw e_3.error;
-                }
-              }
-              json[key] = items;
-            } else {
-              json[key] = val.toJSON ? (hasSeen(val, node) ? getRecursionMessage(val) : val.toJSON(key, node)) : val;
+    function Model(data, opts) {
+        var e_1, _a;
+        /**
+         * Indicates wether this model is connected to the store
+         */
+        this._connected = false;
+        var id = data ? getIdValue(data, getConstructor(this)) : null;
+        Object.defineProperties(this, {
+            _caches: { value: Object.fromEntries(cacheNames.map(function (name) { return [name, {}]; })) },
+            _connected: { value: !!(opts === null || opts === void 0 ? void 0 : opts.connected), enumerable: false, configurable: true },
+            _load: { value: opts === null || opts === void 0 ? void 0 : opts.load, enumerable: false, configurable: true },
+            _id: { value: id, enumerable: false, configurable: false, writable: true },
+        });
+        var _fields = getConstructor(this)._fields;
+        try {
+            for (var _b = __values(Object.keys(_fields)), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var key = _c.value;
+                createAccessor(this, key);
             }
-          } else {
-            json[key] = val;
-          }
         }
-      }
-    } catch (e_2_1) {
-      e_2 = { error: e_2_1 };
-    } finally {
-      try {
-        if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-      } finally {
-        if (e_2) throw e_2.error;
-      }
-    }
-    return json;
-  };
-  /**
-   * Converts the model to a plain javascript object.
-   */
-  Model.prototype.$toObject = function (allProps) {
-    if (allProps === void 0) {
-      allProps = false;
-    }
-    return modelToObject(this, getConstructor(this), allProps);
-  };
-  /**
-   * Update the properties of the model with the given data. You don't need to pass the full model.
-   * You can pass only the props you want to update, You can also pass related models or model-like data
-   */
-  Model.prototype.$update = function (data) {
-    if (data === void 0) {
-      data = {};
-    }
-    return __awaiter(this, void 0, void 0, function () {
-      var constructor;
-      var _this = this;
-      return __generator(this, function (_a) {
-        constructor = getConstructor(this);
-        return [
-          2 /*return*/,
-          constructor._store
-            .dispatch(constructor._namespace + '/update', {
-              id: this._id,
-              data: data,
-              schema: constructor,
-            })
-            .then(function (id) {
-              _this._connected = true;
-              return id;
-            }),
-        ];
-      });
-    });
-  };
-  /**
-   * Useful when a model is created using `new Model()`.
-   * You can assign properties to the model like you would any other javascript
-   * object but the new values won't be saved to the vuex store until this method is called;
-   *
-   * If none model-like data has been assigned to the relationships on `this` model, calling save would
-   * transform them to actual models
-   */
-  Model.prototype.$save = function () {
-    return __awaiter(this, void 0, void 0, function () {
-      var _this = this;
-      return __generator(this, function (_a) {
-        return [
-          2 /*return*/,
-          new Promise(function (resolve) {
-            var constructor = getConstructor(_this);
-            if (_this._connected) {
-              console.warn('No need calling $save. This entity is already connected to the Vuex store');
-            } else {
-              var item = cacheNames.reduce(function (acc, name) {
-                return __assign(__assign({}, acc), _this._caches[name]);
-              }, {});
-              resolve(
-                constructor._store
-                  .dispatch(constructor._namespace + '/' + Actions.ADD, { items: item, schema: constructor })
-                  .then(function (res) {
-                    _this._id = res;
-                    _this._connected = true;
-                    return res;
-                  })
-              );
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-          }),
-        ];
-      });
-    });
-  };
-  Object.defineProperty(Model, 'fields', {
+            finally { if (e_1) throw e_1.error; }
+        }
+        if (!this._connected) {
+            cacheDefaults(this, data || {});
+            Vue.observable(this._caches);
+        }
+        // No need for proxy
+        // return new Proxy<Model>(this, {
+        // set: proxySetter
+        // });
+    }
     /**
-     * This is an alternative to the `Field(), List(), Item(), BelongsTo() and HasMany()` decorators.
-     *
-     * Specify the different fields of the class
-     * in an object that contains the field names as it's keys
-     * e.g
-     * ```javascript
-     * class User extends model {
-     *   static get fields() {
-     *     return {
-     *       id: this.$field(),
-     *       name: this.$field(),
-     *       posts: this.$hasMany(() => Post)
-     *     }
-     *   }
-     * }
-     * ```
-     * @deprecated
+     * Convert to JSON
+     * @internal
      */
-    get: function () {
-      return {};
-    },
-    enumerable: false,
-    configurable: true,
-  });
-  /**
-   * Find a model by the specified identifier
-   */
-  Model.find = function (id, opts) {
-    if (opts === void 0) {
-      opts = {};
-    }
-    return this._store.getters[this._namespace + '/' + Getters.FIND](id, this, opts);
-  };
-  /**
-   * Find all items that match the specified ids
-   *
-   */
-  Model.findByIds = function (ids, opts) {
-    if (opts === void 0) {
-      opts = {};
-    }
-    return this._store.getters[this._namespace + '/' + Getters.FIND_BY_IDS](ids, this, opts);
-  };
-  /**
-   * Get all items of this type from the Database
-   */
-  Model.all = function (opts) {
-    if (opts === void 0) {
-      opts = {};
-    }
-    return this._store.getters[this._namespace + '/' + Getters.ALL](this, opts);
-  };
-  /**
-   * Add the passed item to the database. It should match this model's schema.
-   *
-   * It returns a promise of the inserted entity's id
-   */
-  Model.add = function (item) {
-    return this._store.dispatch(this._namespace + '/' + Actions.ADD, { items: item, schema: this });
-  };
-  /**
-   * Add the passed items to the database. It should match this model's schema.
-   *
-   * It returns a promise of an array of ids for the inserted entities.
-   */
-  Model.addAll = function (items) {
-    return this._store.dispatch(this._namespace + '/' + Actions.ADD, { items: items, schema: [this] });
-  };
-  Model.$item = function (factory) {
-    var _this = this;
-    return Item.define(factory, function () {
-      return _this;
+    Model.prototype.toJSON = function (parentkey, parentNode) {
+        var e_2, _a, e_3, _b;
+        var constructor = getConstructor(this);
+        var json = {};
+        try {
+            for (var _c = __values(Object.entries(this)), _d = _c.next(); !_d.done; _d = _c.next()) {
+                var _e = __read(_d.value, 2), key = _e[0], val = _e[1];
+                if (key in constructor._fields) {
+                    if (constructor._fields[key] instanceof Relationship) {
+                        var node = { item: this, parentNode: parentNode };
+                        if (val == null) {
+                            json[key] = val;
+                        }
+                        else if (Array.isArray(val)) {
+                            var items = [];
+                            try {
+                                for (var _f = (e_3 = void 0, __values(val)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                                    var item = _g.value;
+                                    items.push(item.toJSON ? (hasSeen(item, node) ? getRecursionMessage(item) : item.toJSON(key, node)) : item);
+                                }
+                            }
+                            catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                            finally {
+                                try {
+                                    if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
+                                }
+                                finally { if (e_3) throw e_3.error; }
+                            }
+                            json[key] = items;
+                        }
+                        else {
+                            json[key] = val.toJSON ? (hasSeen(val, node) ? getRecursionMessage(val) : val.toJSON(key, node)) : val;
+                        }
+                    }
+                    else {
+                        json[key] = val;
+                    }
+                }
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
+        return json;
+    };
+    /**
+     * Converts the model to a plain javascript object.
+     */
+    Model.prototype.$toObject = function (allProps) {
+        if (allProps === void 0) { allProps = false; }
+        return modelToObject(this, getConstructor(this), allProps);
+    };
+    /**
+     * Update the properties of the model with the given data. You don't need to pass the full model.
+     * You can pass only the props you want to update, You can also pass related models or model-like data
+     */
+    Model.prototype.$update = function (data) {
+        if (data === void 0) { data = {}; }
+        return __awaiter(this, void 0, void 0, function () {
+            var constructor;
+            var _this = this;
+            return __generator(this, function (_a) {
+                constructor = getConstructor(this);
+                return [2 /*return*/, constructor._store
+                        .dispatch(constructor._namespace + "/update", {
+                        id: this._id,
+                        data: data,
+                        schema: constructor,
+                    })
+                        .then(function (id) {
+                        _this._connected = true;
+                        return id;
+                    })];
+            });
+        });
+    };
+    /**
+     * Useful when a model is created using `new Model()`.
+     * You can assign properties to the model like you would any other javascript
+     * object but the new values won't be saved to the vuex store until this method is called;
+     *
+     * If none model-like data has been assigned to the relationships on `this` model, calling save would
+     * transform them to actual models
+     */
+    Model.prototype.$save = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _this = this;
+            return __generator(this, function (_a) {
+                return [2 /*return*/, new Promise(function (resolve) {
+                        var constructor = getConstructor(_this);
+                        if (_this._connected) {
+                            console.warn('No need calling $save. This entity is already connected to the Vuex store');
+                        }
+                        else {
+                            var item = cacheNames.reduce(function (acc, name) {
+                                return __assign(__assign({}, acc), _this._caches[name]);
+                            }, {});
+                            resolve(constructor._store
+                                .dispatch(constructor._namespace + "/" + Actions.ADD, { items: item, schema: constructor })
+                                .then(function (res) {
+                                _this._id = res;
+                                _this._connected = true;
+                                return res;
+                            }));
+                        }
+                    })];
+            });
+        });
+    };
+    Object.defineProperty(Model, "fields", {
+        /**
+         * This is an alternative to the `Field(), List(), Item(), BelongsTo() and HasMany()` decorators.
+         *
+         * Specify the different fields of the class
+         * in an object that contains the field names as it's keys
+         * e.g
+         * ```javascript
+         * class User extends model {
+         *   static get fields() {
+         *     return {
+         *       id: this.$field(),
+         *       name: this.$field(),
+         *       posts: this.$hasMany(() => Post)
+         *     }
+         *   }
+         * }
+         * ```
+         * @deprecated
+         */
+        get: function () {
+            return {};
+        },
+        enumerable: false,
+        configurable: true
     });
-  };
-  Model.$list = function (factory) {
-    var _this = this;
-    return List.define(factory, function () {
-      return _this;
-    });
-  };
-  Model.$field = function (options) {
-    if (options === void 0) {
-      options = {};
-    }
-    return Field.define(options);
-  };
-  Model.$belongsTo = function (factory, foreignKey) {
-    var _this = this;
-    return BelongsTo.define(
-      factory,
-      function () {
-        return _this;
-      },
-      foreignKey
-    );
-  };
-  Model.$hasMany = function (factory, foreignKey) {
-    var _this = this;
-    return HasMany.define(
-      factory,
-      function () {
-        return _this;
-      },
-      foreignKey
-    );
-  };
-  Model.query = function (fn) {
-    var query = new ModelQuery(this);
-    fn && fn(query);
-    return query;
-  };
-  /**
-   * The identifier for the model. It also accepts an id resolver function that
-   * receives a model-like param as input and returns the id;
-   * @default 'id'
-   */
-  Model.id = 'id';
-  return Model;
-})();
+    /**
+     * Find a model by the specified identifier
+     */
+    Model.find = function (id, opts) {
+        if (opts === void 0) { opts = {}; }
+        return this._store.getters[this._namespace + "/" + Getters.FIND](id, this, opts);
+    };
+    /**
+     * Find all items that match the specified ids
+     *
+     */
+    Model.findByIds = function (ids, opts) {
+        if (opts === void 0) { opts = {}; }
+        return this._store.getters[this._namespace + "/" + Getters.FIND_BY_IDS](ids, this, opts);
+    };
+    /**
+     * Get all items of this type from the Database
+     */
+    Model.all = function (opts) {
+        if (opts === void 0) { opts = {}; }
+        return this._store.getters[this._namespace + "/" + Getters.ALL](this, opts);
+    };
+    /**
+     * Add the passed item to the database. It should match this model's schema.
+     *
+     * It returns a promise of the inserted entity's id
+     */
+    Model.add = function (item) {
+        return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: item, schema: this });
+    };
+    /**
+     * Add the passed items to the database. It should match this model's schema.
+     *
+     * It returns a promise of an array of ids for the inserted entities.
+     */
+    Model.addAll = function (items) {
+        return this._store.dispatch(this._namespace + "/" + Actions.ADD, { items: items, schema: [this] });
+    };
+    Model.$item = function (factory) {
+        var _this = this;
+        return Item.define(factory, function () { return _this; });
+    };
+    Model.$list = function (factory) {
+        var _this = this;
+        return List.define(factory, function () { return _this; });
+    };
+    Model.$field = function (options) {
+        if (options === void 0) { options = {}; }
+        return Field.define(options);
+    };
+    Model.$belongsTo = function (factory, foreignKey) {
+        var _this = this;
+        return BelongsTo.define(factory, function () { return _this; }, foreignKey);
+    };
+    Model.$hasMany = function (factory, foreignKey) {
+        var _this = this;
+        return HasMany.define(factory, function () { return _this; }, foreignKey);
+    };
+    Model.query = function (fn) {
+        var query = new ModelQuery(this);
+        fn && fn(query);
+        return query;
+    };
+    /**
+     * The identifier for the model. It also accepts an id resolver function that
+     * receives a model-like param as input and returns the id;
+     * @default 'id'
+     */
+    Model.id = 'id';
+    return Model;
+}());
 
 var ListRelationship = /** @class */ (function (_super) {
-  __extends(ListRelationship, _super);
-  function ListRelationship() {
-    return (_super !== null && _super.apply(this, arguments)) || this;
-  }
-  return ListRelationship;
-})(ListLike);
+    __extends(ListRelationship, _super);
+    function ListRelationship() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    return ListRelationship;
+}(ListLike));
 
-var listLike = function (entityDef) {
-  return Array.isArray(entityDef) || entityDef instanceof ListLike;
-};
+var listLike = function (entityDef) { return Array.isArray(entityDef) || entityDef instanceof ListLike; };
 var getRelationshipSchema = function (entityDef) {
-  return Array.isArray(entityDef)
-    ? entityDef[0]
-    : entityDef.prototype instanceof Model
-    ? entityDef
-    : entityDef instanceof Relationship
-    ? entityDef.schema
-    : null;
+    return Array.isArray(entityDef)
+        ? entityDef[0]
+        : entityDef.prototype instanceof Model
+            ? entityDef
+            : entityDef instanceof Relationship
+                ? entityDef.schema
+                : null;
 };
 function normalize(raw, entityDef, visited, entities, depth) {
-  var e_1, _a, e_2, _b, e_3, _c, e_4, _d, e_5, _e;
-  if (visited === void 0) {
-    visited = new Map();
-  }
-  if (entities === void 0) {
-    entities = new Map();
-  }
-  if (depth === void 0) {
-    depth = 0;
-  }
-  var schema = getRelationshipSchema(entityDef);
-  var fields = schema._fields;
-  var result;
-  if (raw == null) {
-    result = null;
-  } else if (Array.isArray(raw) && listLike(entityDef)) {
-    result = raw
-      .map(function (r) {
-        var result = normalize(r, schema, visited, entities, depth + 1).result;
-        return result;
-      })
-      .filter(function (id) {
-        return id != null;
-      });
-  } else {
-    if (visited.has(raw)) {
-      result = visited.get(raw);
-    } else {
-      result = getIdValue(raw, schema);
-      visited.set(raw, result);
-      if (!entities.has(schema)) {
-        entities.set(schema, createObject());
-      }
-      if (!entities.get(schema)[result]) {
-        entities.get(schema)[result] = {};
-      }
-      var normalized = entities.get(schema)[result];
-      var relEntries = [];
-      var fieldEntries = [];
-      var relatedResults = [];
-      try {
-        for (var _f = __values(Object.entries(raw)), _g = _f.next(); !_g.done; _g = _f.next()) {
-          var _h = __read(_g.value, 2),
-            key = _h[0],
-            value = _h[1];
-          if (!(key in fields)) continue;
-          (fields[key] instanceof Relationship ? relEntries : fieldEntries).push([key, value]);
-        }
-      } catch (e_1_1) {
-        e_1 = { error: e_1_1 };
-      } finally {
-        try {
-          if (_g && !_g.done && (_a = _f.return)) _a.call(_f);
-        } finally {
-          if (e_1) throw e_1.error;
-        }
-      }
-      try {
-        for (
-          var relEntries_1 = __values(relEntries), relEntries_1_1 = relEntries_1.next();
-          !relEntries_1_1.done;
-          relEntries_1_1 = relEntries_1.next()
-        ) {
-          var _j = __read(relEntries_1_1.value, 2),
-            key = _j[0],
-            value = _j[1];
-          var relationship = fields[key];
-          var relatedResult = normalize(value, relationship, visited, entities, depth + 1).result;
-          relatedResults.push({ key: key, value: relatedResult, relationship: relationship });
-        }
-      } catch (e_2_1) {
-        e_2 = { error: e_2_1 };
-      } finally {
-        try {
-          if (relEntries_1_1 && !relEntries_1_1.done && (_b = relEntries_1.return)) _b.call(relEntries_1);
-        } finally {
-          if (e_2) throw e_2.error;
-        }
-      }
-      try {
-        for (
-          var fieldEntries_1 = __values(fieldEntries), fieldEntries_1_1 = fieldEntries_1.next();
-          !fieldEntries_1_1.done;
-          fieldEntries_1_1 = fieldEntries_1.next()
-        ) {
-          var _k = __read(fieldEntries_1_1.value, 2),
-            key = _k[0],
-            value = _k[1];
-          normalized[key] = value;
-        }
-      } catch (e_3_1) {
-        e_3 = { error: e_3_1 };
-      } finally {
-        try {
-          if (fieldEntries_1_1 && !fieldEntries_1_1.done && (_c = fieldEntries_1.return)) _c.call(fieldEntries_1);
-        } finally {
-          if (e_3) throw e_3.error;
-        }
-      }
-      try {
-        for (
-          var relatedResults_1 = __values(relatedResults), relatedResults_1_1 = relatedResults_1.next();
-          !relatedResults_1_1.done;
-          relatedResults_1_1 = relatedResults_1.next()
-        ) {
-          var _l = relatedResults_1_1.value,
-            key = _l.key,
-            value = _l.value,
-            relationship = _l.relationship;
-          switch (true) {
-            case relationship instanceof ItemRelationship:
-            case relationship instanceof ListRelationship: {
-              normalized[key] = value;
-              break;
-            }
-            case relationship instanceof HasManyRelationship: {
-              if (value == null) continue;
-              var _m = relationship,
-                schema_1 = _m.schema,
-                foreignKey = _m.foreignKey;
-              try {
-                for (var _o = ((e_5 = void 0), __values(value)), _p = _o.next(); !_p.done; _p = _o.next()) {
-                  var id = _p.value;
-                  entities.get(schema_1)[id][foreignKey] = result;
-                }
-              } catch (e_5_1) {
-                e_5 = { error: e_5_1 };
-              } finally {
-                try {
-                  if (_p && !_p.done && (_e = _o.return)) _e.call(_o);
-                } finally {
-                  if (e_5) throw e_5.error;
-                }
-              }
-              break;
-            }
-            case relationship instanceof BelongsToRelationship: {
-              var foreignKey = relationship.foreignKey;
-              normalized[foreignKey] = value;
-              break;
-            }
-          }
-        }
-      } catch (e_4_1) {
-        e_4 = { error: e_4_1 };
-      } finally {
-        try {
-          if (relatedResults_1_1 && !relatedResults_1_1.done && (_d = relatedResults_1.return))
-            _d.call(relatedResults_1);
-        } finally {
-          if (e_4) throw e_4.error;
-        }
-      }
+    var e_1, _a, e_2, _b, e_3, _c, e_4, _d, e_5, _e;
+    if (visited === void 0) { visited = new Map(); }
+    if (entities === void 0) { entities = new Map(); }
+    if (depth === void 0) { depth = 0; }
+    var schema = getRelationshipSchema(entityDef);
+    var fields = schema._fields;
+    var result;
+    if (raw == null) {
+        result = null;
     }
-  }
-  return {
-    result: result,
-    entities: entities,
-  };
+    else if (Array.isArray(raw) && listLike(entityDef)) {
+        result = raw
+            .map(function (r) {
+            var result = normalize(r, schema, visited, entities, depth + 1).result;
+            return result;
+        })
+            .filter(function (id) { return id != null; });
+    }
+    else {
+        if (visited.has(raw)) {
+            result = visited.get(raw);
+        }
+        else {
+            result = getIdValue(raw, schema);
+            visited.set(raw, result);
+            if (!entities.has(schema)) {
+                entities.set(schema, createObject());
+            }
+            if (!entities.get(schema)[result]) {
+                entities.get(schema)[result] = {};
+            }
+            var normalized = entities.get(schema)[result];
+            var relEntries = [];
+            var fieldEntries = [];
+            var relatedResults = [];
+            try {
+                for (var _f = __values(Object.entries(raw)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                    var _h = __read(_g.value, 2), key = _h[0], value = _h[1];
+                    if (!(key in fields))
+                        continue;
+                    (fields[key] instanceof Relationship ? relEntries : fieldEntries).push([key, value]);
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_g && !_g.done && (_a = _f.return)) _a.call(_f);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            try {
+                for (var relEntries_1 = __values(relEntries), relEntries_1_1 = relEntries_1.next(); !relEntries_1_1.done; relEntries_1_1 = relEntries_1.next()) {
+                    var _j = __read(relEntries_1_1.value, 2), key = _j[0], value = _j[1];
+                    var relationship = fields[key];
+                    var relatedResult = normalize(value, relationship, visited, entities, depth + 1).result;
+                    relatedResults.push({ key: key, value: relatedResult, relationship: relationship });
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (relEntries_1_1 && !relEntries_1_1.done && (_b = relEntries_1.return)) _b.call(relEntries_1);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+            try {
+                for (var fieldEntries_1 = __values(fieldEntries), fieldEntries_1_1 = fieldEntries_1.next(); !fieldEntries_1_1.done; fieldEntries_1_1 = fieldEntries_1.next()) {
+                    var _k = __read(fieldEntries_1_1.value, 2), key = _k[0], value = _k[1];
+                    normalized[key] = value;
+                }
+            }
+            catch (e_3_1) { e_3 = { error: e_3_1 }; }
+            finally {
+                try {
+                    if (fieldEntries_1_1 && !fieldEntries_1_1.done && (_c = fieldEntries_1.return)) _c.call(fieldEntries_1);
+                }
+                finally { if (e_3) throw e_3.error; }
+            }
+            try {
+                for (var relatedResults_1 = __values(relatedResults), relatedResults_1_1 = relatedResults_1.next(); !relatedResults_1_1.done; relatedResults_1_1 = relatedResults_1.next()) {
+                    var _l = relatedResults_1_1.value, key = _l.key, value = _l.value, relationship = _l.relationship;
+                    switch (true) {
+                        case relationship instanceof ItemRelationship:
+                        case relationship instanceof ListRelationship: {
+                            normalized[key] = value;
+                            break;
+                        }
+                        case relationship instanceof HasManyRelationship: {
+                            if (value == null)
+                                continue;
+                            var _m = relationship, schema_1 = _m.schema, foreignKey = _m.foreignKey;
+                            try {
+                                for (var _o = (e_5 = void 0, __values(value)), _p = _o.next(); !_p.done; _p = _o.next()) {
+                                    var id = _p.value;
+                                    entities.get(schema_1)[id][foreignKey] = result;
+                                }
+                            }
+                            catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                            finally {
+                                try {
+                                    if (_p && !_p.done && (_e = _o.return)) _e.call(_o);
+                                }
+                                finally { if (e_5) throw e_5.error; }
+                            }
+                            break;
+                        }
+                        case relationship instanceof BelongsToRelationship: {
+                            var foreignKey = relationship.foreignKey;
+                            normalized[foreignKey] = value;
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (e_4_1) { e_4 = { error: e_4_1 }; }
+            finally {
+                try {
+                    if (relatedResults_1_1 && !relatedResults_1_1.done && (_d = relatedResults_1.return)) _d.call(relatedResults_1);
+                }
+                finally { if (e_4) throw e_4.error; }
+            }
+        }
+    }
+    return {
+        result: result,
+        entities: entities,
+    };
 }
 
 function validateItems(items, schema) {
-  var e_1, _a;
-  try {
-    for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
-      var item = items_1_1.value;
-      if (getIdValue(item, schema) == null) {
-        throw new Error('An item being assigned to this array does not have a valid identifier');
-      }
-    }
-  } catch (e_1_1) {
-    e_1 = { error: e_1_1 };
-  } finally {
+    var e_1, _a;
     try {
-      if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
-    } finally {
-      if (e_1) throw e_1.error;
+        for (var items_1 = __values(items), items_1_1 = items_1.next(); !items_1_1.done; items_1_1 = items_1.next()) {
+            var item = items_1_1.value;
+            if (getIdValue(item, schema) == null) {
+                throw new Error("An item being assigned to this array does not have a valid identifier");
+            }
+        }
     }
-  }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (items_1_1 && !items_1_1.done && (_a = items_1.return)) _a.call(items_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
 }
 function validate() {
-  return function (target, key, descriptor) {
-    var method = descriptor.value;
-    descriptor.value = function () {
-      var args = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-      }
-      var _schema = this._schema;
-      validateItems(args, _schema);
-      method.apply(this, args);
+    return function (target, key, descriptor) {
+        var method = descriptor.value;
+        descriptor.value = function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            var _schema = this._schema;
+            validateItems(args, _schema);
+            method.apply(this, args);
+        };
     };
-  };
 }
 function validateSplice() {
-  return function (target, key, descriptor) {
-    var method = descriptor.value;
-    descriptor.value = function () {
-      var args = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-      }
-      var _schema = this._schema;
-      var _a = __read(args),
-        items = _a.slice(2);
-      items.length && validateItems(items, _schema);
-      method.apply(this, args);
+    return function (target, key, descriptor) {
+        var method = descriptor.value;
+        descriptor.value = function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            var _schema = this._schema;
+            var _a = __read(args), items = _a.slice(2);
+            items.length && validateItems(items, _schema);
+            method.apply(this, args);
+        };
     };
-  };
 }
 var ModelArray = /** @class */ (function (_super) {
-  __extends(ModelArray, _super);
-  function ModelArray() {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
+    __extends(ModelArray, _super);
+    function ModelArray() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var _this = _super.apply(this, __spread(args)) || this;
+        Object.setPrototypeOf(_this, ModelArray.prototype);
+        return _this;
     }
-    var _this = _super.apply(this, __spread(args)) || this;
-    Object.setPrototypeOf(_this, ModelArray.prototype);
-    return _this;
-  }
-  ModelArray.prototype._init = function (context, key, items) {
-    Object.defineProperties(this, {
-      _context: { value: context },
-      _key: { value: key },
-      _store: { value: getConstructor(context)._store },
-      _contextSchema: { value: getConstructor(context) },
-      _schema: { value: getConstructor(context)._fields[key].schema },
-    });
-    _super.prototype.push.apply(this, items);
-    return this;
-  };
-  ModelArray.prototype.push = function () {
-    var _a;
-    var items = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      items[_i] = arguments[_i];
-    }
-    normalizeAndStore(
-      this._store,
-      __assign(__assign({}, this._context), ((_a = {}), (_a[this._key] = __spread(this._allForContext(), items)), _a)),
-      this._contextSchema
-    );
-    _super.prototype.splice.apply(this, __spread([0, this.length], this._context[this._key]));
-    return this.length;
-  };
-  ModelArray.prototype.pop = function () {
-    var removed = _super.prototype.pop.call(this);
-    this._remove([removed]);
-    return removed;
-  };
-  ModelArray.prototype.unshift = function () {
-    var _a;
-    var items = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      items[_i] = arguments[_i];
-    }
-    normalizeAndStore(
-      this._store,
-      __assign(__assign({}, this._context), ((_a = {}), (_a[this._key] = __spread(this._allForContext(), items)), _a)),
-      this._contextSchema
-    );
-    _super.prototype.splice.apply(this, __spread([0, this.length], this._context[this._key]));
-    return this.length;
-  };
-  ModelArray.prototype.shift = function () {
-    var removed = _super.prototype.shift.call(this);
-    this._remove([removed]);
-    return removed;
-  };
-  ModelArray.prototype.splice = function () {
-    var _a;
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-      args[_i] = arguments[_i];
-    }
-    var _b = __read(args),
-      start = _b[0],
-      count = _b[1],
-      rest = _b.slice(2);
-    var result = args.length === 0 ? [] : _super.prototype.splice.apply(this, __spread([start, count], rest));
-    this._remove(result);
-    normalizeAndStore(
-      this._store,
-      __assign(__assign({}, this._context), ((_a = {}), (_a[this._key] = __spread(this._allForContext(), rest)), _a)),
-      this._contextSchema
-    );
-    return result;
-  };
-  ModelArray.prototype.toPlainArray = function () {
-    return __spread(this).map(function (item) {
-      return item instanceof Model ? item.$toObject() : item;
-    });
-  };
-  ModelArray.prototype._remove = function (items) {
-    if (!items.length) return;
-    var _a = this,
-      schema = _a._schema,
-      _b = this._key,
-      relationship = _a._contextSchema._fields[_b];
-    var allItems = this._allForContext();
-    var itemIds = items.map(function (item) {
-      return getIdValue(item, schema);
-    });
-    switch (true) {
-      case relationship instanceof ListRelationship: {
-        var idsRemaining = allItems
-          .map(function (item) {
-            return getIdValue(item, schema);
-          })
-          .filter(function (id) {
-            return !itemIds.includes(id);
-          });
-        this._mutateContext(idsRemaining);
-        break;
-      }
-      case relationship instanceof HasManyRelationship: {
-        schema.findByIds(itemIds).forEach(function (item) {
-          return (item[relationship.foreignKey] = null);
+    ModelArray.prototype._init = function (context, key, items) {
+        Object.defineProperties(this, {
+            _context: { value: context },
+            _key: { value: key },
+            _store: { value: getConstructor(context)._store },
+            _contextSchema: { value: getConstructor(context) },
+            _schema: { value: getConstructor(context)._fields[key].schema },
         });
-        break;
-      }
-    }
-  };
-  ModelArray.prototype._allForContext = function () {
-    var _a;
-    return (
-      ((_a = this._contextSchema.find(this._context._id)) === null || _a === void 0 ? void 0 : _a[this._key]) || []
-    );
-  };
-  ModelArray.prototype._mutateContext = function (value) {
-    this._store.commit(this._contextSchema._namespace + '/' + Mutations.SET_PROP, {
-      id: this._context._id,
-      key: this._key,
-      value: value,
-      schema: this._contextSchema,
-    });
-  };
-  __decorate([validate()], ModelArray.prototype, 'push', null);
-  __decorate([validate()], ModelArray.prototype, 'unshift', null);
-  __decorate([validateSplice()], ModelArray.prototype, 'splice', null);
-  return ModelArray;
-})(Array);
+        _super.prototype.push.apply(this, items);
+        return this;
+    };
+    ModelArray.prototype.push = function () {
+        var _a;
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i] = arguments[_i];
+        }
+        normalizeAndStore(this._store, __assign(__assign({}, this._context), (_a = {}, _a[this._key] = __spread(this._allForContext(), items), _a)), this._contextSchema);
+        _super.prototype.splice.apply(this, __spread([0, this.length], this._context[this._key]));
+        return this.length;
+    };
+    ModelArray.prototype.pop = function () {
+        var removed = _super.prototype.pop.call(this);
+        this._remove([removed]);
+        return removed;
+    };
+    ModelArray.prototype.unshift = function () {
+        var _a;
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i] = arguments[_i];
+        }
+        normalizeAndStore(this._store, __assign(__assign({}, this._context), (_a = {}, _a[this._key] = __spread(this._allForContext(), items), _a)), this._contextSchema);
+        _super.prototype.splice.apply(this, __spread([0, this.length], this._context[this._key]));
+        return this.length;
+    };
+    ModelArray.prototype.shift = function () {
+        var removed = _super.prototype.shift.call(this);
+        this._remove([removed]);
+        return removed;
+    };
+    ModelArray.prototype.splice = function () {
+        var _a;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var _b = __read(args), start = _b[0], count = _b[1], rest = _b.slice(2);
+        var result = args.length === 0 ? [] : _super.prototype.splice.apply(this, __spread([start, count], rest));
+        this._remove(result);
+        normalizeAndStore(this._store, __assign(__assign({}, this._context), (_a = {}, _a[this._key] = __spread(this._allForContext(), rest), _a)), this._contextSchema);
+        return result;
+    };
+    ModelArray.prototype.toPlainArray = function () {
+        return __spread(this).map(function (item) { return (item instanceof Model ? item.$toObject() : item); });
+    };
+    ModelArray.prototype._remove = function (items) {
+        if (!items.length)
+            return;
+        var _a = this, schema = _a._schema, _b = this._key, relationship = _a._contextSchema._fields[_b];
+        var allItems = this._allForContext();
+        var itemIds = items.map(function (item) { return getIdValue(item, schema); });
+        switch (true) {
+            case relationship instanceof ListRelationship: {
+                var idsRemaining = allItems.map(function (item) { return getIdValue(item, schema); }).filter(function (id) { return !itemIds.includes(id); });
+                this._mutateContext(idsRemaining);
+                break;
+            }
+            case relationship instanceof HasManyRelationship: {
+                schema
+                    .findByIds(itemIds)
+                    .forEach(function (item) { return (item[relationship.foreignKey] = null); });
+                break;
+            }
+        }
+    };
+    ModelArray.prototype._allForContext = function () {
+        var _a;
+        return ((_a = this._contextSchema.find(this._context._id)) === null || _a === void 0 ? void 0 : _a[this._key]) || [];
+    };
+    ModelArray.prototype._mutateContext = function (value) {
+        this._store.commit(this._contextSchema._namespace + "/" + Mutations.SET_PROP, {
+            id: this._context._id,
+            key: this._key,
+            value: value,
+            schema: this._contextSchema,
+        });
+    };
+    __decorate([
+        validate()
+    ], ModelArray.prototype, "push", null);
+    __decorate([
+        validate()
+    ], ModelArray.prototype, "unshift", null);
+    __decorate([
+        validateSplice()
+    ], ModelArray.prototype, "splice", null);
+    return ModelArray;
+}(Array));
 window.ModelArray = ModelArray;
 
 function getConstructor(model) {
-  return model.constructor;
+    return model.constructor;
 }
 var cacheNames = ['data', 'relationship'];
-var getCacheName = function (isRelationship) {
-  return cacheNames[isRelationship ? 1 : 0];
-};
+var getCacheName = function (isRelationship) { return cacheNames[isRelationship ? 1 : 0]; };
 var parseIfLiteral = function (id, schema) {
-  return ['string', 'number'].includes(typeof id) ? schema.find(id) : id;
+    return ['string', 'number'].includes(typeof id) ? schema.find(id) : id;
 };
 function cacheDefaults(model, overrides) {
-  if (overrides === void 0) {
-    overrides = {};
-  }
-  Object.entries(getConstructor(model)._fields).forEach(function (_a) {
-    var _b;
-    var _c = __read(_a, 2),
-      key = _c[0],
-      definition = _c[1];
-    model._caches[getCacheName(definition instanceof Relationship)][key] =
-      (_b = overrides[key]) !== null && _b !== void 0 ? _b : definition.default;
-  });
+    if (overrides === void 0) { overrides = {}; }
+    Object.entries(getConstructor(model)._fields).forEach(function (_a) {
+        var _b;
+        var _c = __read(_a, 2), key = _c[0], definition = _c[1];
+        model._caches[getCacheName(definition instanceof Relationship)][key] = (_b = overrides[key]) !== null && _b !== void 0 ? _b : definition.default;
+    });
 }
 function persistUnconnected(target, key, value, relationship) {
-  if (relationship) {
-    var Related = relationship.schema;
-    value = parseIfLiteral(value, Related);
-    if (relationship instanceof ListLike && value != null) {
-      value = Array.isArray(value) ? value : [value].filter(identity);
+    if (relationship) {
+        var Related = relationship.schema;
+        value = parseIfLiteral(value, Related);
+        if (relationship instanceof ListLike && value != null) {
+            value = Array.isArray(value) ? value : [value].filter(identity);
+        }
     }
-  }
-  Vue.set(target._caches[getCacheName(!!relationship)], key, value);
+    Vue.set(target._caches[getCacheName(!!relationship)], key, value);
 }
 function persistConnected(target, key, value, relationship, schema) {
-  var _a, _b;
-  var store = schema._store,
-    path = schema._namespace,
-    id = schema.id;
-  if (relationship) {
-    var Related = relationship.schema;
-    value = parseIfLiteral(value, Related);
-    if (relationship instanceof ListLike && value != null) {
-      value = Array.isArray(value) ? value : [value].filter(identity);
+    var _a, _b;
+    var store = schema._store, path = schema._namespace, id = schema.id;
+    if (relationship) {
+        var Related = relationship.schema;
+        value = parseIfLiteral(value, Related);
+        if (relationship instanceof ListLike && value != null) {
+            value = Array.isArray(value) ? value : [value].filter(identity);
+        }
+        if (value != null) {
+            if (!validateEntry(value, relationship)) {
+                throw new Error("An item being assigned to the property [" + key + "] does not have a valid identifier");
+            }
+        }
+        normalizeAndStore(store, __assign(__assign({}, target), (_a = {}, _a[key] = value, _a)), schema);
     }
-    if (value != null) {
-      if (!validateEntry(value, relationship)) {
-        throw new Error('An item being assigned to the property [' + key + '] does not have a valid identifier');
-      }
+    else {
+        if (isFunction(id) || id == key) {
+            var oldId = getIdValue(target, schema);
+            var newId = getIdValue(__assign(__assign({}, target), (_b = {}, _b[key] = value, _b)), schema);
+            if (oldId != newId) {
+                throw new Error('This update is not allowed because the resolved id is different from the original value');
+            }
+        }
+        store.commit(path + "/" + Mutations.SET_PROP, { id: target._id, key: key, value: value, schema: schema });
     }
-    normalizeAndStore(store, __assign(__assign({}, target), ((_a = {}), (_a[key] = value), _a)), schema);
-  } else {
-    if (isFunction(id) || id == key) {
-      var oldId = getIdValue(target, schema);
-      var newId = getIdValue(__assign(__assign({}, target), ((_b = {}), (_b[key] = value), _b)), schema);
-      if (oldId != newId) {
-        throw new Error('This update is not allowed because the resolved id is different from the original value');
-      }
-    }
-    store.commit(path + '/' + Mutations.SET_PROP, { id: target._id, key: key, value: value, schema: schema });
-  }
 }
 function createAccessor(target, key) {
-  var schema = getConstructor(target);
-  var path = schema._namespace,
-    _store = schema._store,
-    _fields = schema._fields;
-  var isRelationship = _fields[key] instanceof Relationship;
-  var relationshipDef = isRelationship ? _fields[key] : null;
-  var load = target._load;
-  Object.defineProperty(target, key, {
-    enumerable: load && isRelationship ? load.has(key) : true,
-    get: function () {
-      if (target._connected) {
-        if (load && isRelationship && !load.has(key)) return;
-        var raw = _store.getters[path + '/' + Getters.GET_RAW](target._id, schema);
-        var value = raw[key];
-        if (isRelationship) {
-          var opts = { load: load === null || load === void 0 ? void 0 : load.getLoad(key) };
-          var Related = relationshipDef.schema;
-          if (relationshipDef instanceof ListLike) {
-            if (relationshipDef instanceof HasManyRelationship) {
-              // Todo: index and Cache relationship keys
-              value = schema.index.get(relationshipDef, this._id);
-              // .all(opts)
-              // .filter((item) => item[relationshipDef.foreignKey] == this._id)
-              // .map((item) => getIdValue(item, relationshipDef.schema));
+    var schema = getConstructor(target);
+    var path = schema._namespace, _store = schema._store, _fields = schema._fields;
+    var isRelationship = _fields[key] instanceof Relationship;
+    var relationshipDef = isRelationship ? _fields[key] : null;
+    var load = target._load;
+    Object.defineProperty(target, key, {
+        enumerable: load && isRelationship ? load.has(key) : true,
+        get: function () {
+            if (target._connected) {
+                if (load && isRelationship && !load.has(key))
+                    return;
+                var raw = _store.getters[path + "/" + Getters.GET_RAW](target._id, schema);
+                var value = raw[key];
+                if (isRelationship) {
+                    var opts = { load: load === null || load === void 0 ? void 0 : load.getLoad(key) };
+                    var Related = relationshipDef.schema;
+                    if (relationshipDef instanceof ListLike) {
+                        if (relationshipDef instanceof HasManyRelationship) {
+                            // Todo: index and Cache relationship keys
+                            value = schema.index.get(relationshipDef, this._id);
+                            // .all(opts)
+                            // .filter((item) => item[relationshipDef.foreignKey] == this._id)
+                            // .map((item) => getIdValue(item, relationshipDef.schema));
+                        }
+                        if (value) {
+                            value = Related.findByIds(value, opts);
+                            if (opts.load) {
+                                value = opts.load.apply(value);
+                            }
+                            return value && new ModelArray()._init(target, key, value);
+                        }
+                        return;
+                    }
+                    else if (relationshipDef instanceof BelongsToRelationship) {
+                        if (!(raw === null || raw === void 0 ? void 0 : raw[relationshipDef.foreignKey]))
+                            return;
+                        value = raw[relationshipDef.foreignKey];
+                    }
+                    value = Related.find(value, opts);
+                    return opts.load ? opts.load.apply(value) : value;
+                }
+                else {
+                    return raw[key];
+                }
             }
-            if (value) {
-              value = Related.findByIds(value, opts);
-              if (opts.load) {
-                value = opts.load.apply(value);
-              }
-              return value && new ModelArray()._init(target, key, value);
-            }
-            return;
-          } else if (relationshipDef instanceof BelongsToRelationship) {
-            if (!(raw === null || raw === void 0 ? void 0 : raw[relationshipDef.foreignKey])) return;
-            value = raw[relationshipDef.foreignKey];
-          }
-          value = Related.find(value, opts);
-          return opts.load ? opts.load.apply(value) : value;
-        } else {
-          return raw[key];
-        }
-      }
-      return target._caches[getCacheName(isRelationship)][key];
-    },
-    set: function (value) {
-      target._connected
-        ? persistConnected(target, key, value, relationshipDef, schema)
-        : persistUnconnected(target, key, value, relationshipDef);
-    },
-  });
+            return target._caches[getCacheName(isRelationship)][key];
+        },
+        set: function (value) {
+            target._connected
+                ? persistConnected(target, key, value, relationshipDef, schema)
+                : persistUnconnected(target, key, value, relationshipDef);
+        },
+    });
 }
 function getIdValue(model, schema) {
-  return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
+    return isFunction(schema.id) ? schema.id(model, null, null) : model[schema.id];
 }
 function validateEntry(data, relationship) {
-  var schema = relationship.schema;
-  return relationship instanceof ListLike
-    ? data.every(function (item) {
-        return getIdValue(item, schema) != null;
-      })
-    : getIdValue(data, schema) != null;
+    var schema = relationship.schema;
+    return relationship instanceof ListLike
+        ? data.every(function (item) { return getIdValue(item, schema) != null; })
+        : getIdValue(data, schema) != null;
 }
 function normalizeAndStore(store, data, entityDef) {
-  var e_1, _a;
-  var _b = normalize(data, entityDef),
-    entities = _b.entities,
-    result = _b.result;
-  try {
-    for (var _c = __values(entities.entries()), _d = _c.next(); !_d.done; _d = _c.next()) {
-      var _e = __read(_d.value, 2),
-        schema = _e[0],
-        items = _e[1];
-      store.commit(schema._namespace + '/' + Mutations.ADD_ALL, { schema: schema, items: items }, { root: true });
-    }
-  } catch (e_1_1) {
-    e_1 = { error: e_1_1 };
-  } finally {
+    var e_1, _a;
+    var _b = normalize(data, entityDef), entities = _b.entities, result = _b.result;
     try {
-      if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-    } finally {
-      if (e_1) throw e_1.error;
+        for (var _c = __values(entities.entries()), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var _e = __read(_d.value, 2), schema = _e[0], items = _e[1];
+            store.commit(schema._namespace + "/" + Mutations.ADD_ALL, { schema: schema, items: items }, { root: true });
+        }
     }
-  }
-  return result;
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    return result;
 }
 function modelToObject(model, schema, allProps, seen) {
-  if (seen === void 0) {
-    seen = new Map();
-  }
-  var object = {};
-  seen.set(model, object);
-  Object.entries(model).reduce(function (acc, _a) {
-    var e_2, _b;
-    var _c = __read(_a, 2),
-      key = _c[0],
-      value = _c[1];
-    if (key in schema._fields) {
-      var fieldDef = schema._fields[key];
-      if (fieldDef instanceof Relationship) {
-        var relatedSchema = fieldDef.schema;
-        if (value == null) {
-          acc[key] = null;
-        } else if (Array.isArray(value) && fieldDef instanceof ListLike) {
-          var items = [];
-          try {
-            for (
-              var value_1 = __values(value), value_1_1 = value_1.next();
-              !value_1_1.done;
-              value_1_1 = value_1.next()
-            ) {
-              var item = value_1_1.value;
-              items.push(seen.has(item) ? seen.get(item) : modelToObject(item, relatedSchema, allProps, seen));
+    if (seen === void 0) { seen = new Map(); }
+    var object = {};
+    seen.set(model, object);
+    Object.entries(model).reduce(function (acc, _a) {
+        var e_2, _b;
+        var _c = __read(_a, 2), key = _c[0], value = _c[1];
+        if (key in schema._fields) {
+            var fieldDef = schema._fields[key];
+            if (fieldDef instanceof Relationship) {
+                var relatedSchema = fieldDef.schema;
+                if (value == null) {
+                    acc[key] = null;
+                }
+                else if (Array.isArray(value) && fieldDef instanceof ListLike) {
+                    var items = [];
+                    try {
+                        for (var value_1 = __values(value), value_1_1 = value_1.next(); !value_1_1.done; value_1_1 = value_1.next()) {
+                            var item = value_1_1.value;
+                            items.push(seen.has(item) ? seen.get(item) : modelToObject(item, relatedSchema, allProps, seen));
+                        }
+                    }
+                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                    finally {
+                        try {
+                            if (value_1_1 && !value_1_1.done && (_b = value_1.return)) _b.call(value_1);
+                        }
+                        finally { if (e_2) throw e_2.error; }
+                    }
+                    acc[key] = items;
+                }
+                else {
+                    acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedSchema, allProps, seen);
+                }
             }
-          } catch (e_2_1) {
-            e_2 = { error: e_2_1 };
-          } finally {
-            try {
-              if (value_1_1 && !value_1_1.done && (_b = value_1.return)) _b.call(value_1);
-            } finally {
-              if (e_2) throw e_2.error;
+            else {
+                acc[key] = value;
             }
-          }
-          acc[key] = items;
-        } else {
-          acc[key] = seen.has(value) ? seen.get(value) : modelToObject(value, relatedSchema, allProps, seen);
         }
-      } else {
-        acc[key] = value;
-      }
-    }
-    return acc;
-  }, object);
-  return object;
+        return acc;
+    }, object);
+    return object;
 }
 function getRecursionMessage(item) {
-  var message = '>>> Recursive item ';
-  if (item instanceof Model) {
-    message += '[' + item.constructor.name + ': ' + item._id + '] ';
-  }
-  return message + '<<<';
+    var message = '>>> Recursive item ';
+    if (item instanceof Model) {
+        message += "[" + item.constructor.name + ": " + item._id + "] ";
+    }
+    return message + '<<<';
 }
 
 function createModule(store, schemas, index) {
-  var _a, _b, _c;
-  return {
-    namespaced: true,
-    state: function () {
-      return {
-        indices: index.toObject(),
-        data: __spread(
-          new Set(
-            schemas.map(function (schema) {
-              return schema.entityName;
-            })
-          )
-        ).reduce(function (state, name) {
-          state[name] = {};
-          return state;
-        }, {}),
-      };
-    },
-    mutations:
-      ((_a = {}),
-      (_a[Mutations.ADD_ALL] = function (state, _a) {
-        var items = _a.items,
-          schema = _a.schema;
-        var storeName = schema.entityName;
-        state.data[storeName] = __assign(
-          __assign({}, state.data[storeName]),
-          Object.fromEntries(
-            Object.entries(items).map(function (_a) {
-              var _b = __read(_a, 2),
-                id = _b[0],
-                entity = _b[1];
-              return [id, __assign(__assign({}, state.data[storeName][id]), entity)];
-            })
-          )
-        );
-      }),
-      (_a[Mutations.SET_PROP] = function (state, _a) {
-        var id = _a.id,
-          key = _a.key,
-          value = _a.value,
-          schema = _a.schema;
-        if (state.data[schema.entityName][id] == null) {
-          throw new Error('Entity does not exist');
-        }
-        Vue.set(state.data[schema.entityName][id], key, value);
-      }),
-      (_a[Mutations.SET_INDEX] = function (state, _a) {
-        var indexName = _a.indexName,
-          data = _a.data;
-        Vue.set(state.indices, indexName, data);
-      }),
-      _a),
-    actions:
-      ((_b = {}),
-      (_b[Actions.ADD] = function (ctx, _a) {
-        var items = _a.items,
-          schema = _a.schema;
-        return normalizeAndStore(store, items, schema);
-      }),
-      (_b[Actions.UPDATE] = function (_a, _b) {
-        var getters = _a.getters,
-          dispatch = _a.dispatch;
-        var id = _b.id,
-          data = _b.data,
-          schema = _b.schema;
-        if (id === null || id === undefined) {
-          throw new Error('Id to perform update must be defined');
-        }
-        var ids = Array.isArray(id) ? id : [id];
-        var items = getters[Getters.FIND_BY_IDS](ids, schema).filter(identity);
-        if (items.length !== ids.length) {
-          throw new Error('Invalid item to update');
-        }
-        var newItems;
-        if (isFunction(schema.id)) {
-          // if the id definition on the model is a function, it means
-          // the value is computed. We don't want an update to change the id
-          // otherwise it'll break consistency
-          newItems = items.map(function (item) {
-            return __assign(__assign({}, item), data);
-          });
-          var oldIds = items.map(function (item) {
-            return getIdValue(item, schema);
-          });
-          var newIds_1 = newItems.map(function (item) {
-            return getIdValue(item, schema);
-          });
-          var idHasChanged = oldIds.some(function (id, index) {
-            return id != newIds_1[index];
-          });
-          if (idHasChanged) {
-            throw new Error('Invalid Update: This would cause a change in the computed id.');
-          }
-        } else {
-          var idName_1 = schema.id;
-          newItems = items.map(function (item) {
-            var _a;
-            return __assign(
-              __assign(__assign({}, isFunction(schema.id) ? item : null), data),
-              ((_a = {}), (_a[idName_1] = id), _a)
-            );
-          });
-        }
-        return dispatch(Actions.ADD, { items: newItems, schema: [schema] });
-      }),
-      _b),
-    getters:
-      ((_c = {}),
-      (_c[Getters.GET_RAW] = function (state) {
-        return function (id, schema) {
-          return state.data[schema.entityName][id];
-        };
-      }),
-      (_c[Getters.GET_INDEX] = function (state) {
-        return function (schema, path, id) {
-          var _a;
-          return ((_a = state.indices[schema.entityName][path]) === null || _a === void 0 ? void 0 : _a[id]) || [];
-        };
-      }),
-      (_c[Getters.FIND] = function (_, getters) {
-        return function (id, schema, opts) {
-          if (opts === void 0) {
-            opts = {};
-          }
-          var data = getters[Getters.GET_RAW](id, schema);
-          if (!data) {
-            return;
-          }
-          var load;
-          if (opts.load) {
-            load = !(opts.load instanceof Load)
-              ? new Load(
-                  new ItemRelationship(function () {
-                    return schema;
-                  })
-                ).parse(opts.load)
-              : opts.load;
-          }
-          return resolveModel(schema, data, { load: load, connected: true });
-        };
-      }),
-      (_c[Getters.FIND_BY_IDS] = function (_, getters) {
-        return function (ids, schema, opts) {
-          if (ids === void 0) {
-            ids = [];
-          }
-          if (opts === void 0) {
-            opts = {};
-          }
-          return ids
-            .map(function (id) {
-              return getters[Getters.FIND](id, schema, opts);
-            })
-            .filter(identity);
-        };
-      }),
-      (_c[Getters.ALL] = function (state, getters) {
-        return function (schema, opts) {
-          if (opts === void 0) {
-            opts = {};
-          }
-          return getters[Getters.FIND_BY_IDS](Object.keys(state.data[schema.entityName]), schema, opts);
-        };
-      }),
-      _c),
-  };
+    var _a, _b, _c;
+    return {
+        namespaced: true,
+        state: function () {
+            return {
+                indices: index.toObject(),
+                data: __spread(new Set(schemas.map(function (schema) { return schema.entityName; }))).reduce(function (state, name) {
+                    state[name] = {};
+                    return state;
+                }, {}),
+            };
+        },
+        mutations: (_a = {},
+            _a[Mutations.ADD_ALL] = function (state, _a) {
+                var items = _a.items, schema = _a.schema;
+                var storeName = schema.entityName;
+                state.data[storeName] = __assign(__assign({}, state.data[storeName]), Object.fromEntries(Object.entries(items).map(function (_a) {
+                    var _b = __read(_a, 2), id = _b[0], entity = _b[1];
+                    return [
+                        id,
+                        __assign(__assign({}, state.data[storeName][id]), entity),
+                    ];
+                })));
+            },
+            _a[Mutations.SET_PROP] = function (state, _a) {
+                var id = _a.id, key = _a.key, value = _a.value, schema = _a.schema;
+                if (state.data[schema.entityName][id] == null) {
+                    throw new Error('Entity does not exist');
+                }
+                Vue.set(state.data[schema.entityName][id], key, value);
+            },
+            _a[Mutations.SET_INDEX] = function (state, _a) {
+                var indexName = _a.indexName, data = _a.data;
+                Vue.set(state.indices, indexName, data);
+            },
+            _a),
+        actions: (_b = {},
+            _b[Actions.ADD] = function (ctx, _a) {
+                var items = _a.items, schema = _a.schema;
+                return normalizeAndStore(store, items, schema);
+            },
+            _b[Actions.UPDATE] = function (_a, _b) {
+                var getters = _a.getters, dispatch = _a.dispatch;
+                var id = _b.id, data = _b.data, schema = _b.schema;
+                if (id === null || id === undefined) {
+                    throw new Error('Id to perform update must be defined');
+                }
+                var ids = Array.isArray(id) ? id : [id];
+                var items = getters[Getters.FIND_BY_IDS](ids, schema).filter(identity);
+                if (items.length !== ids.length) {
+                    throw new Error('Invalid item to update');
+                }
+                var newItems;
+                if (isFunction(schema.id)) {
+                    // if the id definition on the model is a function, it means
+                    // the value is computed. We don't want an update to change the id
+                    // otherwise it'll break consistency
+                    newItems = items.map(function (item) { return (__assign(__assign({}, item), data)); });
+                    var oldIds = items.map(function (item) { return getIdValue(item, schema); });
+                    var newIds_1 = newItems.map(function (item) { return getIdValue(item, schema); });
+                    var idHasChanged = oldIds.some(function (id, index) { return id != newIds_1[index]; });
+                    if (idHasChanged) {
+                        throw new Error('Invalid Update: This would cause a change in the computed id.');
+                    }
+                }
+                else {
+                    var idName_1 = schema.id;
+                    newItems = items.map(function (item) {
+                        var _a;
+                        return (__assign(__assign(__assign({}, (isFunction(schema.id) ? item : null)), data), (_a = {}, _a[idName_1] = id, _a)));
+                    });
+                }
+                return dispatch(Actions.ADD, { items: newItems, schema: [schema] });
+            },
+            _b),
+        getters: (_c = {},
+            _c[Getters.GET_RAW] = function (state) { return function (id, schema) { return state.data[schema.entityName][id]; }; },
+            _c[Getters.GET_INDEX] = function (state) { return function (schema, path, id) { var _a; return ((_a = state.indices[schema.entityName][path]) === null || _a === void 0 ? void 0 : _a[id]) || []; }; },
+            _c[Getters.FIND] = function (_, getters) { return function (id, schema, opts) {
+                if (opts === void 0) { opts = {}; }
+                var data = getters[Getters.GET_RAW](id, schema);
+                if (!data) {
+                    return;
+                }
+                var load;
+                if (opts.load) {
+                    load = !(opts.load instanceof Load)
+                        ? new Load(new ItemRelationship(function () { return schema; })).parse(opts.load)
+                        : opts.load;
+                }
+                return resolveModel(schema, data, { load: load, connected: true });
+            }; },
+            _c[Getters.FIND_BY_IDS] = function (_, getters) {
+                return function (ids, schema, opts) {
+                    if (ids === void 0) { ids = []; }
+                    if (opts === void 0) { opts = {}; }
+                    return ids.map(function (id) { return getters[Getters.FIND](id, schema, opts); }).filter(identity);
+                };
+            },
+            _c[Getters.ALL] = function (state, getters) { return function (schema, opts) {
+                if (opts === void 0) { opts = {}; }
+                return getters[Getters.FIND_BY_IDS](Object.keys(state.data[schema.entityName]), schema, opts);
+            }; },
+            _c),
+    };
 }
 var modelCache = new Map();
 function resolveModel(schema, rawData, options) {
-  var _a;
-  if (options === void 0) {
-    options = {};
-  }
-  var id = getIdValue(rawData, schema);
-  if (!options.load) {
-    if (!modelCache.has(schema)) {
-      modelCache.set(schema, createObject());
+    var _a;
+    if (options === void 0) { options = {}; }
+    var id = getIdValue(rawData, schema);
+    if (!options.load) {
+        if (!modelCache.has(schema)) {
+            modelCache.set(schema, createObject());
+        }
+        var cache = modelCache.get(schema);
+        return ((_a = cache[id]) !== null && _a !== void 0 ? _a : (cache[id] = new schema(rawData, options)));
     }
-    var cache = modelCache.get(schema);
-    return (_a = cache[id]) !== null && _a !== void 0 ? _a : (cache[id] = new schema(rawData, options));
-  } else return new schema(rawData, options);
+    else
+        return new schema(rawData, options);
 }
 window.modelCache = modelCache;
 
 function Field(options) {
-  if (options === void 0) {
-    options = {};
-  }
-  return function (target, propName) {
-    var constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = Field.define(options);
-  };
+    if (options === void 0) { options = {}; }
+    return function (target, propName) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = Field.define(options);
+    };
 }
 Field.define = function (options) {
-  if (options === void 0) {
-    options = {};
-  }
-  return new SimpleFieldDefinition(options);
+    if (options === void 0) { options = {}; }
+    return new SimpleFieldDefinition(options);
 };
 
 function Item(factory) {
-  return function (target, propName) {
-    var constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = Item.define(factory, function () {
-      return constructor;
-    });
-  };
+    return function (target, propName) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = Item.define(factory, function () { return constructor; });
+    };
 }
 Item.define = function (factory, parentFactory) {
-  return new ItemRelationship(factory, parentFactory);
+    return new ItemRelationship(factory, parentFactory);
 };
 
 function List(factory) {
-  return function (target, propName, other) {
-    var constructor = target.constructor;
-    if (constructor._fields == null) {
-      constructor._fields = createObject();
-    }
-    if (propName in constructor._fields) {
-      return;
-    }
-    constructor._fields[propName] = List.define(factory, function () {
-      return constructor;
-    });
-  };
+    return function (target, propName, other) {
+        var constructor = target.constructor;
+        if (constructor._fields == null) {
+            constructor._fields = createObject();
+        }
+        if (propName in constructor._fields) {
+            return;
+        }
+        constructor._fields[propName] = List.define(factory, function () { return constructor; });
+    };
 }
 List.define = function (factory, parentFactory) {
-  return new ListRelationship(factory);
+    return new ListRelationship(factory);
 };
 
 var Watcher = /** @class */ (function () {
-  function Watcher(schema, store, namespace, name) {
-    this.schema = schema;
-    this.store = store;
-    this.namespace = namespace;
-    this.name = name;
-    this.interests = new Set();
-  }
-  Watcher.prototype.addRelationship = function (relationship) {
-    if (relationship.schema != this.schema) {
-      throw new Error('This relationship is not indexable on this watcher');
+    function Watcher(schema, store, namespace, name) {
+        this.schema = schema;
+        this.store = store;
+        this.namespace = namespace;
+        this.name = name;
+        this.interests = new Set();
     }
-    this.interests.add(relationship);
-  };
-  Watcher.prototype.registerWatcher = function () {
-    var _this = this;
-    this.unwatch && this.unwatch();
-    var concerns = __spread(this.interests.values()).map(function (rel) {
-      return [rel.parentSchema.entityName, rel.foreignKey];
-    });
-    this.unwatch = this.store.watch(
-      function (state) {
-        var e_1, _a, e_2, _b;
-        var index = concerns.reduce(function (obj, _a) {
-          var _b = __read(_a, 1),
-            entityName = _b[0];
-          obj[entityName] = createObject();
-          return obj;
-        }, createObject());
-        var entries = Object.entries(state[_this.namespace].data[_this.schema.entityName]);
-        try {
-          for (
-            var entries_1 = __values(entries), entries_1_1 = entries_1.next();
-            !entries_1_1.done;
-            entries_1_1 = entries_1.next()
-          ) {
-            var _c = __read(entries_1_1.value, 2),
-              relatedId = _c[0],
-              value = _c[1];
-            try {
-              for (
-                var concerns_1 = ((e_2 = void 0), __values(concerns)), concerns_1_1 = concerns_1.next();
-                !concerns_1_1.done;
-                concerns_1_1 = concerns_1.next()
-              ) {
-                var _d = __read(concerns_1_1.value, 2),
-                  entityName = _d[0],
-                  foreignKey = _d[1];
-                if (value[foreignKey] == null) continue;
-                if (!index[entityName][value[foreignKey]]) {
-                  index[entityName][value[foreignKey]] = [];
-                }
-                index[entityName][value[foreignKey]].push(relatedId);
-              }
-            } catch (e_2_1) {
-              e_2 = { error: e_2_1 };
-            } finally {
-              try {
-                if (concerns_1_1 && !concerns_1_1.done && (_b = concerns_1.return)) _b.call(concerns_1);
-              } finally {
-                if (e_2) throw e_2.error;
-              }
-            }
-          }
-        } catch (e_1_1) {
-          e_1 = { error: e_1_1 };
-        } finally {
-          try {
-            if (entries_1_1 && !entries_1_1.done && (_a = entries_1.return)) _a.call(entries_1);
-          } finally {
-            if (e_1) throw e_1.error;
-          }
+    Watcher.prototype.addRelationship = function (relationship) {
+        if (relationship.schema != this.schema) {
+            throw new Error('This relationship is not indexable on this watcher');
         }
-        return index;
-      },
-      function (data) {
-        return _this.store.commit(_this.namespace + '/' + Mutations.SET_INDEX, { indexName: _this.name, data: data });
-      }
-    );
-  };
-  return Watcher;
-})();
+        this.interests.add(relationship);
+    };
+    Watcher.prototype.registerWatcher = function () {
+        var _this = this;
+        this.unwatch && this.unwatch();
+        var concerns = __spread(this.interests.values()).map(function (rel) { return [rel.parentSchema.entityName, rel.foreignKey]; });
+        this.unwatch = this.store.watch(function (state) {
+            var e_1, _a, e_2, _b;
+            var index = concerns.reduce(function (obj, _a) {
+                var _b = __read(_a, 1), entityName = _b[0];
+                obj[entityName] = createObject();
+                return obj;
+            }, createObject());
+            var entries = Object.entries(state[_this.namespace].data[_this.schema.entityName]);
+            try {
+                for (var entries_1 = __values(entries), entries_1_1 = entries_1.next(); !entries_1_1.done; entries_1_1 = entries_1.next()) {
+                    var _c = __read(entries_1_1.value, 2), relatedId = _c[0], value = _c[1];
+                    try {
+                        for (var concerns_1 = (e_2 = void 0, __values(concerns)), concerns_1_1 = concerns_1.next(); !concerns_1_1.done; concerns_1_1 = concerns_1.next()) {
+                            var _d = __read(concerns_1_1.value, 2), entityName = _d[0], foreignKey = _d[1];
+                            if (value[foreignKey] == null)
+                                continue;
+                            if (!index[entityName][value[foreignKey]]) {
+                                index[entityName][value[foreignKey]] = [];
+                            }
+                            index[entityName][value[foreignKey]].push(relatedId);
+                        }
+                    }
+                    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                    finally {
+                        try {
+                            if (concerns_1_1 && !concerns_1_1.done && (_b = concerns_1.return)) _b.call(concerns_1);
+                        }
+                        finally { if (e_2) throw e_2.error; }
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (entries_1_1 && !entries_1_1.done && (_a = entries_1.return)) _a.call(entries_1);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            return index;
+        }, function (data) { return _this.store.commit(_this.namespace + "/" + Mutations.SET_INDEX, { indexName: _this.name, data: data }); });
+    };
+    return Watcher;
+}());
 
 var Index = /** @class */ (function () {
-  function Index(store, namespace) {
-    this.store = store;
-    this.namespace = namespace;
-    this.map = new Map();
-  }
-  Index.prototype.addIndex = function (relationship) {
-    var watcher;
-    var schema = relationship.schema;
-    if (!this.map.has(schema)) {
-      watcher = new Watcher(schema, this.store, this.namespace, schema.entityName);
-      this.map.set(schema, watcher);
-    } else {
-      watcher = this.map.get(schema);
+    function Index(store, namespace) {
+        this.store = store;
+        this.namespace = namespace;
+        this.map = new Map();
     }
-    watcher.addRelationship(relationship);
-  };
-  Index.prototype.toObject = function () {
-    var e_1, _a, e_2, _b;
-    var result = createObject();
-    try {
-      for (var _c = __values(this.map), _d = _c.next(); !_d.done; _d = _c.next()) {
-        var _e = __read(_d.value, 2),
-          schema = _e[0],
-          watcher = _e[1];
-        result[schema.entityName] = createObject();
-        try {
-          for (var _f = ((e_2 = void 0), __values(watcher.interests)), _g = _f.next(); !_g.done; _g = _f.next()) {
-            var relationship = _g.value;
-            result[schema.entityName][relationship.parentSchema.entityName] = createObject();
-          }
-        } catch (e_2_1) {
-          e_2 = { error: e_2_1 };
-        } finally {
-          try {
-            if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
-          } finally {
-            if (e_2) throw e_2.error;
-          }
+    Index.prototype.addIndex = function (relationship) {
+        var watcher;
+        var schema = relationship.schema;
+        if (!this.map.has(schema)) {
+            watcher = new Watcher(schema, this.store, this.namespace, schema.entityName);
+            this.map.set(schema, watcher);
         }
-      }
-    } catch (e_1_1) {
-      e_1 = { error: e_1_1 };
-    } finally {
-      try {
-        if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-      } finally {
-        if (e_1) throw e_1.error;
-      }
-    }
-    return result;
-  };
-  Index.prototype.init = function () {
-    var e_3, _a;
-    try {
-      for (var _b = __values(this.map.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
-        var watcher = _c.value;
-        watcher.registerWatcher();
-      }
-    } catch (e_3_1) {
-      e_3 = { error: e_3_1 };
-    } finally {
-      try {
-        if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-      } finally {
-        if (e_3) throw e_3.error;
-      }
-    }
-  };
-  Index.prototype.get = function (_a, parentId) {
-    var schema = _a.schema,
-      parentSchema = _a.parentSchema;
-    return this.store.getters[this.namespace + '/' + Getters.GET_INDEX](schema, parentSchema.entityName, parentId);
-  };
-  return Index;
-})();
+        else {
+            watcher = this.map.get(schema);
+        }
+        watcher.addRelationship(relationship);
+    };
+    Index.prototype.toObject = function () {
+        var e_1, _a, e_2, _b;
+        var result = createObject();
+        try {
+            for (var _c = __values(this.map), _d = _c.next(); !_d.done; _d = _c.next()) {
+                var _e = __read(_d.value, 2), schema = _e[0], watcher = _e[1];
+                result[schema.entityName] = createObject();
+                try {
+                    for (var _f = (e_2 = void 0, __values(watcher.interests)), _g = _f.next(); !_g.done; _g = _f.next()) {
+                        var relationship = _g.value;
+                        result[schema.entityName][relationship.parentSchema.entityName] = createObject();
+                    }
+                }
+                catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                finally {
+                    try {
+                        if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
+                    }
+                    finally { if (e_2) throw e_2.error; }
+                }
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        return result;
+    };
+    Index.prototype.init = function () {
+        var e_3, _a;
+        try {
+            for (var _b = __values(this.map.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var watcher = _c.value;
+                watcher.registerWatcher();
+            }
+        }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_3) throw e_3.error; }
+        }
+    };
+    Index.prototype.get = function (_a, parentId) {
+        var schema = _a.schema, parentSchema = _a.parentSchema;
+        return this.store.getters[this.namespace + "/" + Getters.GET_INDEX](schema, parentSchema.entityName, parentId);
+    };
+    return Index;
+}());
 
 var defaultPluginOptions = {
-  schemas: [],
-  namespace: 'database',
+    schemas: [],
+    namespace: 'database',
 };
 function generateDatabasePlugin(options) {
-  var _a = __assign(__assign({}, defaultPluginOptions), options),
-    schemas = _a.schemas,
-    namespace = _a.namespace;
-  return function (store) {
-    var index = new Index(store, namespace);
-    Object.defineProperty(Model, 'index', {
-      value: index,
-    });
-    schemas.forEach(function (schema) {
-      registerSchema(schema, store, namespace);
-      Object.values(schema._fields).forEach(function (definition) {
-        if (definition instanceof HasManyRelationship) index.addIndex(definition);
-      });
-    });
-    store.registerModule(namespace, createModule(store, schemas, index));
-    index.init();
-  };
+    var _a = __assign(__assign({}, defaultPluginOptions), options), schemas = _a.schemas, namespace = _a.namespace;
+    return function (store) {
+        var index = new Index(store, namespace);
+        Object.defineProperty(Model, 'index', {
+            value: index,
+        });
+        schemas.forEach(function (schema) {
+            registerSchema(schema, store, namespace);
+            Object.values(schema._fields).forEach(function (definition) {
+                if (definition instanceof HasManyRelationship)
+                    index.addIndex(definition);
+            });
+        });
+        store.registerModule(namespace, createModule(store, schemas, index));
+        index.init();
+    };
 }
 
 export { BelongsTo, Field, HasMany, Item, List, Model, generateDatabasePlugin };
