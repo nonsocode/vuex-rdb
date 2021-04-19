@@ -16,16 +16,14 @@
       "pre-commit": "pretty-quick --staged"
     }
   },
-  "lint-staged": {
-    "*.{js,ts}": "prettier --write"
-  },
   "files": [
     "dist",
     "types"
   ],
   "scripts": {
     "build": "tsc --declaration --emitDeclarationOnly --declarationDir types && rollup -c build/bundle.js",
-    "pretify": "prettier  --config ./.prettierrc -w src"
+    "pretify": "prettier  --config ./.prettierrc -w src",
+    "test": "jest"
   },
   "peerDependencies": {
     "vue": "^2.6.0",
